@@ -154,35 +154,46 @@ export async function runGscImport(args: {
         period_start: (dates ? dates[0] : period.start) ?? period.start,
         period_end: (dates ? dates[dates.length - 1] : period.end) ?? period.end,
         source_file: g.sourceFile,
-        is_active: true,
+        // Grains stay inactive until gsc_complete_import activates them, which
+        // is also what triggers superseding of overlapping older exports.
+        is_active: false,
       };
     });
     const { error: grainError } = await supabase.from("gsc_import_grains").insert(grainRows);
     if (grainError) throw new Error(grainError.message);
 
-    await supabase
-      .from("gsc_imports")
-      .update({ import_status: "imported", metadata: { row_counts: rowCounts, detected_reports: parsed.grains.map((g) => g.grain), aggregate_period: period } })
-      .eq("id", importId);
-
-    const through = parsed.dataEndDate ?? period.end;
-    await supabase
-      .from("data_source_connections")
-      .update({
-        status: "manual_upload",
-        last_successful_sync_at: new Date().toISOString(),
-        last_attempted_sync_at: new Date().toISOString(),
-        data_through_date: through,
-      })
-      .eq("id", connectionId);
+    // Completion runs through a permission-checked function so a
+    // marketing_user can finish their own import without holding write access
+    // to data source connection configuration.
+    const { error: completeError } = await supabase.rpc("gsc_complete_import", {
+      _import_id: importId,
+      _metadata: {
+        row_counts: rowCounts,
+        detected_reports: parsed.grains.map((g) => g.grain),
+        aggregate_period: period,
+      },
+      _through: parsed.dataEndDate ?? period.end,
+    });
+    if (completeError) throw new Error(completeError.message);
 
     return { status: "imported", importId, rowCounts, warnings: parsed.warnings };
   } catch (e) {
     const message = (e as Error).message;
-    await supabase
-      .from("gsc_imports")
-      .update({ import_status: "failed", error_summary: message })
-      .eq("id", importId);
+    // A failed import must never leave data behind that a dashboard could read:
+    // every fact and grain row written by this import is discarded and the
+    // import is marked failed. Because grain rows (which trigger superseding)
+    // are only written after all fact rows succeed, a failure can never
+    // deactivate a previously valid import.
+    const { error: discardError } = await supabase.rpc("gsc_discard_failed_import", {
+      _import_id: importId,
+      _error: message,
+    });
+    if (discardError) {
+      await supabase
+        .from("gsc_imports")
+        .update({ import_status: "failed", error_summary: message })
+        .eq("id", importId);
+    }
     return { status: "failed", message, importId };
   }
 }

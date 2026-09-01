@@ -101,10 +101,30 @@ function parsePosition(value: unknown): number | null {
   return n > 0 ? n : null;
 }
 
+/**
+ * Dates arrive as ISO strings, as real Date cells, or — when a spreadsheet
+ * engine has already coerced the column — as an Excel serial number. All three
+ * are read as the exported calendar day, never shifted by a timezone.
+ */
 function parseDate(value: unknown): string | null {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (value instanceof Date) {
+    const utc = new Date(
+      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
+    );
+    return utc.toISOString().slice(0, 10);
+  }
   const s = String(value ?? "").trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // Excel serial day (1900 date system); the plausible window keeps this from
+  // swallowing years or other stray numbers.
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = Number(s);
+    if (serial >= 20000 && serial <= 80000) {
+      const ms = Math.round((serial - 25569) * 86400000);
+      return new Date(ms).toISOString().slice(0, 10);
+    }
+    return null;
+  }
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
@@ -181,7 +201,7 @@ function parseSheet(sheet: Sheet, grain: GrainKey): ParsedGrain | { error: strin
 async function sheetsFromEntry(name: string, data: ArrayBuffer): Promise<Sheet[]> {
   if (/\.(csv|tsv|txt)$/i.test(name)) {
     const text = new TextDecoder("utf-8").decode(data).replace(/^\uFEFF/, "");
-    const wb = XLSX.read(text, { type: "string", raw: false });
+    const wb = XLSX.read(text, { type: "string", raw: false, cellDates: true });
     return sheetsFromWorkbook(wb, name);
   }
   const wb = XLSX.read(new Uint8Array(data), { type: "array", cellDates: true });

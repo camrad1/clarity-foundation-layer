@@ -229,3 +229,49 @@ export function useQueryClassificationRules(organizationId: string | null) {
     },
   });
 }
+
+export type ActiveGrainCoverage = {
+  grain: GrainKey;
+  period_start: string | null;
+  period_end: string | null;
+  row_count: number;
+  source_file: string | null;
+  file_name: string | null;
+  imported_at: string | null;
+};
+
+/**
+ * Coverage reported by Data Health is the coverage dashboards actually use:
+ * only ACTIVE grains of successfully imported files. Superseded grains stay in
+ * import history but never widen the reported range.
+ */
+export function useActiveGrainCoverage(organizationId: string | null) {
+  return useQuery({
+    queryKey: ["gsc_active_coverage", organizationId],
+    enabled: !!organizationId,
+    queryFn: async (): Promise<ActiveGrainCoverage[]> => {
+      const { data, error } = await supabase
+        .from("gsc_import_grains")
+        .select(
+          "grain, period_start, period_end, row_count, source_file, gsc_imports!inner(file_name, imported_at, import_status)",
+        )
+        .eq("organization_id", organizationId!)
+        .eq("is_active", true)
+        .eq("gsc_imports.import_status", "imported");
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as (Omit<
+        ActiveGrainCoverage,
+        "file_name" | "imported_at"
+      > & { gsc_imports: { file_name: string; imported_at: string } | null })[];
+      return rows.map((r) => ({
+        grain: r.grain,
+        period_start: r.period_start,
+        period_end: r.period_end,
+        row_count: r.row_count,
+        source_file: r.source_file,
+        file_name: r.gsc_imports?.file_name ?? null,
+        imported_at: r.gsc_imports?.imported_at ?? null,
+      }));
+    },
+  });
+}

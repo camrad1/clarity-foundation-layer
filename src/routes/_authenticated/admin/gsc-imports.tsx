@@ -75,7 +75,7 @@ type ImportRow = {
 
 function GscImports() {
   const { organizationId } = useAppState();
-  const { isOrgAdmin } = useOrgRole(organizationId);
+  const { canManageImports } = useOrgRole(organizationId);
   const connections = useConnections(organizationId);
   const imports = useGscImports(organizationId);
   const qc = useQueryClient();
@@ -145,11 +145,11 @@ function GscImports() {
     }
   }
 
-  if (!isOrgAdmin)
+  if (!canManageImports)
     return (
       <EmptyState
-        title="Administrator access required"
-        description="Search Console imports are managed by organization administrators."
+        title="Import access required"
+        description="Search Console imports are managed by organization administrators and marketing users of this organization."
       />
     );
 

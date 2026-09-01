@@ -1830,6 +1830,10 @@ export type Database = {
         Args: { _org_id: string; _query: string }
         Returns: Database["public"]["Enums"]["query_classification"]
       }
+      gsc_complete_import: {
+        Args: { _import_id: string; _metadata?: Json; _through?: string }
+        Returns: undefined
+      }
       gsc_daily_series: {
         Args: { _end: string; _org_id: string; _start: string }
         Returns: {
@@ -1842,6 +1846,22 @@ export type Database = {
       }
       gsc_daily_totals: {
         Args: { _end: string; _org_id: string; _start: string }
+        Returns: {
+          avg_position: number
+          clicks: number
+          ctr: number
+          days: number
+          first_date: string
+          impressions: number
+          last_date: string
+        }[]
+      }
+      gsc_discard_failed_import: {
+        Args: { _error?: string; _import_id: string }
+        Returns: undefined
+      }
+      gsc_import_daily_totals: {
+        Args: { _end?: string; _import_id: string; _start?: string }
         Returns: {
           avg_position: number
           clicks: number
