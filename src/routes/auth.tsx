@@ -112,7 +112,7 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
-              {mode === "signin" ? "Sign in" : "Create account"}
+              Sign in
             </Button>
           </form>
 
@@ -127,14 +127,11 @@ function AuthPage() {
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "Need an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              className="font-medium text-accent underline-offset-4 hover:underline"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            >
-              {mode === "signin" ? "Sign up" : "Sign in"}
-            </button>
+            Need access? Contact your ClarityIQ administrator.
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
+            Signing in does not grant data access on its own — an administrator must add you to an
+            organization.
           </p>
         </div>
       </div>
