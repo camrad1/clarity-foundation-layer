@@ -151,8 +151,8 @@ export async function runGscImport(args: {
         import_id: importId,
         grain: g.grain,
         row_count: g.rows.length,
-        period_start: dates ? dates[0] : period.start,
-        period_end: dates ? dates[dates.length - 1] : period.end,
+        period_start: (dates ? dates[0] : period.start) ?? period.start,
+        period_end: (dates ? dates[dates.length - 1] : period.end) ?? period.end,
         source_file: g.sourceFile,
         is_active: true,
       };
