@@ -462,6 +462,553 @@ export type Database = {
         }
         Relationships: []
       }
+      gsc_country_facts: {
+        Row: {
+          clicks: number
+          country: string
+          created_at: string
+          ctr: number | null
+          id: string
+          import_id: string
+          impressions: number
+          organization_id: string
+          position: number | null
+        }
+        Insert: {
+          clicks?: number
+          country: string
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id: string
+          impressions?: number
+          organization_id: string
+          position?: number | null
+        }
+        Update: {
+          clicks?: number
+          country?: string
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id?: string
+          impressions?: number
+          organization_id?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_country_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_country_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_daily_facts: {
+        Row: {
+          clicks: number
+          created_at: string
+          ctr: number | null
+          date: string
+          id: string
+          import_id: string
+          impressions: number
+          organization_id: string
+          position: number | null
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          date: string
+          id?: string
+          import_id: string
+          impressions?: number
+          organization_id: string
+          position?: number | null
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          date?: string
+          id?: string
+          import_id?: string
+          impressions?: number
+          organization_id?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_daily_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_daily_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_device_facts: {
+        Row: {
+          clicks: number
+          created_at: string
+          ctr: number | null
+          device: string
+          id: string
+          import_id: string
+          impressions: number
+          organization_id: string
+          position: number | null
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          device: string
+          id?: string
+          import_id: string
+          impressions?: number
+          organization_id: string
+          position?: number | null
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          device?: string
+          id?: string
+          import_id?: string
+          impressions?: number
+          organization_id?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_device_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_device_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_import_grains: {
+        Row: {
+          connection_id: string
+          created_at: string
+          grain: Database["public"]["Enums"]["gsc_grain"]
+          id: string
+          import_id: string
+          is_active: boolean
+          organization_id: string
+          period_end: string | null
+          period_start: string | null
+          row_count: number
+          source_file: string | null
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          grain: Database["public"]["Enums"]["gsc_grain"]
+          id?: string
+          import_id: string
+          is_active?: boolean
+          organization_id: string
+          period_end?: string | null
+          period_start?: string | null
+          row_count?: number
+          source_file?: string | null
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          grain?: Database["public"]["Enums"]["gsc_grain"]
+          id?: string
+          import_id?: string
+          is_active?: boolean
+          organization_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          row_count?: number
+          source_file?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_import_grains_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_import_grains_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_import_grains_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_imports: {
+        Row: {
+          connection_id: string
+          created_at: string
+          created_by: string | null
+          data_end_date: string | null
+          data_start_date: string | null
+          error_summary: string | null
+          file_hash: string
+          file_name: string
+          file_size_bytes: number | null
+          id: string
+          import_status: Database["public"]["Enums"]["gsc_import_state"]
+          imported_at: string
+          metadata: Json
+          organization_id: string
+          source_sync_run_id: string | null
+          updated_at: string
+          warnings: string[]
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          created_by?: string | null
+          data_end_date?: string | null
+          data_start_date?: string | null
+          error_summary?: string | null
+          file_hash: string
+          file_name: string
+          file_size_bytes?: number | null
+          id?: string
+          import_status?: Database["public"]["Enums"]["gsc_import_state"]
+          imported_at?: string
+          metadata?: Json
+          organization_id: string
+          source_sync_run_id?: string | null
+          updated_at?: string
+          warnings?: string[]
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_end_date?: string | null
+          data_start_date?: string | null
+          error_summary?: string | null
+          file_hash?: string
+          file_name?: string
+          file_size_bytes?: number | null
+          id?: string
+          import_status?: Database["public"]["Enums"]["gsc_import_state"]
+          imported_at?: string
+          metadata?: Json
+          organization_id?: string
+          source_sync_run_id?: string | null
+          updated_at?: string
+          warnings?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_imports_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_imports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_imports_source_sync_run_id_fkey"
+            columns: ["source_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "source_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_page_facts: {
+        Row: {
+          clicks: number
+          created_at: string
+          ctr: number | null
+          id: string
+          import_id: string
+          impressions: number
+          mapped_care_type_id: string | null
+          mapped_community_id: string | null
+          mapped_content_type: string | null
+          mapped_intent_type: string | null
+          mapped_topic: string | null
+          mapping_rule_id: string | null
+          normalized_url: string
+          organization_id: string
+          page_url: string
+          position: number | null
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id: string
+          impressions?: number
+          mapped_care_type_id?: string | null
+          mapped_community_id?: string | null
+          mapped_content_type?: string | null
+          mapped_intent_type?: string | null
+          mapped_topic?: string | null
+          mapping_rule_id?: string | null
+          normalized_url: string
+          organization_id: string
+          page_url: string
+          position?: number | null
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id?: string
+          impressions?: number
+          mapped_care_type_id?: string | null
+          mapped_community_id?: string | null
+          mapped_content_type?: string | null
+          mapped_intent_type?: string | null
+          mapped_topic?: string | null
+          mapping_rule_id?: string | null
+          normalized_url?: string
+          organization_id?: string
+          page_url?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_page_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_page_facts_mapped_care_type_id_fkey"
+            columns: ["mapped_care_type_id"]
+            isOneToOne: false
+            referencedRelation: "care_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_page_facts_mapped_community_id_fkey"
+            columns: ["mapped_community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_page_facts_mapping_rule_id_fkey"
+            columns: ["mapping_rule_id"]
+            isOneToOne: false
+            referencedRelation: "url_mapping_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_page_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_query_classification_rules: {
+        Row: {
+          active: boolean
+          classification: Database["public"]["Enums"]["query_classification"]
+          created_at: string
+          id: string
+          match_type: Database["public"]["Enums"]["query_match_type"]
+          name: string
+          organization_id: string
+          pattern: string
+          priority: number
+          secondary_tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          classification: Database["public"]["Enums"]["query_classification"]
+          created_at?: string
+          id?: string
+          match_type?: Database["public"]["Enums"]["query_match_type"]
+          name: string
+          organization_id: string
+          pattern: string
+          priority?: number
+          secondary_tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          classification?: Database["public"]["Enums"]["query_classification"]
+          created_at?: string
+          id?: string
+          match_type?: Database["public"]["Enums"]["query_match_type"]
+          name?: string
+          organization_id?: string
+          pattern?: string
+          priority?: number
+          secondary_tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_query_classification_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_query_facts: {
+        Row: {
+          clicks: number
+          created_at: string
+          ctr: number | null
+          id: string
+          import_id: string
+          impressions: number
+          normalized_query: string
+          organization_id: string
+          position: number | null
+          query: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id: string
+          impressions?: number
+          normalized_query: string
+          organization_id: string
+          position?: number | null
+          query: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id?: string
+          impressions?: number
+          normalized_query?: string
+          organization_id?: string
+          position?: number | null
+          query?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_query_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_query_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_search_appearance_facts: {
+        Row: {
+          clicks: number
+          created_at: string
+          ctr: number | null
+          id: string
+          import_id: string
+          impressions: number
+          organization_id: string
+          position: number | null
+          search_appearance: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id: string
+          impressions?: number
+          organization_id: string
+          position?: number | null
+          search_appearance: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          import_id?: string
+          impressions?: number
+          organization_id?: string
+          position?: number | null
+          search_appearance?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_search_appearance_facts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "gsc_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_search_appearance_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insight_signals: {
         Row: {
           attribution_level: Database["public"]["Enums"]["attribution_level"]
@@ -1274,6 +1821,82 @@ export type Database = {
         Args: { _profile_id: string; _user_id?: string }
         Returns: boolean
       }
+      can_manage_imports: {
+        Args: { _org_id: string; _user_id?: string }
+        Returns: boolean
+      }
+      gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
+      gsc_classify_query: {
+        Args: { _org_id: string; _query: string }
+        Returns: Database["public"]["Enums"]["query_classification"]
+      }
+      gsc_daily_series: {
+        Args: { _end: string; _org_id: string; _start: string }
+        Returns: {
+          avg_position: number
+          clicks: number
+          ctr: number
+          date: string
+          impressions: number
+        }[]
+      }
+      gsc_daily_totals: {
+        Args: { _end: string; _org_id: string; _start: string }
+        Returns: {
+          avg_position: number
+          clicks: number
+          ctr: number
+          days: number
+          first_date: string
+          impressions: number
+          last_date: string
+        }[]
+      }
+      gsc_page_report: {
+        Args: {
+          _compare_import_id?: string
+          _import_id: string
+          _org_id: string
+        }
+        Returns: {
+          clicks: number
+          community_name: string
+          ctr: number
+          impressions: number
+          mapped_community_id: string
+          mapped_content_type: string
+          mapped_intent_type: string
+          mapped_topic: string
+          mapping_rule_id: string
+          normalized_url: string
+          page_url: string
+          position_value: number
+          prev_clicks: number
+          prev_ctr: number
+          prev_impressions: number
+          prev_position_value: number
+        }[]
+      }
+      gsc_query_report: {
+        Args: {
+          _compare_import_id?: string
+          _import_id: string
+          _org_id: string
+        }
+        Returns: {
+          classification: Database["public"]["Enums"]["query_classification"]
+          clicks: number
+          ctr: number
+          impressions: number
+          normalized_query: string
+          position_value: number
+          prev_clicks: number
+          prev_ctr: number
+          prev_impressions: number
+          prev_position_value: number
+          query: string
+        }[]
+      }
       has_community_access: {
         Args: { _community_id: string; _user_id?: string }
         Returns: boolean
@@ -1308,12 +1931,34 @@ export type Database = {
         | "manual_upload"
         | "syncing"
       entity_status: "active" | "inactive" | "archived" | "pending"
+      gsc_grain:
+        | "daily"
+        | "query"
+        | "page"
+        | "device"
+        | "country"
+        | "search_appearance"
+      gsc_import_state:
+        | "pending"
+        | "parsed"
+        | "imported"
+        | "failed"
+        | "duplicate"
       metric_status: "draft" | "provisional" | "validated" | "deprecated"
       metric_validation_state:
         | "unvalidated"
         | "in_review"
         | "validated"
         | "failed"
+      query_classification:
+        | "branded"
+        | "local_intent"
+        | "cost_intent"
+        | "informational"
+        | "care_type_intent"
+        | "competitor"
+        | "other"
+      query_match_type: "exact_phrase" | "contains" | "starts_with" | "regex"
       sync_run_status: "running" | "success" | "partial" | "failed"
       url_match_type: "exact_url" | "url_contains" | "path_prefix" | "regex"
       validation_check_status:
@@ -1466,6 +2111,21 @@ export const Constants = {
         "syncing",
       ],
       entity_status: ["active", "inactive", "archived", "pending"],
+      gsc_grain: [
+        "daily",
+        "query",
+        "page",
+        "device",
+        "country",
+        "search_appearance",
+      ],
+      gsc_import_state: [
+        "pending",
+        "parsed",
+        "imported",
+        "failed",
+        "duplicate",
+      ],
       metric_status: ["draft", "provisional", "validated", "deprecated"],
       metric_validation_state: [
         "unvalidated",
@@ -1473,6 +2133,16 @@ export const Constants = {
         "validated",
         "failed",
       ],
+      query_classification: [
+        "branded",
+        "local_intent",
+        "cost_intent",
+        "informational",
+        "care_type_intent",
+        "competitor",
+        "other",
+      ],
+      query_match_type: ["exact_phrase", "contains", "starts_with", "regex"],
       sync_run_status: ["running", "success", "partial", "failed"],
       url_match_type: ["exact_url", "url_contains", "path_prefix", "regex"],
       validation_check_status: [
