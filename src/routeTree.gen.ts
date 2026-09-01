@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
 import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
+import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
@@ -125,6 +126,12 @@ const AuthenticatedAdminOrganizationsRoute =
     path: '/admin/organizations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminQueryRulesRoute =
+  AuthenticatedAdminQueryRulesRouteImport.update({
+    id: '/admin/query-rules',
+    path: '/admin/query-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminUrlRulesRoute =
   AuthenticatedAdminUrlRulesRouteImport.update({
     id: '/admin/url-rules',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/mappings'
     | '/admin/metrics'
     | '/admin/organizations'
+    | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/marketing/opportunities'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/admin/mappings'
     | '/admin/metrics'
     | '/admin/organizations'
+    | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/marketing/opportunities'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/mappings'
     | '/_authenticated/admin/metrics'
     | '/_authenticated/admin/organizations'
+    | '/_authenticated/admin/query-rules'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
     | '/_authenticated/marketing/opportunities'
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/query-rules': {
+      id: '/_authenticated/admin/query-rules'
+      path: '/admin/query-rules'
+      fullPath: '/admin/query-rules'
+      preLoaderRoute: typeof AuthenticatedAdminQueryRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/url-rules': {
       id: '/_authenticated/admin/url-rules'
       path: '/admin/url-rules'
@@ -539,6 +559,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
   AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
+  AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
   AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
 }
@@ -558,6 +579,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
   AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
+  AuthenticatedAdminQueryRulesRoute: AuthenticatedAdminQueryRulesRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
   AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
 }
