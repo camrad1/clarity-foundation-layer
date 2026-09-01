@@ -75,8 +75,8 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const memberships = useMyMemberships();
-  const { isPlatformAdmin } = useIsPlatformAdmin();
   const { organizationId, setOrganizationId } = useAppState();
+  const { isPlatformAdmin, isOrgAdmin } = useOrgRole(organizationId);
 
   const orgs = (memberships.data ?? [])
     .map((m) => m.organizations)
