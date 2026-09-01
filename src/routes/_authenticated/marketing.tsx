@@ -1,38 +1,59 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { SectionPlaceholder } from "@/components/clarity/section-placeholder";
+import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/marketing")({
   head: () => ({
     meta: [
-      { title: "Marketing Intelligence — ClarityIQ" },
+      { title: "Search Intelligence — ClarityIQ" },
       {
         name: "description",
         content:
-          "Search visibility, traffic and demand generation intelligence for your communities.",
+          "Google Search Console visibility, query intent and page performance for your communities.",
       },
-      { property: "og:title", content: "Marketing Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Search Intelligence — ClarityIQ" },
       {
         property: "og:description",
-        content: "Visibility and traffic performance across your community portfolio.",
+        content: "Organic visibility, query intelligence and page performance across your portfolio.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Marketing"
-      title="Marketing Intelligence"
-      description="Visibility and traffic performance — how people find your communities and what that demand is worth."
-      planned={[
-        "Search visibility by community and query intent",
-        "Page and content performance tied to canonical communities",
-        "Traffic to conversation conversion",
-        "Paid and organic contribution once Ads and GA4 are connected",
-      ]}
-      dependsOn={[
-        "Search Console connection and data import",
-        "URL mapping rules resolving pages to communities",
-        "Validated gsc.* metric definitions",
-      ]}
-    />
-  ),
+  component: MarketingLayout,
 });
+
+const TABS = [
+  { to: "/marketing", label: "Search Overview" },
+  { to: "/marketing/queries", label: "Query Intelligence" },
+  { to: "/marketing/pages", label: "Page Intelligence" },
+  { to: "/marketing/segments", label: "Segments" },
+  { to: "/marketing/opportunities", label: "Opportunities" },
+];
+
+function MarketingLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <div className="space-y-6">
+      <nav className="flex flex-wrap gap-1 border-b border-border pb-px">
+        {TABS.map((t) => {
+          const active = pathname === t.to;
+          return (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={cn(
+                "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
+                active
+                  ? "border-primary font-medium text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
+      <Outlet />
+    </div>
+  );
+}
