@@ -133,22 +133,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </div>
 
-          <div className="space-y-0.5">
-            <p className="px-2.5 pb-1 eyebrow">Admin</p>
-            {isPlatformAdmin ? (
+          {isOrgAdmin ? (
+            <div className="space-y-0.5">
+              <p className="px-2.5 pb-1 eyebrow">Admin</p>
+              {isPlatformAdmin ? (
+                <NavLink
+                  item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
+                  active={pathname === "/admin/organizations"}
+                />
+              ) : null}
+              {ADMIN.map((item) => (
+                <NavLink key={item.to} item={item} active={pathname === item.to} />
+              ))}
               <NavLink
-                item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
-                active={pathname === "/admin/organizations"}
+                item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
+                active={pathname === "/admin/access"}
               />
-            ) : null}
-            {ADMIN.map((item) => (
-              <NavLink key={item.to} item={item} active={pathname === item.to} />
-            ))}
-            <NavLink
-              item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
-              active={pathname === "/admin/access"}
-            />
-          </div>
+            </div>
+          ) : null}
         </nav>
 
         <div className="border-t border-sidebar-border p-3">
