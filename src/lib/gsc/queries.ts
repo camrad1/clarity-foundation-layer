@@ -137,7 +137,7 @@ export function useQueryReport(
       const { data, error } = await supabase.rpc("gsc_query_report", {
         _org_id: organizationId!,
         _import_id: importId!,
-        _compare_import_id: compareImportId,
+        _compare_import_id: compareImportId ?? undefined,
       });
       if (error) throw error;
       return data ?? [];
@@ -157,7 +157,7 @@ export function usePageReport(
       const { data, error } = await supabase.rpc("gsc_page_report", {
         _org_id: organizationId!,
         _import_id: importId!,
-        _compare_import_id: compareImportId,
+        _compare_import_id: compareImportId ?? undefined,
       });
       if (error) throw error;
       return data ?? [];
