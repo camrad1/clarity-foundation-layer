@@ -101,6 +101,12 @@ export function useOrgRole(organizationId: string | null) {
     role,
     isPlatformAdmin,
     isOrgAdmin: isPlatformAdmin || role === "organization_admin",
+    /**
+     * Mirrors the database helper `can_manage_imports()` so the interface does
+     * not hide capabilities RLS already allows. Enforcement stays in RLS.
+     */
+    canManageImports:
+      isPlatformAdmin || role === "organization_admin" || role === "marketing_user",
   };
 }
 

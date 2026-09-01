@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const memberships = useMyMemberships();
   const { organizationId, setOrganizationId } = useAppState();
-  const { isPlatformAdmin, isOrgAdmin } = useOrgRole(organizationId);
+  const { isPlatformAdmin, isOrgAdmin, canManageImports } = useOrgRole(organizationId);
 
   const orgs = (memberships.data ?? [])
     .map((m) => m.organizations)
@@ -160,6 +160,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavLink
                 item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
                 active={pathname === "/admin/access"}
+              />
+            </div>
+          ) : canManageImports ? (
+            // Marketing users manage Search Console imports only — no other
+            // organization administration is exposed to them.
+            <div className="space-y-0.5">
+              <p className="px-2.5 pb-1 eyebrow">Admin</p>
+              <NavLink
+                item={{ to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload }}
+                active={pathname === "/admin/gsc-imports"}
               />
             </div>
           ) : null}
