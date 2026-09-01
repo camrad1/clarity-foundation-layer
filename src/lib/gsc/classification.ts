@@ -16,6 +16,7 @@ export const CLASSIFICATION_LABELS: Record<QueryClassification, string> = {
   informational: "Informational",
   care_type_intent: "Care type intent",
   competitor: "Competitor",
+  other: "Other",
 };
 
 export const CLASSIFICATIONS = Object.keys(CLASSIFICATION_LABELS) as QueryClassification[];
