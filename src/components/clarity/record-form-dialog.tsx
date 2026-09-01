@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { useOrgRole } from "@/lib/clarity-queries";
+import { useAppState } from "@/state/app-state";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,12 @@ export function RecordFormDialog({
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const { organizationId } = useAppState();
+  const { isOrgAdmin } = useOrgRole(organizationId);
+
+  // Presentation only — row level security is the real boundary. Users without
+  // administrative rights are simply not shown controls they cannot use.
+  if (!isOrgAdmin) return null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

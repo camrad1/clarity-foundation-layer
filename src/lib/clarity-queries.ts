@@ -39,6 +39,71 @@ export function useIsPlatformAdmin() {
   };
 }
 
+/**
+ * Roles are the database `app_role` enum — never invent parallel role names.
+ * Enforcement lives in RLS; these helpers only shape the interface.
+ */
+export const APP_ROLES = [
+  "platform_admin",
+  "organization_admin",
+  "regional_user",
+  "community_user",
+  "marketing_user",
+  "read_only",
+] as const;
+export type AppRole = (typeof APP_ROLES)[number];
+
+/** Roles an organization admin is allowed to assign. platform_admin is excluded. */
+export const ASSIGNABLE_ORG_ROLES: AppRole[] = [
+  "organization_admin",
+  "regional_user",
+  "community_user",
+  "marketing_user",
+  "read_only",
+];
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  platform_admin: "Platform admin",
+  organization_admin: "Organization admin",
+  regional_user: "Regional user",
+  community_user: "Community user",
+  marketing_user: "Marketing user",
+  read_only: "Read only",
+};
+
+/** Roles whose data scope is the whole organization. */
+export const ORG_WIDE_ROLES: AppRole[] = [
+  "platform_admin",
+  "organization_admin",
+  "marketing_user",
+  "read_only",
+];
+
+export function roleScopeLabel(role: string, regions: string[], communities: string[]) {
+  if (ORG_WIDE_ROLES.includes(role as AppRole)) return "All communities (organization-wide)";
+  if (role === "regional_user")
+    return regions.length ? regions.join(", ") : "No regions assigned";
+  if (role === "community_user")
+    return communities.length ? communities.join(", ") : "No communities assigned";
+  return "—";
+}
+
+/** Current user's role in the active organization, plus admin capability flags. */
+export function useOrgRole(organizationId: string | null) {
+  const memberships = useMyMemberships();
+  const rows = memberships.data ?? [];
+  const isPlatformAdmin = rows.some((m) => m.role === "platform_admin");
+  const role = (rows.find((m) => m.organization_id === organizationId)?.role ?? null) as
+    | AppRole
+    | null;
+  return {
+    loading: memberships.isLoading,
+    role,
+    isPlatformAdmin,
+    isOrgAdmin: isPlatformAdmin || role === "organization_admin",
+  };
+}
+
 export function useOrganizations() {
   return useQuery({
     queryKey: ["organizations"],
