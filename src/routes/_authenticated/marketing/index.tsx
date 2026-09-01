@@ -98,7 +98,7 @@ function SearchOverview() {
         actions={
           <div className="flex items-center gap-2">
             <Select value={mode} onValueChange={(v) => setMode(v as ComparisonMode)}>
-              <SelectTrigger className="w-44" size="sm">
+              <SelectTrigger className="h-9 w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
