@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDataHealthRouteImport } from './routes/_authenticated/data-health'
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
@@ -31,6 +32,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDataHealthRoute = AuthenticatedDataHealthRouteImport.update({
+  id: '/data-health',
+  path: '/data-health',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedJourneyRoute = AuthenticatedJourneyRouteImport.update({
   id: '/journey',
@@ -61,6 +67,7 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/data-health': typeof AuthenticatedDataHealthRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/occupancy': typeof AuthenticatedOccupancyRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/data-health': typeof AuthenticatedDataHealthRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/occupancy': typeof AuthenticatedOccupancyRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/data-health'
     | '/journey'
     | '/marketing'
     | '/occupancy'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/data-health'
     | '/journey'
     | '/marketing'
     | '/occupancy'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/data-health'
     | '/_authenticated/journey'
     | '/_authenticated/marketing'
     | '/_authenticated/occupancy'
@@ -146,6 +158,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/data-health': {
+      id: '/_authenticated/data-health'
+      path: '/data-health'
+      fullPath: '/data-health'
+      preLoaderRoute: typeof AuthenticatedDataHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/journey': {
       id: '/_authenticated/journey'
@@ -186,6 +205,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDataHealthRoute: typeof AuthenticatedDataHealthRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
   AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
@@ -194,6 +214,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDataHealthRoute: AuthenticatedDataHealthRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
   AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,
