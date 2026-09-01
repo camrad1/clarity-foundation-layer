@@ -52,7 +52,7 @@ function Communities() {
                 if (!organizationId) throw new Error("Select an organization first");
                 const { error } = await supabase
                   .from("regions")
-                  .insert({ organization_id: organizationId, name: v.name, slug: v.slug });
+                  .insert({ organization_id: organizationId, name: v("name"), slug: v("slug") });
                 if (error) throw error;
                 await qc.invalidateQueries({ queryKey: ["regions", organizationId] });
               }}
@@ -85,15 +85,15 @@ function Communities() {
                 if (!organizationId) throw new Error("Select an organization first");
                 const { error } = await supabase.from("communities").insert({
                   organization_id: organizationId,
-                  name: v.name,
-                  slug: v.slug,
-                  city: v.city || null,
-                  state: v.state || null,
-                  timezone: v.timezone || "America/Chicago",
-                  website_url: v.website_url || null,
-                  primary_domain: v.primary_domain || null,
-                  unit_count: v.unit_count ? Number(v.unit_count) : null,
-                  region_id: v.region_id || null,
+                  name: v("name"),
+                  slug: v("slug"),
+                  city: v("city") || null,
+                  state: v("state") || null,
+                  timezone: v("timezone") || "America/Chicago",
+                  website_url: v("website_url") || null,
+                  primary_domain: v("primary_domain") || null,
+                  unit_count: v("unit_count") ? Number(v("unit_count")) : null,
+                  region_id: v("region_id") || null,
                 });
                 if (error) throw error;
                 await qc.invalidateQueries({ queryKey: ["communities", organizationId] });

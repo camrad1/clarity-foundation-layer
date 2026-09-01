@@ -45,7 +45,7 @@ export function RecordFormDialog({
   fields: FieldSpec[];
   submitLabel?: string;
   trigger?: ReactNode;
-  onSubmit: (values: Record<string, string>) => Promise<void>;
+  onSubmit: (get: (name: string) => string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -55,7 +55,7 @@ export function RecordFormDialog({
     e.preventDefault();
     setBusy(true);
     try {
-      await onSubmit(values);
+      await onSubmit((n) => values[n] ?? "");
       toast.success(`${title} saved`);
       setValues({});
       setOpen(false);

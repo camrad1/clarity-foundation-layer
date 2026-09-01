@@ -98,14 +98,14 @@ function UrlRules() {
               if (!organizationId) throw new Error("Select an organization first");
               const { error } = await supabase.from("url_mapping_rules").insert({
                 organization_id: organizationId,
-                match_type: v.match_type as never,
-                pattern: v.pattern,
-                content_type: v.content_type || "other",
-                community_id: v.community_id || null,
-                care_type_id: v.care_type_id || null,
-                intent_type: v.intent_type || null,
-                topic: v.topic || null,
-                priority: v.priority ? Number(v.priority) : 100,
+                match_type: v("match_type") as never,
+                pattern: v("pattern"),
+                content_type: v("content_type") || "other",
+                community_id: v("community_id") || null,
+                care_type_id: v("care_type_id") || null,
+                intent_type: v("intent_type") || null,
+                topic: v("topic") || null,
+                priority: v("priority") ? Number(v("priority")) : 100,
               });
               if (error) throw error;
               await qc.invalidateQueries({ queryKey: ["url_rules", organizationId] });

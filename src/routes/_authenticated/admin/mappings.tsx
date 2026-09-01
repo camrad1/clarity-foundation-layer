@@ -86,10 +86,10 @@ function Mappings() {
               if (!organizationId) throw new Error("Select an organization first");
               const { error } = await supabase.from("community_source_mappings").insert({
                 organization_id: organizationId,
-                community_id: v.community_id,
-                source_type: v.source_type,
-                external_id: v.external_id,
-                external_name: v.external_name || null,
+                community_id: v("community_id"),
+                source_type: v("source_type"),
+                external_id: v("external_id"),
+                external_name: v("external_name") || null,
               });
               if (error) throw error;
               await qc.invalidateQueries({ queryKey: ["community_mappings", organizationId] });

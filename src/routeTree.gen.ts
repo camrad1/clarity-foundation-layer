@@ -18,6 +18,10 @@ import { Route as AuthenticatedMarketingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
+import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
+import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
+import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +67,30 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminCommunitiesRoute =
+  AuthenticatedAdminCommunitiesRouteImport.update({
+    id: '/admin/communities',
+    path: '/admin/communities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMappingsRoute =
+  AuthenticatedAdminMappingsRouteImport.update({
+    id: '/admin/mappings',
+    path: '/admin/mappings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminOrganizationsRoute =
+  AuthenticatedAdminOrganizationsRouteImport.update({
+    id: '/admin/organizations',
+    path: '/admin/organizations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUrlRulesRoute =
+  AuthenticatedAdminUrlRulesRouteImport.update({
+    id: '/admin/url-rules',
+    path: '/admin/url-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +101,10 @@ export interface FileRoutesByFullPath {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
+  '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +115,10 @@ export interface FileRoutesByTo {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
+  '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +131,10 @@ export interface FileRoutesById {
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
+  '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +147,10 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
+    | '/admin/communities'
+    | '/admin/mappings'
+    | '/admin/organizations'
+    | '/admin/url-rules'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +161,10 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
+    | '/admin/communities'
+    | '/admin/mappings'
+    | '/admin/organizations'
+    | '/admin/url-rules'
   id:
     | '__root__'
     | '/'
@@ -128,6 +176,10 @@ export interface FileRouteTypes {
     | '/_authenticated/occupancy'
     | '/_authenticated/overview'
     | '/_authenticated/sales'
+    | '/_authenticated/admin/communities'
+    | '/_authenticated/admin/mappings'
+    | '/_authenticated/admin/organizations'
+    | '/_authenticated/admin/url-rules'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,6 +253,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/communities': {
+      id: '/_authenticated/admin/communities'
+      path: '/admin/communities'
+      fullPath: '/admin/communities'
+      preLoaderRoute: typeof AuthenticatedAdminCommunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/mappings': {
+      id: '/_authenticated/admin/mappings'
+      path: '/admin/mappings'
+      fullPath: '/admin/mappings'
+      preLoaderRoute: typeof AuthenticatedAdminMappingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/organizations': {
+      id: '/_authenticated/admin/organizations'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations'
+      preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/url-rules': {
+      id: '/_authenticated/admin/url-rules'
+      path: '/admin/url-rules'
+      fullPath: '/admin/url-rules'
+      preLoaderRoute: typeof AuthenticatedAdminUrlRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -211,6 +291,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
+  AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
+  AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
+  AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
+  AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -220,6 +304,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
+  AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
+  AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
+  AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
+  AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

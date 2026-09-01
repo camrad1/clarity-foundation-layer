@@ -66,9 +66,9 @@ function Organizations() {
             ]}
             onSubmit={async (v) => {
               const { error } = await supabase.from("organizations").insert({
-                name: v.name,
-                slug: v.slug,
-                default_timezone: v.default_timezone || "America/Chicago",
+                name: v("name"),
+                slug: v("slug"),
+                default_timezone: v("default_timezone") || "America/Chicago",
               });
               if (error) throw error;
               await qc.invalidateQueries({ queryKey: ["organizations"] });
