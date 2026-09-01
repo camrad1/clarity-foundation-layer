@@ -27,6 +27,11 @@ import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
+import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
+import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './routes/_authenticated/marketing/opportunities'
+import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
+import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
+import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -125,13 +130,43 @@ const AuthenticatedAdminValidationRoute =
     path: '/admin/validation',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMarketingIndexRoute =
+  AuthenticatedMarketingIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingOpportunitiesRoute =
+  AuthenticatedMarketingOpportunitiesRouteImport.update({
+    id: '/opportunities',
+    path: '/opportunities',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingPagesRoute =
+  AuthenticatedMarketingPagesRouteImport.update({
+    id: '/pages',
+    path: '/pages',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingQueriesRoute =
+  AuthenticatedMarketingQueriesRouteImport.update({
+    id: '/queries',
+    path: '/queries',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingSegmentsRoute =
+  AuthenticatedMarketingSegmentsRouteImport.update({
+    id: '/segments',
+    path: '/segments',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/journey': typeof AuthenticatedJourneyRoute
-  '/marketing': typeof AuthenticatedMarketingRoute
+  '/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
@@ -144,13 +179,17 @@ export interface FileRoutesByFullPath {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
+  '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
+  '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/journey': typeof AuthenticatedJourneyRoute
-  '/marketing': typeof AuthenticatedMarketingRoute
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
@@ -163,6 +202,11 @@ export interface FileRoutesByTo {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
+  '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
+  '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/marketing': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -171,7 +215,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
-  '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
+  '/_authenticated/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
@@ -184,6 +228,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
+  '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
+  '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,13 +254,17 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/opportunities'
+    | '/marketing/pages'
+    | '/marketing/queries'
+    | '/marketing/segments'
+    | '/marketing/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/data-health'
     | '/journey'
-    | '/marketing'
     | '/occupancy'
     | '/overview'
     | '/sales'
@@ -224,6 +277,11 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/opportunities'
+    | '/marketing/pages'
+    | '/marketing/queries'
+    | '/marketing/segments'
+    | '/marketing'
   id:
     | '__root__'
     | '/'
@@ -244,6 +302,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
+    | '/_authenticated/marketing/opportunities'
+    | '/_authenticated/marketing/pages'
+    | '/_authenticated/marketing/queries'
+    | '/_authenticated/marketing/segments'
+    | '/_authenticated/marketing/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,13 +443,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminValidationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/marketing/': {
+      id: '/_authenticated/marketing/'
+      path: '/'
+      fullPath: '/marketing/'
+      preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/opportunities': {
+      id: '/_authenticated/marketing/opportunities'
+      path: '/opportunities'
+      fullPath: '/marketing/opportunities'
+      preLoaderRoute: typeof AuthenticatedMarketingOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/pages': {
+      id: '/_authenticated/marketing/pages'
+      path: '/pages'
+      fullPath: '/marketing/pages'
+      preLoaderRoute: typeof AuthenticatedMarketingPagesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/queries': {
+      id: '/_authenticated/marketing/queries'
+      path: '/queries'
+      fullPath: '/marketing/queries'
+      preLoaderRoute: typeof AuthenticatedMarketingQueriesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/segments': {
+      id: '/_authenticated/marketing/segments'
+      path: '/segments'
+      fullPath: '/marketing/segments'
+      preLoaderRoute: typeof AuthenticatedMarketingSegmentsRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
   }
 }
+
+interface AuthenticatedMarketingRouteChildren {
+  AuthenticatedMarketingOpportunitiesRoute: typeof AuthenticatedMarketingOpportunitiesRoute
+  AuthenticatedMarketingPagesRoute: typeof AuthenticatedMarketingPagesRoute
+  AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
+  AuthenticatedMarketingSegmentsRoute: typeof AuthenticatedMarketingSegmentsRoute
+  AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
+}
+
+const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
+  {
+    AuthenticatedMarketingOpportunitiesRoute:
+      AuthenticatedMarketingOpportunitiesRoute,
+    AuthenticatedMarketingPagesRoute: AuthenticatedMarketingPagesRoute,
+    AuthenticatedMarketingQueriesRoute: AuthenticatedMarketingQueriesRoute,
+    AuthenticatedMarketingSegmentsRoute: AuthenticatedMarketingSegmentsRoute,
+    AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
+  }
+
+const AuthenticatedMarketingRouteWithChildren =
+  AuthenticatedMarketingRoute._addFileChildren(
+    AuthenticatedMarketingRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDataHealthRoute: typeof AuthenticatedDataHealthRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
-  AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
+  AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRouteWithChildren
   AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
@@ -404,7 +525,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDataHealthRoute: AuthenticatedDataHealthRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
-  AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
+  AuthenticatedMarketingRoute: AuthenticatedMarketingRouteWithChildren,
   AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
