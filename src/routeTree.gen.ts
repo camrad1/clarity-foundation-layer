@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
+import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -132,6 +133,12 @@ const AuthenticatedMarketingIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingQueriesRoute =
+  AuthenticatedMarketingQueriesRouteImport.update({
+    id: '/queries',
+    path: '/queries',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRoutesById {
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
 export interface FileRouteTypes {
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/queries'
     | '/marketing/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/queries'
     | '/marketing'
   id:
     | '__root__'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
+    | '/_authenticated/marketing/queries'
     | '/_authenticated/marketing/'
   fileRoutesById: FileRoutesById
 }
@@ -398,15 +411,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/queries': {
+      id: '/_authenticated/marketing/queries'
+      path: '/queries'
+      fullPath: '/marketing/queries'
+      preLoaderRoute: typeof AuthenticatedMarketingQueriesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
   }
 }
 
 interface AuthenticatedMarketingRouteChildren {
+  AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
   AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
 }
 
 const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
+    AuthenticatedMarketingQueriesRoute: AuthenticatedMarketingQueriesRoute,
     AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
   }
 
