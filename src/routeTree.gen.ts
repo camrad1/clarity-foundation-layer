@@ -19,9 +19,13 @@ import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
+import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
+import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
+import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
+import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -73,10 +77,27 @@ const AuthenticatedAdminCommunitiesRoute =
     path: '/admin/communities',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminDataSourcesRoute =
+  AuthenticatedAdminDataSourcesRouteImport.update({
+    id: '/admin/data-sources',
+    path: '/admin/data-sources',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminGoalsRoute = AuthenticatedAdminGoalsRouteImport.update({
+  id: '/admin/goals',
+  path: '/admin/goals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminMappingsRoute =
   AuthenticatedAdminMappingsRouteImport.update({
     id: '/admin/mappings',
     path: '/admin/mappings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMetricsRoute =
+  AuthenticatedAdminMetricsRouteImport.update({
+    id: '/admin/metrics',
+    path: '/admin/metrics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminOrganizationsRoute =
@@ -91,6 +112,12 @@ const AuthenticatedAdminUrlRulesRoute =
     path: '/admin/url-rules',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminValidationRoute =
+  AuthenticatedAdminValidationRouteImport.update({
+    id: '/admin/validation',
+    path: '/admin/validation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,9 +129,13 @@ export interface FileRoutesByFullPath {
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,9 +147,13 @@ export interface FileRoutesByTo {
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,9 +167,13 @@ export interface FileRoutesById {
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,9 +187,13 @@ export interface FileRouteTypes {
     | '/overview'
     | '/sales'
     | '/admin/communities'
+    | '/admin/data-sources'
+    | '/admin/goals'
     | '/admin/mappings'
+    | '/admin/metrics'
     | '/admin/organizations'
     | '/admin/url-rules'
+    | '/admin/validation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,9 +205,13 @@ export interface FileRouteTypes {
     | '/overview'
     | '/sales'
     | '/admin/communities'
+    | '/admin/data-sources'
+    | '/admin/goals'
     | '/admin/mappings'
+    | '/admin/metrics'
     | '/admin/organizations'
     | '/admin/url-rules'
+    | '/admin/validation'
   id:
     | '__root__'
     | '/'
@@ -177,9 +224,13 @@ export interface FileRouteTypes {
     | '/_authenticated/overview'
     | '/_authenticated/sales'
     | '/_authenticated/admin/communities'
+    | '/_authenticated/admin/data-sources'
+    | '/_authenticated/admin/goals'
     | '/_authenticated/admin/mappings'
+    | '/_authenticated/admin/metrics'
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/url-rules'
+    | '/_authenticated/admin/validation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,11 +311,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCommunitiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/data-sources': {
+      id: '/_authenticated/admin/data-sources'
+      path: '/admin/data-sources'
+      fullPath: '/admin/data-sources'
+      preLoaderRoute: typeof AuthenticatedAdminDataSourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/goals': {
+      id: '/_authenticated/admin/goals'
+      path: '/admin/goals'
+      fullPath: '/admin/goals'
+      preLoaderRoute: typeof AuthenticatedAdminGoalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/mappings': {
       id: '/_authenticated/admin/mappings'
       path: '/admin/mappings'
       fullPath: '/admin/mappings'
       preLoaderRoute: typeof AuthenticatedAdminMappingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/metrics': {
+      id: '/_authenticated/admin/metrics'
+      path: '/admin/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/organizations': {
@@ -281,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUrlRulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/validation': {
+      id: '/_authenticated/admin/validation'
+      path: '/admin/validation'
+      fullPath: '/admin/validation'
+      preLoaderRoute: typeof AuthenticatedAdminValidationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -292,9 +371,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
+  AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
+  AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
+  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
+  AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -305,9 +388,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
+  AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
+  AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
+  AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
+  AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
