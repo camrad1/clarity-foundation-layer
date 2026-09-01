@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -84,7 +84,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     .filter((o, i, arr) => arr.findIndex((x) => x.id === o.id) === i);
 
   const activeOrg = orgs.find((o) => o.id === organizationId) ?? orgs[0] ?? null;
-  if (activeOrg && activeOrg.id !== organizationId) setOrganizationId(activeOrg.id);
+
+  useEffect(() => {
+    if (activeOrg && activeOrg.id !== organizationId) setOrganizationId(activeOrg.id);
+  }, [activeOrg, organizationId, setOrganizationId]);
 
   return (
     <div className="flex min-h-screen bg-background">
