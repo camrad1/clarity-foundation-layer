@@ -1270,6 +1270,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_admin_view_profile: {
+        Args: { _profile_id: string; _user_id?: string }
+        Returns: boolean
+      }
       has_community_access: {
         Args: { _community_id: string; _user_id?: string }
         Returns: boolean
