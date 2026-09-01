@@ -114,7 +114,7 @@ type Sheet = { name: string; rows: Record<string, unknown>[] };
 function sheetsFromWorkbook(wb: XLSX.WorkBook, fallbackName: string): Sheet[] {
   return wb.SheetNames.map((name) => ({
     name: wb.SheetNames.length === 1 ? fallbackName || name : name,
-    rows: XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[name], { defval: "" }),
+    rows: XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[name]!, { defval: "" }),
   }));
 }
 
@@ -129,7 +129,7 @@ function metricHeader(row: Record<string, unknown>, pattern: RegExp): string | n
 function parseSheet(sheet: Sheet, grain: GrainKey): ParsedGrain | { error: string } {
   const warnings: string[] = [];
   if (!sheet.rows.length) return { error: `${sheet.name}: report is empty.` };
-  const first = sheet.rows[0];
+  const first = sheet.rows[0]!;
   const dim = headerFor(first, DIMENSION_HEADERS[grain]);
   const clicksKey = metricHeader(first, /^clicks$/i);
   const imprKey = metricHeader(first, /^impressions$/i);
