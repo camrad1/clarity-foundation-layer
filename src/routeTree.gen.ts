@@ -10,33 +10,233 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDataHealthRouteImport } from './routes/_authenticated/data-health'
+import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
+import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
+import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
+import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
+import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
+import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
+import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
+import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
+import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
+import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
+import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDataHealthRoute = AuthenticatedDataHealthRouteImport.update({
+  id: '/data-health',
+  path: '/data-health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJourneyRoute = AuthenticatedJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOccupancyRoute = AuthenticatedOccupancyRouteImport.update({
+  id: '/occupancy',
+  path: '/occupancy',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminCommunitiesRoute =
+  AuthenticatedAdminCommunitiesRouteImport.update({
+    id: '/admin/communities',
+    path: '/admin/communities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDataSourcesRoute =
+  AuthenticatedAdminDataSourcesRouteImport.update({
+    id: '/admin/data-sources',
+    path: '/admin/data-sources',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminGoalsRoute = AuthenticatedAdminGoalsRouteImport.update({
+  id: '/admin/goals',
+  path: '/admin/goals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminMappingsRoute =
+  AuthenticatedAdminMappingsRouteImport.update({
+    id: '/admin/mappings',
+    path: '/admin/mappings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMetricsRoute =
+  AuthenticatedAdminMetricsRouteImport.update({
+    id: '/admin/metrics',
+    path: '/admin/metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminOrganizationsRoute =
+  AuthenticatedAdminOrganizationsRouteImport.update({
+    id: '/admin/organizations',
+    path: '/admin/organizations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUrlRulesRoute =
+  AuthenticatedAdminUrlRulesRouteImport.update({
+    id: '/admin/url-rules',
+    path: '/admin/url-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminValidationRoute =
+  AuthenticatedAdminValidationRouteImport.update({
+    id: '/admin/validation',
+    path: '/admin/validation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/data-health': typeof AuthenticatedDataHealthRoute
+  '/journey': typeof AuthenticatedJourneyRoute
+  '/marketing': typeof AuthenticatedMarketingRoute
+  '/occupancy': typeof AuthenticatedOccupancyRoute
+  '/overview': typeof AuthenticatedOverviewRoute
+  '/sales': typeof AuthenticatedSalesRoute
+  '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/data-health': typeof AuthenticatedDataHealthRoute
+  '/journey': typeof AuthenticatedJourneyRoute
+  '/marketing': typeof AuthenticatedMarketingRoute
+  '/occupancy': typeof AuthenticatedOccupancyRoute
+  '/overview': typeof AuthenticatedOverviewRoute
+  '/sales': typeof AuthenticatedSalesRoute
+  '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
+  '/_authenticated/journey': typeof AuthenticatedJourneyRoute
+  '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
+  '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
+  '/_authenticated/overview': typeof AuthenticatedOverviewRoute
+  '/_authenticated/sales': typeof AuthenticatedSalesRoute
+  '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
+  '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
+  '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/data-health'
+    | '/journey'
+    | '/marketing'
+    | '/occupancy'
+    | '/overview'
+    | '/sales'
+    | '/admin/communities'
+    | '/admin/data-sources'
+    | '/admin/goals'
+    | '/admin/mappings'
+    | '/admin/metrics'
+    | '/admin/organizations'
+    | '/admin/url-rules'
+    | '/admin/validation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/data-health'
+    | '/journey'
+    | '/marketing'
+    | '/occupancy'
+    | '/overview'
+    | '/sales'
+    | '/admin/communities'
+    | '/admin/data-sources'
+    | '/admin/goals'
+    | '/admin/mappings'
+    | '/admin/metrics'
+    | '/admin/organizations'
+    | '/admin/url-rules'
+    | '/admin/validation'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/data-health'
+    | '/_authenticated/journey'
+    | '/_authenticated/marketing'
+    | '/_authenticated/occupancy'
+    | '/_authenticated/overview'
+    | '/_authenticated/sales'
+    | '/_authenticated/admin/communities'
+    | '/_authenticated/admin/data-sources'
+    | '/_authenticated/admin/goals'
+    | '/_authenticated/admin/mappings'
+    | '/_authenticated/admin/metrics'
+    | '/_authenticated/admin/organizations'
+    | '/_authenticated/admin/url-rules'
+    | '/_authenticated/admin/validation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +248,162 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/data-health': {
+      id: '/_authenticated/data-health'
+      path: '/data-health'
+      fullPath: '/data-health'
+      preLoaderRoute: typeof AuthenticatedDataHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/journey': {
+      id: '/_authenticated/journey'
+      path: '/journey'
+      fullPath: '/journey'
+      preLoaderRoute: typeof AuthenticatedJourneyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marketing': {
+      id: '/_authenticated/marketing'
+      path: '/marketing'
+      fullPath: '/marketing'
+      preLoaderRoute: typeof AuthenticatedMarketingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/occupancy': {
+      id: '/_authenticated/occupancy'
+      path: '/occupancy'
+      fullPath: '/occupancy'
+      preLoaderRoute: typeof AuthenticatedOccupancyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/overview': {
+      id: '/_authenticated/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/communities': {
+      id: '/_authenticated/admin/communities'
+      path: '/admin/communities'
+      fullPath: '/admin/communities'
+      preLoaderRoute: typeof AuthenticatedAdminCommunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/data-sources': {
+      id: '/_authenticated/admin/data-sources'
+      path: '/admin/data-sources'
+      fullPath: '/admin/data-sources'
+      preLoaderRoute: typeof AuthenticatedAdminDataSourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/goals': {
+      id: '/_authenticated/admin/goals'
+      path: '/admin/goals'
+      fullPath: '/admin/goals'
+      preLoaderRoute: typeof AuthenticatedAdminGoalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/mappings': {
+      id: '/_authenticated/admin/mappings'
+      path: '/admin/mappings'
+      fullPath: '/admin/mappings'
+      preLoaderRoute: typeof AuthenticatedAdminMappingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/metrics': {
+      id: '/_authenticated/admin/metrics'
+      path: '/admin/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/organizations': {
+      id: '/_authenticated/admin/organizations'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations'
+      preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/url-rules': {
+      id: '/_authenticated/admin/url-rules'
+      path: '/admin/url-rules'
+      fullPath: '/admin/url-rules'
+      preLoaderRoute: typeof AuthenticatedAdminUrlRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/validation': {
+      id: '/_authenticated/admin/validation'
+      path: '/admin/validation'
+      fullPath: '/admin/validation'
+      preLoaderRoute: typeof AuthenticatedAdminValidationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDataHealthRoute: typeof AuthenticatedDataHealthRoute
+  AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
+  AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
+  AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
+  AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
+  AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
+  AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
+  AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
+  AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
+  AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
+  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
+  AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
+  AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
+  AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDataHealthRoute: AuthenticatedDataHealthRoute,
+  AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
+  AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
+  AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,
+  AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
+  AuthenticatedSalesRoute: AuthenticatedSalesRoute,
+  AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
+  AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
+  AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
+  AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
+  AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
+  AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
+  AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
+  AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
