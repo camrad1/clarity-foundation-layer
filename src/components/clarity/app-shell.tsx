@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsPlatformAdmin, useMyMemberships } from "@/lib/clarity-queries";
+import { useMyMemberships, useOrgRole } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 import { GlobalFilterBar } from "./global-filter-bar";
