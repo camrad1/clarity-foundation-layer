@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.guard_platform_admin_grants() FROM authenticated, anon, PUBLIC;

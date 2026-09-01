@@ -23,10 +23,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -39,23 +37,9 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate({ to: "/overview" });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/overview`,
-            data: { full_name: fullName },
-          },
-        });
-        if (error) throw error;
-        toast.success("Account created. Check your email if confirmation is required.");
-        navigate({ to: "/overview" });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate({ to: "/overview" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
     } finally {
@@ -101,23 +85,11 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-1.5">
-            <h1 className="text-xl font-semibold">
-              {mode === "signin" ? "Sign in to ClarityIQ" : "Create your account"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {mode === "signin"
-                ? "Use your work email to continue."
-                : "Access is granted per organization by an administrator."}
-            </p>
+            <h1 className="text-xl font-semibold">Sign in to ClarityIQ</h1>
+            <p className="text-sm text-muted-foreground">Use your work email to continue.</p>
           </div>
 
           <form onSubmit={submit} className="space-y-4">
-            {mode === "signup" ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              </div>
-            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="email">Work email</Label>
               <Input
@@ -140,7 +112,7 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
-              {mode === "signin" ? "Sign in" : "Create account"}
+              Sign in
             </Button>
           </form>
 
@@ -155,14 +127,11 @@ function AuthPage() {
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "Need an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              className="font-medium text-accent underline-offset-4 hover:underline"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            >
-              {mode === "signin" ? "Sign up" : "Sign in"}
-            </button>
+            Need access? Contact your ClarityIQ administrator.
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
+            Signing in does not grant data access on its own — an administrator must add you to an
+            organization.
           </p>
         </div>
       </div>

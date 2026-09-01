@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsPlatformAdmin, useMyMemberships } from "@/lib/clarity-queries";
+import { useMyMemberships, useOrgRole } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 import { GlobalFilterBar } from "./global-filter-bar";
@@ -75,8 +75,8 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const memberships = useMyMemberships();
-  const { isPlatformAdmin } = useIsPlatformAdmin();
   const { organizationId, setOrganizationId } = useAppState();
+  const { isPlatformAdmin, isOrgAdmin } = useOrgRole(organizationId);
 
   const orgs = (memberships.data ?? [])
     .map((m) => m.organizations)
@@ -133,22 +133,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </div>
 
-          <div className="space-y-0.5">
-            <p className="px-2.5 pb-1 eyebrow">Admin</p>
-            {isPlatformAdmin ? (
+          {isOrgAdmin ? (
+            <div className="space-y-0.5">
+              <p className="px-2.5 pb-1 eyebrow">Admin</p>
+              {isPlatformAdmin ? (
+                <NavLink
+                  item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
+                  active={pathname === "/admin/organizations"}
+                />
+              ) : null}
+              {ADMIN.map((item) => (
+                <NavLink key={item.to} item={item} active={pathname === item.to} />
+              ))}
               <NavLink
-                item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
-                active={pathname === "/admin/organizations"}
+                item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
+                active={pathname === "/admin/access"}
               />
-            ) : null}
-            {ADMIN.map((item) => (
-              <NavLink key={item.to} item={item} active={pathname === item.to} />
-            ))}
-            <NavLink
-              item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
-              active={pathname === "/admin/access"}
-            />
-          </div>
+            </div>
+          ) : null}
         </nav>
 
         <div className="border-t border-sidebar-border p-3">

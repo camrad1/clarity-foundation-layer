@@ -6,7 +6,15 @@ import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { RecordFormDialog } from "@/components/clarity/record-form-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunities } from "@/lib/clarity-queries";
+import {
+  ASSIGNABLE_ORG_ROLES,
+  ROLE_LABELS,
+  roleScopeLabel,
+  useCommunities,
+  useOrgRole,
+  useRegions,
+  type AppRole,
+} from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/admin/access")({
@@ -31,12 +39,8 @@ type MemberRow = {
   email: string | null;
   full_name: string | null;
   communities: string[];
+  regions: string[];
 };
-
-const ROLES = ["org_admin", "org_analyst", "regional_manager", "community_manager"].map((r) => ({
-  value: r,
-  label: r.replace(/_/g, " "),
-}));
 
 function useMembers(organizationId: string | null) {
   return useQuery({
@@ -51,11 +55,15 @@ function useMembers(organizationId: string | null) {
       const ids = (memberships ?? []).map((m) => m.user_id);
       if (!ids.length) return [];
 
-      const [{ data: profiles }, { data: access }] = await Promise.all([
+      const [{ data: profiles }, { data: access }, { data: regionAccess }] = await Promise.all([
         supabase.from("profiles").select("id, email, full_name").in("id", ids),
         supabase
           .from("user_community_access")
           .select("user_id, communities(name)")
+          .eq("organization_id", organizationId!),
+        supabase
+          .from("user_region_access")
+          .select("user_id, regions(name)")
           .eq("organization_id", organizationId!),
       ]);
 
@@ -71,6 +79,10 @@ function useMembers(organizationId: string | null) {
             .filter((a) => a.user_id === m.user_id)
             .map((a) => (a.communities as { name: string } | null)?.name ?? "")
             .filter(Boolean),
+          regions: (regionAccess ?? [])
+            .filter((a) => a.user_id === m.user_id)
+            .map((a) => (a.regions as { name: string } | null)?.name ?? "")
+            .filter(Boolean),
         };
       });
     },
@@ -80,17 +92,17 @@ function useMembers(organizationId: string | null) {
 function Access() {
   const qc = useQueryClient();
   const { organizationId } = useAppState();
+  const { isOrgAdmin, isPlatformAdmin } = useOrgRole(organizationId);
   const members = useMembers(organizationId);
   const communities = useCommunities(organizationId);
-
-  const scopedRoles = new Set(["regional_manager", "community_manager"]);
+  const regions = useRegions(organizationId);
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Admin"
         title="Users & Access"
-        description="Roles set what a user can do; community access sets what they can see. Scoped users only ever receive rows for their assigned communities — enforced in the database, not the interface."
+        description="Roles set what a user can do; region and community access set what they can see. Scoped users only ever receive rows for their assigned scope — enforced in the database, not the interface. Platform administrator status can only be granted by an existing platform administrator."
         actions={
           <RecordFormDialog
             title="Grant community access"
@@ -153,39 +165,46 @@ function Access() {
           {
             key: "role",
             header: "Role",
-            render: (r) => (
-              <select
-                className="rounded-md border border-border bg-background px-2 py-1 text-sm capitalize"
-                value={r.role}
-                onChange={async (e) => {
-                  const { error } = await supabase
-                    .from("organization_memberships")
-                    .update({ role: e.target.value as never })
-                    .eq("id", r.id);
-                  if (!error)
-                    await qc.invalidateQueries({ queryKey: ["org_members", organizationId] });
-                }}
-              >
-                {ROLES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            ),
+            render: (r) => {
+              const isPlatform = r.role === "platform_admin";
+              // Only platform admins may view or change platform admin membership.
+              if (!isOrgAdmin || (isPlatform && !isPlatformAdmin)) {
+                return <span>{ROLE_LABELS[r.role as AppRole] ?? r.role}</span>;
+              }
+              const options = isPlatformAdmin
+                ? ([...ASSIGNABLE_ORG_ROLES, "platform_admin"] as AppRole[])
+                : ASSIGNABLE_ORG_ROLES;
+              return (
+                <select
+                  className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                  value={r.role}
+                  onChange={async (e) => {
+                    const { error } = await supabase
+                      .from("organization_memberships")
+                      .update({ role: e.target.value as never })
+                      .eq("id", r.id);
+                    if (!error)
+                      await qc.invalidateQueries({ queryKey: ["org_members", organizationId] });
+                  }}
+                >
+                  {options.map((o) => (
+                    <option key={o} value={o}>
+                      {ROLE_LABELS[o]}
+                    </option>
+                  ))}
+                </select>
+              );
+            },
           },
           {
             key: "scope",
             header: "Data scope",
-            render: (r) =>
-              scopedRoles.has(r.role)
-                ? r.communities.length
-                  ? r.communities.join(", ")
-                  : "No communities assigned"
-                : "All communities",
+            render: (r) => roleScopeLabel(r.role, r.regions, r.communities),
           },
         ]}
       />
+
+      {regions.data?.length ? null : null}
     </div>
   );
 }
