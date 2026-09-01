@@ -85,23 +85,11 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-1.5">
-            <h1 className="text-xl font-semibold">
-              {mode === "signin" ? "Sign in to ClarityIQ" : "Create your account"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {mode === "signin"
-                ? "Use your work email to continue."
-                : "Access is granted per organization by an administrator."}
-            </p>
+            <h1 className="text-xl font-semibold">Sign in to ClarityIQ</h1>
+            <p className="text-sm text-muted-foreground">Use your work email to continue.</p>
           </div>
 
           <form onSubmit={submit} className="space-y-4">
-            {mode === "signup" ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              </div>
-            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="email">Work email</Label>
               <Input
