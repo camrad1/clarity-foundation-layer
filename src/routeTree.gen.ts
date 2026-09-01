@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
+import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 
 const IndexRoute = IndexRouteImport.update({
@@ -133,6 +134,12 @@ const AuthenticatedMarketingIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingPagesRoute =
+  AuthenticatedMarketingPagesRouteImport.update({
+    id: '/pages',
+    path: '/pages',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 const AuthenticatedMarketingQueriesRoute =
   AuthenticatedMarketingQueriesRouteImport.update({
     id: '/queries',
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
 }
@@ -201,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
 }
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/pages'
     | '/marketing/queries'
     | '/marketing/'
   fileRoutesByTo: FileRoutesByTo
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/marketing/pages'
     | '/marketing/queries'
     | '/marketing'
   id:
@@ -266,6 +278,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
+    | '/_authenticated/marketing/pages'
     | '/_authenticated/marketing/queries'
     | '/_authenticated/marketing/'
   fileRoutesById: FileRoutesById
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/pages': {
+      id: '/_authenticated/marketing/pages'
+      path: '/pages'
+      fullPath: '/marketing/pages'
+      preLoaderRoute: typeof AuthenticatedMarketingPagesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
     '/_authenticated/marketing/queries': {
       id: '/_authenticated/marketing/queries'
       path: '/queries'
@@ -422,12 +442,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedMarketingRouteChildren {
+  AuthenticatedMarketingPagesRoute: typeof AuthenticatedMarketingPagesRoute
   AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
   AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
 }
 
 const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
+    AuthenticatedMarketingPagesRoute: AuthenticatedMarketingPagesRoute,
     AuthenticatedMarketingQueriesRoute: AuthenticatedMarketingQueriesRoute,
     AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
   }
