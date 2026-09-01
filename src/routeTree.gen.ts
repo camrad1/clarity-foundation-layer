@@ -22,9 +22,11 @@ import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
 import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
 import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
+import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_authenticated/admin/gsc-imports'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
 import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
+import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
@@ -100,6 +102,12 @@ const AuthenticatedAdminGoalsRoute = AuthenticatedAdminGoalsRouteImport.update({
   path: '/admin/goals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminGscImportsRoute =
+  AuthenticatedAdminGscImportsRouteImport.update({
+    id: '/admin/gsc-imports',
+    path: '/admin/gsc-imports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminMappingsRoute =
   AuthenticatedAdminMappingsRouteImport.update({
     id: '/admin/mappings',
@@ -116,6 +124,12 @@ const AuthenticatedAdminOrganizationsRoute =
   AuthenticatedAdminOrganizationsRouteImport.update({
     id: '/admin/organizations',
     path: '/admin/organizations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminQueryRulesRoute =
+  AuthenticatedAdminQueryRulesRouteImport.update({
+    id: '/admin/query-rules',
+    path: '/admin/query-rules',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminUrlRulesRoute =
@@ -174,9 +188,11 @@ export interface FileRoutesByFullPath {
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -197,9 +213,11 @@ export interface FileRoutesByTo {
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -223,9 +241,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
+  '/_authenticated/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
+  '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
@@ -249,9 +269,11 @@ export interface FileRouteTypes {
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/goals'
+    | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
     | '/admin/organizations'
+    | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/marketing/opportunities'
@@ -272,9 +294,11 @@ export interface FileRouteTypes {
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/goals'
+    | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
     | '/admin/organizations'
+    | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/marketing/opportunities'
@@ -297,9 +321,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/communities'
     | '/_authenticated/admin/data-sources'
     | '/_authenticated/admin/goals'
+    | '/_authenticated/admin/gsc-imports'
     | '/_authenticated/admin/mappings'
     | '/_authenticated/admin/metrics'
     | '/_authenticated/admin/organizations'
+    | '/_authenticated/admin/query-rules'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
     | '/_authenticated/marketing/opportunities'
@@ -408,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGoalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/gsc-imports': {
+      id: '/_authenticated/admin/gsc-imports'
+      path: '/admin/gsc-imports'
+      fullPath: '/admin/gsc-imports'
+      preLoaderRoute: typeof AuthenticatedAdminGscImportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/mappings': {
       id: '/_authenticated/admin/mappings'
       path: '/admin/mappings'
@@ -427,6 +460,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/organizations'
       fullPath: '/admin/organizations'
       preLoaderRoute: typeof AuthenticatedAdminOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/query-rules': {
+      id: '/_authenticated/admin/query-rules'
+      path: '/admin/query-rules'
+      fullPath: '/admin/query-rules'
+      preLoaderRoute: typeof AuthenticatedAdminQueryRulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/url-rules': {
@@ -515,9 +555,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
   AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
   AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
+  AuthenticatedAdminGscImportsRoute: typeof AuthenticatedAdminGscImportsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
   AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
+  AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
   AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
 }
@@ -533,9 +575,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
   AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
   AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
+  AuthenticatedAdminGscImportsRoute: AuthenticatedAdminGscImportsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
   AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
+  AuthenticatedAdminQueryRulesRoute: AuthenticatedAdminQueryRulesRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
   AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
 }

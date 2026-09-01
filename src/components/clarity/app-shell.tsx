@@ -16,6 +16,8 @@ import {
   Signal,
   TrendingUp,
   Users,
+  Tags,
+  Upload,
 } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,8 @@ const ADMIN: NavItem[] = [
   { to: "/admin/communities", label: "Communities", icon: Building2 },
   { to: "/admin/mappings", label: "Community Mappings", icon: Link2 },
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },
+  { to: "/admin/query-rules", label: "Query Classification", icon: Tags },
+  { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
   { to: "/admin/data-sources", label: "Data Sources", icon: Database },
   { to: "/admin/metrics", label: "Metric Registry", icon: Ruler },
   { to: "/admin/goals", label: "Goals", icon: Goal },
@@ -129,7 +133,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6">
           <div className="space-y-0.5">
             {INTELLIGENCE.map((item) => (
-              <NavLink key={item.to} item={item} active={pathname === item.to} />
+              <NavLink
+                key={item.to}
+                item={item}
+                active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
+              />
             ))}
           </div>
 
@@ -143,7 +151,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 />
               ) : null}
               {ADMIN.map((item) => (
-                <NavLink key={item.to} item={item} active={pathname === item.to} />
+                <NavLink
+                key={item.to}
+                item={item}
+                active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
+              />
               ))}
               <NavLink
                 item={{ to: "/admin/access", label: "Users & Access", icon: Users }}

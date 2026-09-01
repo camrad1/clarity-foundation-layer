@@ -5,6 +5,9 @@ import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { StatusPill } from "@/components/clarity/status-pill";
 import { useConnections, useSourceTypes, useSyncRuns } from "@/lib/clarity-queries";
+import { fmtInt } from "@/lib/gsc/format";
+import { GRAIN_LABELS, type GrainKey } from "@/lib/gsc/parse";
+import { useGscImports } from "@/lib/gsc/queries";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/data-health")({
@@ -36,6 +39,32 @@ function DataHealth() {
   const connections = useConnections(organizationId);
   const sourceTypes = useSourceTypes();
   const runs = useSyncRuns(organizationId);
+  const gscImports = useGscImports(organizationId) as unknown as {
+    isLoading: boolean;
+    data?: {
+      id: string;
+      file_name: string;
+      imported_at: string;
+      import_status: string;
+      data_start_date: string | null;
+      data_end_date: string | null;
+      gsc_import_grains: { grain: string; row_count: number; is_active: boolean }[];
+    }[];
+  };
+  const imports = gscImports.data ?? [];
+  const activeImports = imports.filter((i) => i.import_status === "imported");
+  const coverageEnd = activeImports
+    .map((i) => i.data_end_date)
+    .filter(Boolean)
+    .sort()
+    .at(-1) as string | undefined;
+  const coverageStart = activeImports
+    .map((i) => i.data_start_date)
+    .filter(Boolean)
+    .sort()[0] as string | undefined;
+  const activeGrains = new Set<string>(
+    activeImports.flatMap((i) => (i.gsc_import_grains ?? []).filter((g) => g.is_active).map((g) => g.grain)),
+  );
 
   const typeName = (key: string) =>
     (sourceTypes.data ?? []).find((t) => t.key === key)?.name ?? key;
@@ -119,6 +148,58 @@ function DataHealth() {
           })}
         </div>
       )}
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Search Console freshness</h2>
+        {gscImports.isLoading ? (
+          <div className="panel px-6 py-10 text-center text-sm text-muted-foreground">Loading…</div>
+        ) : !activeImports.length ? (
+          <EmptyState
+            title="No Search Console exports imported"
+            description="Upload an export in Admin → Search Console Imports. Search Intelligence stays empty until real data exists."
+          />
+        ) : (
+          <div className="panel space-y-4 p-5">
+            <dl className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <dt className="text-xs text-muted-foreground">Data coverage</dt>
+                <dd className="text-foreground">
+                  {coverageStart && coverageEnd
+                    ? `${format(new Date(`${coverageStart}T00:00:00`), "MMM d, yyyy")} – ${format(new Date(`${coverageEnd}T00:00:00`), "MMM d, yyyy")}`
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Last import</dt>
+                <dd className="text-foreground">{relative(activeImports[0]?.imported_at ?? null)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Files imported</dt>
+                <dd className="text-foreground">{fmtInt(activeImports.length)}</dd>
+              </div>
+            </dl>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(GRAIN_LABELS) as GrainKey[]).map((g) => (
+                <span
+                  key={g}
+                  className={
+                    activeGrains.has(g)
+                      ? "rounded-full bg-success/10 px-2.5 py-1 text-xs text-success"
+                      : "rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                  }
+                >
+                  {GRAIN_LABELS[g]}
+                  {activeGrains.has(g) ? "" : " · missing"}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Each report grain is stored separately. Totals for a grain are only as complete as the
+              exports that were uploaded for it.
+            </p>
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Coverage</h2>

@@ -96,24 +96,24 @@ function Opportunities() {
 
   const rows: Base[] = useMemo(() => {
     if (dataset === "query") {
-      return ((queryReport.data ?? []) as Record<string, never>[]).map((r) => ({
+      return ((queryReport.data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
         key: String(r["normalized_query"]),
         label: String(r["query"]),
-        secondary: classificationLabel(r["classification"] as string | null),
+        secondary: classificationLabel(r["classification"] as string | null | undefined),
         clicks: Number(r["clicks"] ?? 0),
         impressions: Number(r["impressions"] ?? 0),
-        ctr: r["ctr"] === null ? null : Number(r["ctr"]),
-        position: r["position_value"] === null ? null : Number(r["position_value"]),
+        ctr: r["ctr"] == null ? null : Number(r["ctr"]),
+        position: r["position_value"] == null ? null : Number(r["position_value"]),
       }));
     }
-    return ((pageReport.data ?? []) as Record<string, never>[]).map((r) => ({
+    return ((pageReport.data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
       key: String(r["normalized_url"]),
       label: pageLabel(String(r["page_url"])),
-      secondary: (r["community_name"] as string | null) ?? "Unmapped",
+      secondary: ((r["community_name"] as string | null | undefined) ?? "Unmapped"),
       clicks: Number(r["clicks"] ?? 0),
       impressions: Number(r["impressions"] ?? 0),
-      ctr: r["ctr"] === null ? null : Number(r["ctr"]),
-      position: r["position_value"] === null ? null : Number(r["position_value"]),
+      ctr: r["ctr"] == null ? null : Number(r["ctr"]),
+      position: r["position_value"] == null ? null : Number(r["position_value"]),
     }));
   }, [dataset, queryReport.data, pageReport.data]);
 
