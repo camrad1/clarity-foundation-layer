@@ -346,6 +346,16 @@ function SalesIntelligence() {
               compare={p ? cmp(s.moveIns - s.moveOuts, p.moveIns - p.moveOuts) : undefined}
             />
             <KpiCard
+              label="Current occupancy"
+              value={s.occupancy.occupiedUnitsCandidate}
+              display={occDisplay}
+              note={`${s.occupancy.occupiedUnitsCandidate} of ${s.occupancy.censusUnits} census-eligible units. ${
+                budgetUnits == null
+                  ? "No budgeted occupancy configured for this scope."
+                  : `Budget ${budgetUnits} units · variance ${occVariance! >= 0 ? "+" : ""}${occVariance}.`
+              } Current state, not affected by the date filter.`}
+            />
+            <KpiCard
               label="Pending move-ins / outs"
               display={`${s.pending.pendingIn} / ${s.pending.pendingOut}`}
               value={s.pending.pendingIn}
