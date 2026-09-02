@@ -503,14 +503,15 @@ export async function runWelcomeHomeSync(
     );
   }
 
+  // Run status reflects what was actually persisted. A run is only "success"
+  // when every table succeeded; anything degraded is at best "partial", and a
+  // run where no core table landed data is a failure.
   const coreResults = results.filter((r) => isCoreTable(r.table));
-  const anyFailed = results.some((r) => r.status === "failed");
-  const coreAllFailed = coreResults.length > 0 && coreResults.every((r) => r.status === "failed");
-  const status: "success" | "partial" | "failed" = coreAllFailed
-    ? "failed"
-    : anyFailed || results.some((r) => r.status === "partial")
-      ? "partial"
-      : "success";
+  const coreOk = coreResults.filter((r) => r.status === "success" || r.status === "partial");
+  const allClean = results.every((r) => r.status === "success" || r.status === "skipped");
+  const status: "success" | "partial" | "failed" =
+    coreResults.length > 0 && coreOk.length === 0 ? "failed" : allClean ? "success" : "partial";
+
 
   const totals = results.reduce(
     (acc, r) => ({
