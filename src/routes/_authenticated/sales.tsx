@@ -155,7 +155,7 @@ function SalesIntelligence() {
           <TabsTrigger value="pipeline">Pipeline health</TabsTrigger>
           <TabsTrigger value="counselors">Counselors</TabsTrigger>
           <TabsTrigger value="sources">Lead sources</TabsTrigger>
-          <TabsTrigger value="occupancy">Occupancy components</TabsTrigger>
+          <TabsTrigger value="occupancy">Current occupancy</TabsTrigger>
         </TabsList>
 
         <TabsContent value="funnel" className="space-y-6 pt-6">
