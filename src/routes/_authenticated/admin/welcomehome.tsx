@@ -152,29 +152,143 @@ function WelcomeHomeAdmin() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const runSync = useMutation({
-    mutationFn: async (mode: "full" | "incremental") =>
-      sync({ data: { connectionId: connectionId!, mode } }),
-    onSuccess: async (r) => {
-      if (!r.ok) toast.error(r.message ?? "Sync failed");
-      else if (r.status === "partial")
-        toast.warning(
-          `Sync completed with issues: ${r.results
-            .filter((x: any) => x.status !== "success")
-            .map((x: any) => x.table)
-            .join(", ")}`,
-        );
-      else toast.success("Sync completed");
-      await seed({ data: { connectionId: connectionId! } });
+  // ---------------------------------------------------------------------
+  // Sync orchestration
+  // ---------------------------------------------------------------------
+  // A sync is a sequence of bounded work units (one dataset x one community),
+  // each its own short request. Nothing about this loop grows with portfolio
+  // size except the number of units, so adding communities never turns one
+  // request into a timeout.
+  const [scope, setScope] = useState<"selected" | "all">("selected");
+  const [progress, setProgress] = useState<{
+    total: number;
+    done: number;
+    failed: number;
+    current: string | null;
+    runId: string | null;
+    running: boolean;
+    failedUnits: WhWorkUnit[];
+  }>({ total: 0, done: 0, failed: 0, current: null, runId: null, running: false, failedUnits: [] });
+  const cancelRef = useRef(false);
+
+  const mappedList = useMemo(
+    () =>
+      (mappings.data ?? []).filter((m: any) => m.active).map((m: any) => ({
+        communityId: m.community_id as string,
+        name: (m.communities?.name as string) ?? "Community",
+      })),
+    [mappings.data],
+  );
+
+  const scopedCommunityIds = useMemo(() => {
+    if (scope === "all") return undefined;
+    if (communityScope.mode === "all") return undefined;
+    return communityScope.communityIds;
+  }, [scope, communityScope]);
+
+  const scopeLabel =
+    scope === "all" || communityScope.mode === "all"
+      ? `all ${mappedList.length} mapped communities`
+      : `${scopedCommunityIds?.length ?? 0} selected communit${(scopedCommunityIds?.length ?? 0) === 1 ? "y" : "ies"}`;
+
+  async function orchestrate(opts: {
+    mode: "full" | "incremental";
+    resumeRunId?: string;
+    onlyUnits?: WhWorkUnit[];
+  }) {
+    if (!connectionId) return;
+    cancelRef.current = false;
+    setProgress((p) => ({ ...p, running: true, failed: 0, done: 0, failedUnits: [], current: "Planning…" }));
+    try {
+      const plan = await planSync({
+        data: {
+          connectionId,
+          mode: opts.mode,
+          ...(scopedCommunityIds ? { communityIds: scopedCommunityIds } : {}),
+          ...(opts.resumeRunId ? { resumeRunId: opts.resumeRunId } : {}),
+        },
+      });
+      if (!plan.ok || !plan.syncRunId) {
+        setProgress((p) => ({ ...p, running: false, current: null }));
+        toast.error(plan.message ?? "Nothing to sync");
+        return;
+      }
+      let units = plan.units;
+      if (opts.onlyUnits?.length) {
+        const keys = new Set(opts.onlyUnits.map((u) => u.key));
+        units = units.filter((u) => keys.has(u.key));
+      }
+      const runId = plan.syncRunId;
+      setProgress({
+        total: units.length,
+        done: 0,
+        failed: 0,
+        current: null,
+        runId,
+        running: true,
+        failedUnits: [],
+      });
+
+      const failedUnits: WhWorkUnit[] = [];
+      for (const unit of units) {
+        if (cancelRef.current) break;
+        setProgress((p) => ({
+          ...p,
+          current: `${unit.table}${unit.communityName ? ` — ${unit.communityName}` : " (account-wide)"}`,
+        }));
+        try {
+          const res = await runUnit({
+            data: {
+              connectionId,
+              syncRunId: runId,
+              mode: opts.mode,
+              table: unit.table,
+              communityId: unit.communityId,
+            },
+          });
+          if (res.status === "failed" || res.status === "partial") failedUnits.push(unit);
+        } catch {
+          // One failing dataset never aborts the portfolio: the unit is
+          // recorded, retryable, and the run continues.
+          failedUnits.push(unit);
+        }
+        setProgress((p) => ({
+          ...p,
+          done: p.done + 1,
+          failed: failedUnits.length,
+          failedUnits: [...failedUnits],
+        }));
+      }
+
+      const summary = await finalize({
+        data: {
+          connectionId,
+          syncRunId: runId,
+          expectedUnits: units.length + plan.skipped.length,
+          ...(cancelRef.current ? { canceled: true } : {}),
+        },
+      });
+      await seed({ data: { connectionId } });
+
+      if (cancelRef.current) toast.warning("Sync canceled. Completed work is saved and resumable.");
+      else if (summary.status === "success") toast.success("Sync completed");
+      else if (summary.status === "partial")
+        toast.warning(`Sync partially completed — ${failedUnits.length} unit(s) need a retry.`);
+      else toast.error("Sync failed. Review the table runs below.");
+
+      setProgress((p) => ({ ...p, running: false, current: null }));
       syncState.refetch();
       runs.refetch();
       qc.invalidateQueries({ queryKey: ["wh_lookups"] });
       qc.invalidateQueries({ queryKey: ["wh_activity_mappings"] });
       qc.invalidateQueries({ queryKey: ["wh_score_mappings"] });
       qc.invalidateQueries({ queryKey: ["wh_connection"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+    } catch (e) {
+      setProgress((p) => ({ ...p, running: false, current: null }));
+      toast.error((e as Error).message);
+    }
+  }
+
 
   if (!canManageImports) {
     return (
