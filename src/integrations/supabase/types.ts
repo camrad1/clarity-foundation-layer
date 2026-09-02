@@ -2658,6 +2658,7 @@ export type Database = {
           move_in_date_field: string
           move_out_date_field: string
           organization_id: string
+          pseudo_unit_patterns: string[]
           stalled_threshold_days: number
           updated_at: string
         }
@@ -2673,6 +2674,7 @@ export type Database = {
           move_in_date_field?: string
           move_out_date_field?: string
           organization_id: string
+          pseudo_unit_patterns?: string[]
           stalled_threshold_days?: number
           updated_at?: string
         }
@@ -2688,6 +2690,7 @@ export type Database = {
           move_in_date_field?: string
           move_out_date_field?: string
           organization_id?: string
+          pseudo_unit_patterns?: string[]
           stalled_threshold_days?: number
           updated_at?: string
         }
@@ -3197,6 +3200,7 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      wh_norm_unit_label: { Args: { _v: string }; Returns: string }
       wh_prospect_page: {
         Args: {
           _bucket: string
@@ -3253,6 +3257,28 @@ export type Database = {
           source_id: string
           successful: boolean
           total_count: number
+        }[]
+      }
+      wh_unit_census_exclusion: {
+        Args: {
+          _discarded_at: string
+          _floor_plan_label: string
+          _off_census: boolean
+          _pseudo_patterns: string[]
+          _status: string
+          _unit_name: string
+          _unit_number: string
+        }
+        Returns: string
+      }
+      wh_unit_census_report: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          exclusion_reason: string
+          floor_plan_label: string
+          source_id: string
+          unit_name: string
+          unit_number: string
         }[]
       }
     }
