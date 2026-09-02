@@ -195,15 +195,30 @@ export async function whLookup(
     });
     return { records, pages, transport: "export" };
   }
-  const res = await get(auth, `/${source.path}`);
-  if (res.status === 401 || res.status === 403) {
-    throw new Error(`${table}: unauthorized (${res.status})`);
+  // JSON lookups can also be cursor-paginated (Users in particular), so the
+  // RFC5988 `Link` header is followed here exactly as it is for exports. A
+  // single page was previously assumed, which silently truncated large
+  // dimensions and left ids without labels in the UI.
+  const rows: Record<string, unknown>[] = [];
+  let pages = 0;
+  let url: URL = new URL(`${WH_API_BASE}/${source.path}`);
+  for (;;) {
+    const res = await getUrl(auth, url);
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`${table}: unauthorized (${res.status})`);
+    }
+    if (!res.ok) throw new Error(`${table}: lookup request failed (${res.status})`);
+    const json = JSON.parse(await res.text());
+    const page: Record<string, unknown>[] = Array.isArray(json) ? json : (json.data ?? []);
+    rows.push(...page);
+    pages += 1;
+    const next = nextPageUrl(res);
+    if (!next || page.length === 0 || pages >= WH_MAX_PAGES) break;
+    url = new URL(next);
   }
-  if (!res.ok) throw new Error(`${table}: lookup request failed (${res.status})`);
-  const json = JSON.parse(await res.text());
-  const rows: Record<string, unknown>[] = Array.isArray(json) ? json : (json.data ?? []);
-  return { records: rows.map(flatten), pages: 1, transport: "json" };
+  return { records: rows.map(flatten), pages, transport: "json" };
 }
+
 
 /**
  * Probes /exports/daily_snapshots/table/{table} without ingesting anything.
