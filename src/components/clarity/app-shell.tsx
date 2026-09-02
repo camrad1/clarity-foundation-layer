@@ -202,11 +202,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/85 px-6 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-background/85 px-6 backdrop-blur">
           <GlobalFilterBar />
-          <span className="hidden text-xs text-muted-foreground md:inline">
-            Phase 0 · Foundation
-          </span>
         </header>
         <main className="mx-auto w-full max-w-[1400px] flex-1 space-y-8 px-6 py-8">{children}</main>
       </div>
