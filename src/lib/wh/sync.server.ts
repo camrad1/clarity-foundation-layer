@@ -28,24 +28,32 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  WH_CORE_TABLES,
   WH_CORE_DESTINATION,
   WH_LOOKUP_KEY,
-  WH_LOOKUP_TABLES,
-  WH_MAX_PAGE_SIZE,
+  WH_LOOKUP_SOURCE,
+  WH_MAX_PAGES,
+  WH_REFERRER_SAFE_FIELDS,
   isCoreTable,
   type WhCoreTable,
   type WhLookupTable,
   type WhTable,
 } from "./tables";
-import { NORMALIZERS, sourceId, updatedAt, type Rec } from "./normalize.server";
-import { safeError, whExportPage, type WhAuth } from "./api.server";
+import { NORMALIZERS, sourceId, stripPii, updatedAt, type Rec } from "./normalize.server";
+import { safeError, whExportPage, whLookup, type WhAuth } from "./api.server";
 
 type Admin = SupabaseClient<any, "public", any>;
 
+/**
+ * `unsupported` is a first-class outcome: WelcomeHome genuinely does not expose
+ * some datasets on the transport we ask for. Reporting that as `success` (or as
+ * a generic failure) is what made the first real sync look healthy while it
+ * ingested nothing.
+ */
+export type TableStatus = "success" | "partial" | "failed" | "skipped" | "unsupported";
+
 export type TableResult = {
   table: WhTable;
-  status: "success" | "partial" | "failed" | "skipped";
+  status: TableStatus;
   mode: "full" | "incremental";
   rowsReceived: number;
   rowsInserted: number;
@@ -67,7 +75,21 @@ export type CommunityTarget = {
 };
 
 const CHUNK = 500;
-const MAX_PAGES = 200; // hard stop: 200 x 10,000 rows per community/table
+
+/**
+ * Decides the outcome of a table from what actually landed in the warehouse.
+ * Receiving rows and persisting none is a FAILURE, not a success — that exact
+ * case previously reported "Success" with zero normalized records.
+ */
+function classify(result: TableResult): TableStatus {
+  if (result.status === "failed" || result.status === "unsupported") return result.status;
+  const persisted = result.rowsInserted + result.rowsUpdated;
+  if (result.rowsReceived === 0) return "success";
+  if (persisted === 0) return "failed";
+  if (result.rowsFailed > 0 || result.rowsUnmapped > 0) return "partial";
+  return "success";
+}
+
 
 async function upsertChunk(
   admin: Admin,
