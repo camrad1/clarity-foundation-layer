@@ -109,7 +109,7 @@ function WhMappings() {
   });
 
   const setActivityCategory = useMutation({
-    mutationFn: async (args: { id: string; category: string }) => {
+    mutationFn: async (args: { id: string; category: (typeof WH_ACTIVITY_CATEGORIES)[number] }) => {
       const { error } = await supabase
         .from("wh_activity_type_mappings")
         .update({ category: args.category })
@@ -121,7 +121,7 @@ function WhMappings() {
   });
 
   const setScoreLevel = useMutation({
-    mutationFn: async (args: { id: string; level: string }) => {
+    mutationFn: async (args: { id: string; level: (typeof WH_SCORE_LEVELS)[number] }) => {
       const { error } = await supabase
         .from("wh_score_mappings")
         .update({ level: args.level })
@@ -267,7 +267,7 @@ function WhMappings() {
               render: (r: any) => (
                 <Select
                   value={r.category}
-                  onValueChange={(v) => setActivityCategory.mutate({ id: r.id, category: v })}
+                  onValueChange={(v) => setActivityCategory.mutate({ id: r.id, category: v as (typeof WH_ACTIVITY_CATEGORIES)[number] })}
                 >
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -309,7 +309,7 @@ function WhMappings() {
               key: "level",
               header: "ClarityIQ level",
               render: (r: any) => (
-                <Select value={r.level} onValueChange={(v) => setScoreLevel.mutate({ id: r.id, level: v })}>
+                <Select value={r.level} onValueChange={(v) => setScoreLevel.mutate({ id: r.id, level: v as (typeof WH_SCORE_LEVELS)[number] })}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
