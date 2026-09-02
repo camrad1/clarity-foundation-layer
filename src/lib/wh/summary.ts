@@ -128,6 +128,70 @@ export function useWhSalesSummary(
   });
 }
 
+export type WhTrendRow = {
+  month: string;
+  inquiries: number;
+  tours: number;
+  re_tours: number;
+  deposits: number;
+  move_ins: number;
+  move_outs: number;
+  net_move_ins: number;
+};
+
+/**
+ * Monthly period-event trend. One bounded server-side aggregate covers the
+ * whole window — the browser never calls wh_sales_summary once per month and
+ * never downloads fact rows. Predicates are identical to the validated KPIs.
+ */
+export function useWhSalesTrend(
+  organizationId: string | null,
+  communityIds: string[],
+  end: string,
+  months = 12,
+) {
+  return useQuery({
+    queryKey: ["wh_sales_trend", organizationId, communityIds.join(","), end, months],
+    enabled: !!organizationId,
+    queryFn: async (): Promise<WhTrendRow[]> => {
+      const { data, error } = await (supabase as any).rpc("wh_sales_trend", {
+        _org_id: organizationId,
+        _end: end,
+        _months: months,
+        _community_ids: communityIds.length ? communityIds : null,
+      });
+      if (error) throw error;
+      return (data ?? []) as WhTrendRow[];
+    },
+  });
+}
+
+export type WhActivityMixRow = { category: string; activities: number };
+
+/** Completed activities in the period grouped by mapped semantic category. */
+export function useWhActivityMix(
+  organizationId: string | null,
+  communityIds: string[],
+  start: string,
+  end: string,
+) {
+  return useQuery({
+    queryKey: ["wh_activity_mix", organizationId, communityIds.join(","), start, end],
+    enabled: !!organizationId,
+    queryFn: async (): Promise<WhActivityMixRow[]> => {
+      const { data, error } = await (supabase as any).rpc("wh_activity_mix", {
+        _org_id: organizationId,
+        _start: start,
+        _end: end,
+        _community_ids: communityIds.length ? communityIds : null,
+      });
+      if (error) throw error;
+      return (data ?? []) as WhActivityMixRow[];
+    },
+  });
+}
+
+
 export type WhProspectRow = {
   id: string;
   source_id: string;
