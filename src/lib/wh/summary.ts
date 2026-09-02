@@ -73,13 +73,23 @@ export type WhSalesSummary = {
   leadSources: { id: string; inquiries: number; moveIns: number }[];
   utm: { total: number; counts: Record<string, number> };
   occupancy: {
+    /** Every WelcomeHome Unit record, including non-residential pseudo-units. */
     totalUnits: number;
+    /** Units the source explicitly flags off_census. */
     offCensusUnits: number;
+    /** Recognized non-residential pseudo-units (e.g. WAITLIST). */
+    pseudoUnits: number;
+    /** Units discarded or marked inactive by the source. */
+    inactiveUnits: number;
+    /** All excluded units, whatever the reason. */
+    excludedUnits: number;
+    /** Denominator: total unit records minus every deterministic exclusion. */
     censusUnits: number;
     occupiedUnitsCandidate: number;
     noticeCount: number;
     pendingMoveIns: number;
   };
+
   stageDistribution: { id: string; n: number }[];
   generatedAt: string;
 };
