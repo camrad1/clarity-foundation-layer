@@ -166,7 +166,7 @@ export function GroupedBarChart({
 }: {
   data: Record<string, any>[];
   bars: TrendSeries[];
-  line?: TrendSeries;
+  line?: TrendSeries | undefined;
   xKey?: string;
 }) {
   return (
