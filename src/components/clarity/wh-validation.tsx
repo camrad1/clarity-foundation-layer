@@ -3,8 +3,87 @@ import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { StatusPill } from "@/components/clarity/status-pill";
 import { WH_DEFAULT_SETTINGS } from "@/lib/wh/queries";
-import { useWhSalesSummary } from "@/lib/wh/summary";
+import { useMetricValidationEvidence, useWhSalesSummary } from "@/lib/wh/summary";
 import { useWhContext } from "@/lib/wh/use-wh";
+
+/**
+ * Persisted reconciliation evidence, read from public.metric_validation_checks.
+ * These records — not the explanatory text below — are the system of record for
+ * whether a wh.* metric matched official WelcomeHome reporting, and each row
+ * keeps the metric version it validated so a later definition change cannot
+ * silently rewrite history.
+ */
+export function WhValidationEvidence() {
+  const ctx = useWhContext();
+  const q = useMetricValidationEvidence(ctx.organizationId);
+  const rows = q.data ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold">Persisted validation evidence</h2>
+        <p className="text-xs text-muted-foreground">
+          Stored reconciliation records against official WelcomeHome reports. Current-state evidence
+          (occupancy) is labelled separately and is not an as-of-date historical validation.
+        </p>
+      </div>
+      <DataTable
+        columns={[
+          { key: "m", header: "Metric", render: (r: any) => <code className="text-xs">{r.metric_key}</code> },
+          { key: "v", header: "Version", render: (r: any) => `v${r.metric_version ?? 1}.0` },
+          {
+            key: "c",
+            header: "Community",
+            render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "All communities",
+          },
+          {
+            key: "p",
+            header: "Period",
+            render: (r: any) =>
+              r.evidence_scope === "current_state"
+                ? `Current state (${r.period_start})`
+                : `${r.period_start} → ${r.period_end}`,
+          },
+          {
+            key: "cand",
+            header: "Candidate",
+            align: "right",
+            render: (r: any) => (r.calculated_value == null ? "—" : String(Number(r.calculated_value))),
+          },
+          {
+            key: "off",
+            header: "Official",
+            align: "right",
+            render: (r: any) => (r.expected_value == null ? "—" : String(Number(r.expected_value))),
+          },
+          {
+            key: "diff",
+            header: "Difference",
+            align: "right",
+            render: (r: any) => (r.difference == null ? "—" : String(Number(r.difference))),
+          },
+          { key: "st", header: "Result", render: (r: any) => <StatusPill status={r.status} /> },
+          { key: "src", header: "Official source", render: (r: any) => <span className="text-xs">{r.official_source ?? "—"}</span> },
+          {
+            key: "at",
+            header: "Validated",
+            render: (r: any) => (r.validated_at ? new Date(r.validated_at).toLocaleDateString() : "—"),
+          },
+          { key: "n", header: "Notes", render: (r: any) => <span className="text-xs text-muted-foreground">{r.reviewer_notes ?? "—"}</span> },
+        ]}
+        rows={rows as any[]}
+        loading={q.isLoading}
+        empty={
+          <EmptyState
+            title="No validation evidence stored yet"
+            description="Reconciliation records appear here once a metric has been compared against an official WelcomeHome report."
+          />
+        }
+      />
+    </div>
+  );
+}
+
 
 /**
  * The open WelcomeHome definition questions (V-001 … V-007). Each row states

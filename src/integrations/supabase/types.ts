@@ -1311,10 +1311,12 @@ export type Database = {
           community_id: string | null
           created_at: string
           difference: number | null
+          evidence_scope: string
           expected_value: number | null
           id: string
           metric_key: string
           metric_version: number | null
+          official_source: string | null
           organization_id: string
           period_end: string
           period_start: string
@@ -1329,10 +1331,12 @@ export type Database = {
           community_id?: string | null
           created_at?: string
           difference?: number | null
+          evidence_scope?: string
           expected_value?: number | null
           id?: string
           metric_key: string
           metric_version?: number | null
+          official_source?: string | null
           organization_id: string
           period_end: string
           period_start: string
@@ -1347,10 +1351,12 @@ export type Database = {
           community_id?: string | null
           created_at?: string
           difference?: number | null
+          evidence_scope?: string
           expected_value?: number | null
           id?: string
           metric_key?: string
           metric_version?: number | null
+          official_source?: string | null
           organization_id?: string
           period_end?: string
           period_start?: string

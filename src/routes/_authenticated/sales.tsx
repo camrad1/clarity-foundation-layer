@@ -10,6 +10,7 @@ import { ratio } from "@/lib/wh/metrics";
 import {
   candidate,
   useWhDepositPage,
+  useWhMoveInPage,
   useWhTourPage,
   useWhProspectPage,
   useWhSalesSummary,
@@ -289,6 +290,9 @@ function SalesIntelligence() {
           <TourDrillThrough />
 
           <DepositDrillThrough />
+
+          <MoveInDrillThrough />
+
 
         </TabsContent>
 
@@ -679,6 +683,93 @@ function UnitCensusDiagnostic() {
         loading={q.isLoading}
         empty={<EmptyState title="No units excluded" description="Every unit record is census-eligible." />}
       />
+    </section>
+  );
+}
+
+/**
+ * Move-In KPI drill-through (V-004). Server-paginated through wh_move_in_page,
+ * which applies exactly the KPI predicates (count_move_in true, financial
+ * move-in date inside the selected period, lease not canceled) under the same
+ * organization and community authorization. The diagnostic mode lists in-period
+ * contracts the source marks non-countable (Transfer Ins). No resident PII.
+ */
+function MoveInDrillThrough() {
+  const ctx = useWhContext();
+  const [page, setPage] = useState(0);
+  const [mode, setMode] = useState<"move_in" | "transfer_in">("move_in");
+  const q = useWhMoveInPage(
+    ctx.organizationId,
+    ctx.communityIds,
+    ctx.dateRange.start,
+    ctx.dateRange.end,
+    mode,
+    page,
+    PAGE_SIZE,
+  );
+  const total = q.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">
+            {mode === "move_in" ? "Counted move-in contracts" : "Non-countable move-in records (diagnostic)"}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {mode === "move_in"
+              ? "Exactly the rows behind the Move-in candidate: count_move_in contracts with a financial move-in date in the selected period, canceled leases excluded."
+              : "In-period contracts the source marks count_move_in = false — typically Transfer Ins. Shown for audit only; never counted."}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setMode((m) => (m === "move_in" ? "transfer_in" : "move_in"));
+            setPage(0);
+          }}
+        >
+          {mode === "move_in" ? "Show excluded / transfer records" : "Show counted move-ins only"}
+        </Button>
+      </div>
+      <DataTable
+        columns={[
+          { key: "src", header: "Contract", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
+          { key: "date", header: "Financial move-in", render: (r: any) => r.financial_move_in_date ?? "—" },
+          { key: "unit", header: "Unit", render: (r: any) => <code className="text-xs">{r.unit_source_id ?? "—"}</code> },
+          { key: "status", header: "Status", render: (r: any) => r.status ?? "—" },
+          {
+            key: "counted",
+            header: "Counted",
+            render: () => (mode === "move_in" ? "Yes" : "No"),
+          },
+        ]}
+        rows={(q.data?.rows ?? []) as any[]}
+        loading={q.isLoading}
+        empty={
+          <EmptyState
+            title={mode === "move_in" ? "No counted move-ins" : "No excluded move-in records"}
+            description="Nothing matches the current selection."
+          />
+        }
+      />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {total.toLocaleString()} {mode === "move_in" ? "counted move-ins" : "excluded records"} · page {page + 1} of{" "}
+          {pages}
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      </div>
     </section>
   );
 }
