@@ -817,20 +817,29 @@ function KpiCard({
   );
 }
 
+const TREND_STORAGE_KEY = "clarityiq.chart.sales-activity-trend";
+const MOVE_TREND_STORAGE_KEY = "clarityiq.chart.move-trend";
+
 const TREND_SERIES = [
-  { key: "inquiries", label: "New inquiries", color: CHART_TOKENS.primary, always: true },
-  { key: "tours", label: "Completed tours", color: CHART_TOKENS.secondary, always: true },
-  { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.tertiary, always: true },
-  { key: "re_tours", label: "Re-tours", color: "var(--chart-4)", always: false },
-  { key: "deposits", label: "Deposits (provisional)", color: CHART_TOKENS.provisional, always: false },
-  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative, always: false },
+  { key: "inquiries", label: "New inquiries", color: CHART_TOKENS.primary },
+  { key: "tours", label: "Completed tours", color: CHART_TOKENS.secondary },
+  { key: "re_tours", label: "Re-tours", color: "var(--chart-4)" },
+  { key: "deposits", label: "Deposits", color: CHART_TOKENS.provisional, provisional: true },
+  { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.tertiary },
+  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative },
+  { key: "net_move_ins", label: "Net move-ins", color: "var(--chart-5)" },
 ];
+const TREND_DEFAULTS = ["inquiries", "tours", "move_ins"];
 
 function SalesTrendCard({ data, loading }: { data: Record<string, any>[]; loading: boolean }) {
-  const [optional, setOptional] = useState<string[]>([]);
-  const series = TREND_SERIES.filter((s) => s.always || optional.includes(s.key)).map((s) => ({
+  const { visible, toggle } = useSeriesVisibility(
+    TREND_STORAGE_KEY,
+    TREND_SERIES.map((s) => s.key),
+    TREND_DEFAULTS,
+  );
+  const series = TREND_SERIES.filter((s) => visible.includes(s.key)).map((s) => ({
     key: s.key,
-    label: s.label,
+    label: s.provisional ? "Deposits (provisional)" : s.label,
     color: s.color,
     dashed: s.key === "deposits",
   }));
@@ -838,24 +847,51 @@ function SalesTrendCard({ data, loading }: { data: Record<string, any>[]; loadin
   return (
     <ChartCard
       title="Sales activity trend"
-      description="Monthly period-event totals for the last 12 months, ending with the selected period. One bounded server-side aggregate produces every series using the validated metric predicates."
+      description="Monthly period-event totals for the last 12 months, ending with the selected period. One bounded server-side aggregate produces every series using the validated metric predicates. Toggle series to inspect smaller-volume metrics."
       loading={loading}
       empty={!loading && data.length === 0 ? "No monthly data available for this selection." : undefined}
       height={320}
-      actions={TREND_SERIES.filter((s) => !s.always).map((s) => (
-        <Button
-          key={s.key}
-          size="sm"
-          variant={optional.includes(s.key) ? "default" : "outline"}
-          onClick={() =>
-            setOptional((o) => (o.includes(s.key) ? o.filter((k) => k !== s.key) : [...o, s.key]))
-          }
-        >
-          {s.label}
-        </Button>
-      ))}
+      actions={<SeriesToggleChips series={TREND_SERIES} visible={visible} onToggle={toggle} />}
     >
       <MetricTrendChart data={data} series={series} />
+    </ChartCard>
+  );
+}
+
+const MOVE_TREND_SERIES = [
+  { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.primary },
+  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative },
+  { key: "net_move_ins", label: "Net move-ins", color: CHART_TOKENS.tertiary },
+];
+
+function MoveTrendCard({ data, loading }: { data: Record<string, any>[]; loading: boolean }) {
+  const { visible, toggle } = useSeriesVisibility(
+    MOVE_TREND_STORAGE_KEY,
+    MOVE_TREND_SERIES.map((s) => s.key),
+    MOVE_TREND_SERIES.map((s) => s.key),
+  );
+  const bars = MOVE_TREND_SERIES.filter(
+    (s) => visible.includes(s.key) && s.key !== "net_move_ins",
+  );
+  const line = visible.includes("net_move_ins")
+    ? MOVE_TREND_SERIES.find((s) => s.key === "net_move_ins")
+    : undefined;
+
+  return (
+    <ChartCard
+      title="Move-in / move-out trend"
+      description="Monthly census momentum for the last 12 months, using the validated financial move-in and move-out definitions. Net move-ins is drawn from the same aggregate."
+      loading={loading}
+      empty={!loading && data.length === 0 ? "No monthly data available." : undefined}
+      height={300}
+      actions={<SeriesToggleChips series={MOVE_TREND_SERIES} visible={visible} onToggle={toggle} />}
+    >
+      <GroupedBarChart
+        data={data}
+        bars={bars}
+        line={line && bars.length > 0 ? line : undefined}
+        xKey="label"
+      />
     </ChartCard>
   );
 }
