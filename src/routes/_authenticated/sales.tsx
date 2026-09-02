@@ -242,8 +242,8 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Tour reconciliation</h3>
               <p className="text-xs text-muted-foreground">
-                Candidate (V-002, provisional): tour activities completed in the period whose
-                WelcomeHome activity result is flagged successful.
+                Successful tours are tour activities completed in the period whose WelcomeHome
+                activity result is flagged successful.
               </p>
               <ul className="text-sm text-muted-foreground">
                 <li className="text-foreground">Successful tours (KPI): {s.tourRecon.successfulTours}</li>
@@ -264,9 +264,10 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Deposit and move-in reconciliation</h3>
               <p className="text-xs text-muted-foreground">
-                Candidate (V-003, provisional): distinct depositors with a standard deposit dated in
-                the selected period, matching WelcomeHome's Depositor List rather than a count of
-                transaction rows.
+                Deposits (provisional): distinct depositors with a standard deposit dated in the
+                selected period, matching WelcomeHome's Depositor List rather than a count of
+                transaction rows. A known WelcomeHome reporting limitation is documented in
+                Validation Center.
               </p>
               <ul className="text-sm text-muted-foreground">
                 <li>Counted depositors: {s.depositRecon.depositors}</li>
@@ -395,7 +396,7 @@ function SalesIntelligence() {
               WelcomeHome-equivalent rounded display. The denominator counts census-eligible
               residential units only; non-residential pseudo-units such as WAITLIST are excluded by
               a configurable rule, never by a community-specific override. Occupancy as of a past
-              date is not published: no historical-state source is available yet (V-005).
+              date is not published: no historical-state source is available yet.
             </p>
           </WithheldPanel>
           <UnitCensusDiagnostic />
