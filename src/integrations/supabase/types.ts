@@ -2757,6 +2757,8 @@ export type Database = {
       }
       wh_sync_state: {
         Row: {
+          community_id: string | null
+          community_scope: string
           connection_id: string
           created_at: string
           duration_ms: number | null
@@ -2778,6 +2780,8 @@ export type Database = {
           watermark: string | null
         }
         Insert: {
+          community_id?: string | null
+          community_scope?: string
           connection_id: string
           created_at?: string
           duration_ms?: number | null
@@ -2799,6 +2803,8 @@ export type Database = {
           watermark?: string | null
         }
         Update: {
+          community_id?: string | null
+          community_scope?: string
           connection_id?: string
           created_at?: string
           duration_ms?: number | null
@@ -2820,6 +2826,13 @@ export type Database = {
           watermark?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "wh_sync_state_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wh_sync_state_connection_id_fkey"
             columns: ["connection_id"]
@@ -2838,6 +2851,7 @@ export type Database = {
       }
       wh_sync_table_runs: {
         Row: {
+          community_id: string | null
           completed_at: string | null
           connection_id: string
           created_at: string
@@ -2854,6 +2868,7 @@ export type Database = {
           rows_received: number
           rows_unmapped: number
           rows_updated: number
+          source_community_id: string | null
           source_max_updated_at: string | null
           source_table: string
           started_at: string
@@ -2862,6 +2877,7 @@ export type Database = {
           warnings: string[]
         }
         Insert: {
+          community_id?: string | null
           completed_at?: string | null
           connection_id: string
           created_at?: string
@@ -2878,6 +2894,7 @@ export type Database = {
           rows_received?: number
           rows_unmapped?: number
           rows_updated?: number
+          source_community_id?: string | null
           source_max_updated_at?: string | null
           source_table: string
           started_at?: string
@@ -2886,6 +2903,7 @@ export type Database = {
           warnings?: string[]
         }
         Update: {
+          community_id?: string | null
           completed_at?: string | null
           connection_id?: string
           created_at?: string
@@ -2902,6 +2920,7 @@ export type Database = {
           rows_received?: number
           rows_unmapped?: number
           rows_updated?: number
+          source_community_id?: string | null
           source_max_updated_at?: string | null
           source_table?: string
           started_at?: string
@@ -2910,6 +2929,13 @@ export type Database = {
           warnings?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "wh_sync_table_runs_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wh_sync_table_runs_connection_id_fkey"
             columns: ["connection_id"]
@@ -3332,6 +3358,8 @@ export type Database = {
         | "partial"
         | "failed"
         | "unsupported"
+        | "queued"
+        | "canceled"
       url_match_type: "exact_url" | "url_contains" | "path_prefix" | "regex"
       validation_check_status:
         | "pending"
@@ -3532,6 +3560,8 @@ export const Constants = {
         "partial",
         "failed",
         "unsupported",
+        "queued",
+        "canceled",
       ],
       url_match_type: ["exact_url", "url_contains", "path_prefix", "regex"],
       validation_check_status: [
