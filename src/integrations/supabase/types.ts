@@ -3417,6 +3417,11 @@ export type Database = {
         Args: { _org_id: string; _user_id?: string }
         Returns: boolean
       }
+      flash_budget_units: {
+        Args: { _as_of: string; _org_id: string; _scope: string[] }
+        Returns: Json
+      }
+      flash_week_start: { Args: { _d: string }; Returns: string }
       gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
       gsc_classify_query: {
         Args: { _org_id: string; _query: string }
@@ -3567,6 +3572,33 @@ export type Database = {
           total_count: number
           transaction_type: string
         }[]
+      }
+      wh_flash_occupancy: {
+        Args: { _org_id: string; _scope: string[] }
+        Returns: Json
+      }
+      wh_flash_period_metrics: {
+        Args: {
+          _end: string
+          _org_id: string
+          _scope: string[]
+          _start: string
+        }
+        Returns: Json
+      }
+      wh_flash_report: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _month: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
+      wh_flash_scope: {
+        Args: { _community_ids: string[]; _org_id: string }
+        Returns: string[]
       }
       wh_move_in_page: {
         Args: {
