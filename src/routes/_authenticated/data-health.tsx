@@ -8,6 +8,7 @@ import { useConnections, useSourceTypes, useSyncRuns } from "@/lib/clarity-queri
 import { fmtInt } from "@/lib/gsc/format";
 import { GRAIN_LABELS, type GrainKey } from "@/lib/gsc/parse";
 import { useActiveGrainCoverage } from "@/lib/gsc/queries";
+import { WhHealthSection } from "@/components/clarity/wh-health";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/data-health")({
@@ -224,6 +225,8 @@ function DataHealth() {
           </div>
         )}
       </section>
+
+      <WhHealthSection organizationId={organizationId} />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Coverage</h2>
