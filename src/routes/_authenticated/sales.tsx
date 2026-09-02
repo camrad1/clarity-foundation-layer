@@ -173,6 +173,7 @@ function priorPeriod(start: string, end: string) {
 function SalesIntelligence() {
   const ctx = useWhContext();
   const labels = useWhLabelMaps(ctx.connectionId);
+  const budgets = useFlashBudgets(ctx.organizationId);
   const summary = useWhSalesSummary(
     ctx.organizationId,
     ctx.communityIds,
