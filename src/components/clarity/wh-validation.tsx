@@ -60,7 +60,8 @@ export function WhValidationQueue() {
         candidate: `${s.deposits} depositors (from ${recon.fromTransactions} standard transaction rows; ${recon.zeroAmountRows} zero-amount adjustments, ${recon.refunds} refunds, ${recon.waitlist} waitlist, ${recon.otherTypes} other types excluded; contracts ${recon.fromContracts})`,
         state: "pending",
         detail:
-          "PROVISIONAL — depositor-based rule matched to the WelcomeHome Depositor List. The Esther Aug 2026 returns 5 (official 5). The Rawlin Aug 2026 returns 2 against an official 3: the third depositor's standard deposit is dated 2026-09-01 in the WelcomeHome API while the official Depositor List shows 08/25, so the rule was NOT bent to force a match. Deposit dates now use the source calendar date; the previous timezone conversion shifted them one day earlier. Refunds and waitlist rows are preserved but never counted; amount sign is never used.",
+          "PROVISIONAL — depositor-based rule matched to the WelcomeHome Depositor List. The Esther Aug 2026 returns 5 (official 5). The Rawlin Aug 2026 returns 2 against an official 3, and the gap is a source-data conflict, not a rule gap: every WelcomeHome export was searched (DepositTransactions, HousingContracts deposit_received_on/deposit_amount, WaitlistEntries, Residents, Prospects) and the third depositor's ONLY deposit record in WelcomeHome is dated 2025-08-25, one year before the reported period. HousingContract deposit fields stop in Dec 2024, so contracts cannot be the Depositor List source either. The rule was NOT bent to force a match. Zero-amount rows are stage-advance placeholders with no money received and are reported as diagnostics. Deposit dates use the source calendar date; the previous timezone conversion shifted them one day earlier. Refunds and waitlist rows are preserved but never counted; amount sign is never used.",
+
       },
 
       {
