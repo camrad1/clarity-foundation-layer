@@ -37,6 +37,8 @@ import {
 } from "@/lib/wh/summary";
 
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
+import { effectiveBudget } from "@/lib/wh/occupancy";
+import { useFlashBudgets } from "@/lib/flash/queries";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -226,6 +228,7 @@ function SalesIntelligence() {
   }
 
   const s = summary.data;
+  const budgetRows = budgets.data ?? [];
 
   if (!s || s.exclusions.total === 0) {
     return (
