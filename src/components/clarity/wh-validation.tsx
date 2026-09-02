@@ -73,11 +73,20 @@ export function WhValidationQueue() {
       {
         id: "V-005",
         question: "How is occupancy defined against census units?",
-        choice: "Withheld — not published",
-        candidate: `${occ.occupiedUnitsCandidate} of ${occ.censusUnits} census units`,
-        state: "needs_review",
-        detail: "No occupancy KPI is published until reconciled against operational census.",
+        choice:
+          "Census-eligible residential units only — excludes off-census flags, discarded/inactive units and recognized non-residential pseudo-units (WAITLIST)",
+        candidate: `${occ.occupiedUnitsCandidate} of ${occ.censusUnits} census-eligible units (${
+          occ.censusUnits
+            ? `${((occ.occupiedUnitsCandidate / occ.censusUnits) * 100).toFixed(1)}% raw / ${Math.round(
+                (occ.occupiedUnitsCandidate / occ.censusUnits) * 100,
+              )}% rounded`
+            : "—"
+        }); ${occ.totalUnits} total unit records, ${occ.offCensusUnits} off-census, ${occ.pseudoUnits} pseudo-unit, ${occ.inactiveUnits} inactive`,
+        state: "pending",
+        detail:
+          "PROVISIONAL — denominator matched to WelcomeHome for The Esther, Aug 2026 (census 103 of 104 unit records; the WAITLIST pseudo-unit is excluded by a configurable rule, never by a community-specific override). Occupied-unit derivation from housing contracts is still being reconciled against operational census, so no occupancy KPI is published.",
       },
+
       {
         id: "V-006",
         question: "Which prospects are excluded from counts?",
