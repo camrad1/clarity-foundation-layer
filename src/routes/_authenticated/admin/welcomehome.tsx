@@ -186,10 +186,9 @@ function WelcomeHomeAdmin() {
     return communityScope.communityIds;
   }, [scope, communityScope]);
 
-  const scopeLabel =
-    scope === "all" || communityScope.mode === "all"
-      ? `all ${mappedList.length} mapped communities`
-      : `${scopedCommunityIds?.length ?? 0} selected communit${(scopedCommunityIds?.length ?? 0) === 1 ? "y" : "ies"}`;
+  const scopeLabel = !scopedCommunityIds
+    ? `all ${mappedList.length} mapped communities`
+    : `${scopedCommunityIds.length} selected communit${scopedCommunityIds.length === 1 ? "y" : "ies"}`;
 
   async function orchestrate(opts: {
     mode: "full" | "incremental";
