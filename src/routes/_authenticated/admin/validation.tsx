@@ -5,6 +5,7 @@ import { GitCompareArrows } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { GscValidation } from "@/components/clarity/gsc-validation";
+import { WhValidationQueue } from "@/components/clarity/wh-validation";
 import { PageHeader } from "@/components/clarity/page-header";
 import { RecordFormDialog } from "@/components/clarity/record-form-dialog";
 import { StatusPill } from "@/components/clarity/status-pill";
@@ -105,6 +106,8 @@ function Validation() {
       />
 
       <GscValidation organizationId={organizationId} />
+
+      <WhValidationQueue />
 
       <h2 className="text-sm font-semibold text-foreground">Validation history</h2>
 
