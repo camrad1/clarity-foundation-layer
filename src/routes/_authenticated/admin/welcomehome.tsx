@@ -73,13 +73,18 @@ function WelcomeHomeAdmin() {
   const syncState = useWhSyncState(connectionId);
   const runs = useWhTableRuns(connectionId, 40);
   const [token, setToken] = useState("");
+  const mappings = useWhCommunityMappings(organizationId);
+  const { selectedCommunityIds } = useAppState() as { selectedCommunityIds?: string[] };
 
   const save = useServerFn(whSaveCredential);
   const test = useServerFn(whTestConnection);
   const discover = useServerFn(whDiscoverCommunities);
-  const sync = useServerFn(whRunSync);
+  const planSync = useServerFn(whPlanSync);
+  const runUnit = useServerFn(whRunSyncUnit);
+  const finalize = useServerFn(whFinalizeSync);
   const snapshots = useServerFn(whCheckDailySnapshots);
   const seed = useServerFn(whSeedMappingRows);
+
 
   const credential = useQuery({
     queryKey: ["wh_credential_status", connectionId],
