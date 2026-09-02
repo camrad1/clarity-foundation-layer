@@ -386,202 +386,140 @@ async function syncCoreTable(
   return result;
 }
 
-export async function runWelcomeHomeSync(
+/**
+ * BOUNDED WORK UNIT — one source table x one mapped community (or one
+ * account-wide lookup dataset). This is the only unit of ingestion ClarityIQ
+ * performs in a single HTTP request, so request duration is a function of ONE
+ * dataset for ONE community, never of portfolio size. Portfolio syncs are an
+ * orchestrated sequence of these units (see welcomehome.functions.ts).
+ *
+ * Every unit is idempotent: pages are upserted on (connection_id, source_id)
+ * as they arrive, so an interrupted unit leaves valid rows behind and a retry
+ * updates rather than duplicates them.
+ */
+export async function runWelcomeHomeSyncUnit(
   admin: Admin,
   auth: WhAuth,
   args: {
     organizationId: string;
     connectionId: string;
+    syncRunId: string;
+    table: WhTable;
+    /** null = account-wide dataset (JSON lookups). */
+    target: CommunityTarget | null;
     mode: "full" | "incremental";
-    tables: WhTable[];
-    targets: CommunityTarget[];
     overlapMinutes: number;
   },
-): Promise<{ syncRunId: string; results: TableResult[]; status: "success" | "partial" | "failed" }> {
-  const { data: run, error: runErr } = await admin
-    .from("source_sync_runs")
-    .insert({
+): Promise<TableResult> {
+  const scopeKey = args.target?.communityId ?? "";
+  const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(args.table);
+
+  let updatedAfter: string | null = null;
+  if (args.mode === "incremental" && supportsIncremental) {
+    const { data: state } = await admin
+      .from("wh_sync_state")
+      .select("watermark, source_max_updated_at")
+      .eq("connection_id", args.connectionId)
+      .eq("source_table", args.table)
+      .eq("community_scope", scopeKey)
+      .maybeSingle();
+    const base = state?.source_max_updated_at ?? state?.watermark ?? null;
+    if (base) {
+      updatedAfter = new Date(new Date(base).getTime() - args.overlapMinutes * 60_000).toISOString();
+    }
+  }
+
+  await admin.from("wh_sync_state").upsert(
+    {
       organization_id: args.organizationId,
       connection_id: args.connectionId,
-      status: "running",
-      sync_cursor: { mode: args.mode, tables: args.tables },
-    })
-    .select("id")
-    .single();
-  if (runErr || !run) throw new Error(`Unable to start sync run: ${runErr?.message ?? "unknown"}`);
-  const syncRunId = run.id as string;
+      source_table: args.table,
+      community_scope: scopeKey,
+      community_id: args.target?.communityId ?? null,
+      last_attempted_at: new Date().toISOString(),
+    },
+    { onConflict: "connection_id,source_table,community_scope" },
+  );
 
-  await admin
-    .from("data_source_connections")
-    .update({ status: "syncing", last_attempted_sync_at: new Date().toISOString() })
-    .eq("id", args.connectionId)
-    .eq("organization_id", args.organizationId);
+  const targets = args.target ? [args.target] : [];
 
-  const results: TableResult[] = [];
+  const result = isCoreTable(args.table)
+    ? await syncCoreTable(admin, auth, {
+        organizationId: args.organizationId,
+        connectionId: args.connectionId,
+        syncRunId: args.syncRunId,
+        table: args.table,
+        targets,
+        updatedAfter,
+      })
+    : await syncLookupTable(admin, auth, {
+        organizationId: args.organizationId,
+        connectionId: args.connectionId,
+        table: args.table as WhLookupTable,
+        targets,
+      });
 
-  for (const table of args.tables) {
-    let updatedAfter: string | null = null;
-    // WelcomeHome exports expose no updated_at column, so no watermark can be
-    // derived and incremental mode honestly degrades to a full refresh.
-    const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(table);
-    if (args.mode === "incremental" && supportsIncremental) {
-      const { data: state } = await admin
-        .from("wh_sync_state")
-        .select("watermark, source_max_updated_at")
-        .eq("connection_id", args.connectionId)
-        .eq("source_table", table)
-        .maybeSingle();
-      const base = state?.source_max_updated_at ?? state?.watermark ?? null;
-      if (base) {
-        updatedAfter = new Date(
-          new Date(base).getTime() - args.overlapMinutes * 60_000,
-        ).toISOString();
-      }
-    }
-
-
-    await admin.from("wh_sync_state").upsert(
-      {
-        organization_id: args.organizationId,
-        connection_id: args.connectionId,
-        source_table: table,
-        last_attempted_at: new Date().toISOString(),
-      },
-      { onConflict: "connection_id,source_table" },
+  if (args.mode === "incremental" && !supportsIncremental && isCoreTable(args.table)) {
+    result.warnings.push(
+      "WelcomeHome exports expose no updated_at column; a full refresh was performed instead of an incremental one.",
     );
+  }
 
-    const result = isCoreTable(table)
-      ? await syncCoreTable(admin, auth, {
-          organizationId: args.organizationId,
-          connectionId: args.connectionId,
-          syncRunId,
-          table,
-          targets: args.targets,
-          updatedAfter,
-        })
-      : await syncLookupTable(admin, auth, {
-          organizationId: args.organizationId,
-          connectionId: args.connectionId,
-          table: table as WhLookupTable,
-          targets: args.targets,
-        });
+  await admin.from("wh_sync_table_runs").insert({
+    organization_id: args.organizationId,
+    connection_id: args.connectionId,
+    sync_run_id: args.syncRunId,
+    community_id: args.target?.communityId ?? null,
+    source_community_id: args.target?.sourceCommunityId ?? null,
+    source_table: args.table,
+    mode: result.mode,
+    status: result.status,
+    requested_after: updatedAfter,
+    rows_received: result.rowsReceived,
+    rows_inserted: result.rowsInserted,
+    rows_updated: result.rowsUpdated,
+    rows_failed: result.rowsFailed,
+    rows_unmapped: result.rowsUnmapped,
+    raw_rows_stored: result.rawRowsStored,
+    pages_fetched: result.pagesFetched,
+    source_max_updated_at: result.sourceMaxUpdatedAt,
+    duration_ms: result.durationMs,
+    error_summary: result.error,
+    warnings: result.warnings,
+    completed_at: new Date().toISOString(),
+  });
 
-    if (args.mode === "incremental" && !supportsIncremental && isCoreTable(table)) {
-      result.warnings.push(
-        "WelcomeHome exports expose no updated_at column; a full refresh was performed instead of an incremental one.",
-      );
-    }
-
-    results.push(result);
-
-
-    await admin.from("wh_sync_table_runs").insert({
+  // The watermark only advances on a clean unit. An interrupted, failed or
+  // partial unit keeps its previous watermark, so a retry re-reads the same
+  // window instead of skipping records that were never persisted.
+  const advance = result.status === "success" && result.sourceMaxUpdatedAt;
+  await admin.from("wh_sync_state").upsert(
+    {
       organization_id: args.organizationId,
       connection_id: args.connectionId,
-      sync_run_id: syncRunId,
-      source_table: table,
-      mode: result.mode,
-      status: result.status,
-      requested_after: updatedAfter,
+      source_table: args.table,
+      community_scope: scopeKey,
+      community_id: args.target?.communityId ?? null,
+      last_attempted_at: new Date().toISOString(),
+      ...(result.status !== "failed" ? { last_successful_at: new Date().toISOString() } : {}),
+      ...(advance
+        ? { watermark: result.sourceMaxUpdatedAt, source_max_updated_at: result.sourceMaxUpdatedAt }
+        : {}),
+      last_mode: result.mode,
       rows_received: result.rowsReceived,
       rows_inserted: result.rowsInserted,
       rows_updated: result.rowsUpdated,
       rows_failed: result.rowsFailed,
       rows_unmapped: result.rowsUnmapped,
-      raw_rows_stored: result.rawRowsStored,
-      pages_fetched: result.pagesFetched,
-      source_max_updated_at: result.sourceMaxUpdatedAt,
       duration_ms: result.durationMs,
       error_summary: result.error,
       warnings: result.warnings,
-      completed_at: new Date().toISOString(),
-    });
-
-    // The watermark only advances on a clean run. A failed or partial table
-    // keeps its previous watermark so nothing is skipped on the next attempt.
-    const advance = result.status === "success" && result.sourceMaxUpdatedAt;
-    await admin.from("wh_sync_state").upsert(
-      {
-        organization_id: args.organizationId,
-        connection_id: args.connectionId,
-        source_table: table,
-        last_attempted_at: new Date().toISOString(),
-        ...(result.status !== "failed" ? { last_successful_at: new Date().toISOString() } : {}),
-        ...(advance
-          ? {
-              watermark: result.sourceMaxUpdatedAt,
-              source_max_updated_at: result.sourceMaxUpdatedAt,
-            }
-          : {}),
-        last_mode: result.mode,
-        rows_received: result.rowsReceived,
-        rows_inserted: result.rowsInserted,
-        rows_updated: result.rowsUpdated,
-        rows_failed: result.rowsFailed,
-        rows_unmapped: result.rowsUnmapped,
-        duration_ms: result.durationMs,
-        error_summary: result.error,
-        warnings: result.warnings,
-      },
-      { onConflict: "connection_id,source_table" },
-    );
-  }
-
-  // Run status reflects what was actually persisted. A run is only "success"
-  // when every table succeeded; anything degraded is at best "partial", and a
-  // run where no core table landed data is a failure.
-  const coreResults = results.filter((r) => isCoreTable(r.table));
-  const coreOk = coreResults.filter((r) => r.status === "success" || r.status === "partial");
-  const allClean = results.every((r) => r.status === "success" || r.status === "skipped");
-  const status: "success" | "partial" | "failed" =
-    coreResults.length > 0 && coreOk.length === 0 ? "failed" : allClean ? "success" : "partial";
-
-
-  const totals = results.reduce(
-    (acc, r) => ({
-      received: acc.received + r.rowsReceived,
-      inserted: acc.inserted + r.rowsInserted,
-      updated: acc.updated + r.rowsUpdated,
-      failed: acc.failed + r.rowsFailed,
-    }),
-    { received: 0, inserted: 0, updated: 0, failed: 0 },
+    },
+    { onConflict: "connection_id,source_table,community_scope" },
   );
 
-  await admin
-    .from("source_sync_runs")
-    .update({
-      status,
-      completed_at: new Date().toISOString(),
-      records_received: totals.received,
-      records_inserted: totals.inserted,
-      records_updated: totals.updated,
-      records_failed: totals.failed,
-      error_summary: results
-        .filter((r) => r.error)
-        .map((r) => `${r.table}: ${r.error}`)
-        .join(" | ")
-        .slice(0, 1000) || null,
-    })
-    .eq("id", syncRunId);
-
-  const throughDates = results
-    .map((r) => r.sourceMaxUpdatedAt)
-    .filter((d): d is string => !!d)
-    .sort();
-  await admin
-    .from("data_source_connections")
-    .update({
-      status: status === "failed" ? "needs_attention" : "connected",
-      last_attempted_sync_at: new Date().toISOString(),
-      ...(status !== "failed" ? { last_successful_sync_at: new Date().toISOString() } : {}),
-      ...(throughDates.length
-        ? { data_through_date: String(throughDates[throughDates.length - 1]).slice(0, 10) }
-        : {}),
-    })
-    .eq("id", args.connectionId)
-    .eq("organization_id", args.organizationId);
-
-  return { syncRunId, results, status };
+  return result;
 }
 
 export { WH_ALL_TABLES as ALL_SYNC_TABLES } from "./tables";
+

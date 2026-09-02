@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,20 +12,31 @@ import { StatusPill } from "@/components/clarity/status-pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/lib/clarity-queries";
 import {
   whCheckDailySnapshots,
   whCredentialStatus,
   whDiscoverCommunities,
-  whRunSync,
+  whFinalizeSync,
+  whPlanSync,
+  whRunSyncUnit,
   whSaveCredential,
   whSeedMappingRows,
   whTestConnection,
+  type WhWorkUnit,
 } from "@/lib/wh/welcomehome.functions";
-import { useWhConnection, useWhSourceCommunities, useWhSyncState, useWhTableRuns } from "@/lib/wh/queries";
+import {
+  useWhCommunityMappings,
+  useWhConnection,
+  useWhSourceCommunities,
+  useWhSyncState,
+  useWhTableRuns,
+} from "@/lib/wh/queries";
 import { WH_CORE_TABLES } from "@/lib/wh/tables";
 import { useAppState } from "@/state/app-state";
+
 
 export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
   head: () => ({
@@ -62,13 +73,19 @@ function WelcomeHomeAdmin() {
   const syncState = useWhSyncState(connectionId);
   const runs = useWhTableRuns(connectionId, 40);
   const [token, setToken] = useState("");
+  const mappings = useWhCommunityMappings(organizationId);
+  const { communityScope } = useAppState();
+
 
   const save = useServerFn(whSaveCredential);
   const test = useServerFn(whTestConnection);
   const discover = useServerFn(whDiscoverCommunities);
-  const sync = useServerFn(whRunSync);
+  const planSync = useServerFn(whPlanSync);
+  const runUnit = useServerFn(whRunSyncUnit);
+  const finalize = useServerFn(whFinalizeSync);
   const snapshots = useServerFn(whCheckDailySnapshots);
   const seed = useServerFn(whSeedMappingRows);
+
 
   const credential = useQuery({
     queryKey: ["wh_credential_status", connectionId],
@@ -135,29 +152,142 @@ function WelcomeHomeAdmin() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const runSync = useMutation({
-    mutationFn: async (mode: "full" | "incremental") =>
-      sync({ data: { connectionId: connectionId!, mode } }),
-    onSuccess: async (r) => {
-      if (!r.ok) toast.error(r.message ?? "Sync failed");
-      else if (r.status === "partial")
-        toast.warning(
-          `Sync completed with issues: ${r.results
-            .filter((x: any) => x.status !== "success")
-            .map((x: any) => x.table)
-            .join(", ")}`,
-        );
-      else toast.success("Sync completed");
-      await seed({ data: { connectionId: connectionId! } });
+  // ---------------------------------------------------------------------
+  // Sync orchestration
+  // ---------------------------------------------------------------------
+  // A sync is a sequence of bounded work units (one dataset x one community),
+  // each its own short request. Nothing about this loop grows with portfolio
+  // size except the number of units, so adding communities never turns one
+  // request into a timeout.
+  const [scope, setScope] = useState<"selected" | "all">("selected");
+  const [progress, setProgress] = useState<{
+    total: number;
+    done: number;
+    failed: number;
+    current: string | null;
+    runId: string | null;
+    running: boolean;
+    failedUnits: WhWorkUnit[];
+  }>({ total: 0, done: 0, failed: 0, current: null, runId: null, running: false, failedUnits: [] });
+  const cancelRef = useRef(false);
+
+  const mappedList = useMemo(
+    () =>
+      (mappings.data ?? []).filter((m: any) => m.active).map((m: any) => ({
+        communityId: m.community_id as string,
+        name: (m.communities?.name as string) ?? "Community",
+      })),
+    [mappings.data],
+  );
+
+  const scopedCommunityIds = useMemo(() => {
+    if (scope === "all") return undefined;
+    if (communityScope.mode !== "communities") return undefined;
+    return communityScope.communityIds;
+  }, [scope, communityScope]);
+
+  const scopeLabel = !scopedCommunityIds
+    ? `all ${mappedList.length} mapped communities`
+    : `${scopedCommunityIds.length} selected communit${scopedCommunityIds.length === 1 ? "y" : "ies"}`;
+
+  async function orchestrate(opts: {
+    mode: "full" | "incremental";
+    resumeRunId?: string;
+    onlyUnits?: WhWorkUnit[];
+  }) {
+    if (!connectionId) return;
+    cancelRef.current = false;
+    setProgress((p) => ({ ...p, running: true, failed: 0, done: 0, failedUnits: [], current: "Planning…" }));
+    try {
+      const plan = await planSync({
+        data: {
+          connectionId,
+          mode: opts.mode,
+          ...(scopedCommunityIds ? { communityIds: scopedCommunityIds } : {}),
+          ...(opts.resumeRunId ? { resumeRunId: opts.resumeRunId } : {}),
+        },
+      });
+      if (!plan.ok || !plan.syncRunId) {
+        setProgress((p) => ({ ...p, running: false, current: null }));
+        toast.error(plan.message ?? "Nothing to sync");
+        return;
+      }
+      let units = plan.units;
+      if (opts.onlyUnits?.length) {
+        const keys = new Set(opts.onlyUnits.map((u) => u.key));
+        units = units.filter((u) => keys.has(u.key));
+      }
+      const runId = plan.syncRunId;
+      setProgress({
+        total: units.length,
+        done: 0,
+        failed: 0,
+        current: null,
+        runId,
+        running: true,
+        failedUnits: [],
+      });
+
+      const failedUnits: WhWorkUnit[] = [];
+      for (const unit of units) {
+        if (cancelRef.current) break;
+        setProgress((p) => ({
+          ...p,
+          current: `${unit.table}${unit.communityName ? ` — ${unit.communityName}` : " (account-wide)"}`,
+        }));
+        try {
+          const res = await runUnit({
+            data: {
+              connectionId,
+              syncRunId: runId,
+              mode: opts.mode,
+              table: unit.table,
+              communityId: unit.communityId,
+            },
+          });
+          if (res.status === "failed" || res.status === "partial") failedUnits.push(unit);
+        } catch {
+          // One failing dataset never aborts the portfolio: the unit is
+          // recorded, retryable, and the run continues.
+          failedUnits.push(unit);
+        }
+        setProgress((p) => ({
+          ...p,
+          done: p.done + 1,
+          failed: failedUnits.length,
+          failedUnits: [...failedUnits],
+        }));
+      }
+
+      const summary = await finalize({
+        data: {
+          connectionId,
+          syncRunId: runId,
+          expectedUnits: units.length + plan.skipped.length,
+          ...(cancelRef.current ? { canceled: true } : {}),
+        },
+      });
+      await seed({ data: { connectionId } });
+
+      if (cancelRef.current) toast.warning("Sync canceled. Completed work is saved and resumable.");
+      else if (summary.status === "success") toast.success("Sync completed");
+      else if (summary.status === "partial")
+        toast.warning(`Sync partially completed — ${failedUnits.length} unit(s) need a retry.`);
+      else toast.error("Sync failed. Review the table runs below.");
+
+      setProgress((p) => ({ ...p, running: false, current: null }));
       syncState.refetch();
       runs.refetch();
       qc.invalidateQueries({ queryKey: ["wh_lookups"] });
       qc.invalidateQueries({ queryKey: ["wh_activity_mappings"] });
       qc.invalidateQueries({ queryKey: ["wh_score_mappings"] });
       qc.invalidateQueries({ queryKey: ["wh_connection"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+    } catch (e) {
+      setProgress((p) => ({ ...p, running: false, current: null }));
+      toast.error((e as Error).message);
+    }
+  }
+
 
   if (!canManageImports) {
     return (
@@ -312,11 +442,13 @@ function WelcomeHomeAdmin() {
               <div>
                 <h2 className="text-sm font-semibold">Synchronization</h2>
                 <p className="text-xs text-muted-foreground">
-                  Full sync retrieves every mapped community. Incremental sync uses each table's own
-                  watermark with a safety overlap, and source-ID upsert keeps it idempotent.
+                  Sync runs as bounded work units — one dataset for one community per request — so
+                  duration does not grow with portfolio size. Progress is saved continuously and any
+                  interrupted run can be resumed. Incremental sync uses each table's own watermark with a
+                  safety overlap, and source-ID upsert keeps it idempotent.
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -328,20 +460,88 @@ function WelcomeHomeAdmin() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => runSync.mutate("incremental")}
-                  disabled={!credential.data?.configured || runSync.isPending}
+                  onClick={() => orchestrate({ mode: "incremental" })}
+                  disabled={!credential.data?.configured || progress.running}
                 >
                   <RefreshCw className="size-4" /> Incremental sync
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => runSync.mutate("full")}
-                  disabled={!credential.data?.configured || runSync.isPending}
+                  onClick={() => orchestrate({ mode: "full" })}
+                  disabled={!credential.data?.configured || progress.running}
                 >
                   Full sync
                 </Button>
               </div>
             </div>
+
+            <div className="rounded-lg border border-border/60 bg-card/40 p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-4">
+                <Label className="text-xs font-medium">Sync scope</Label>
+                <label className="flex items-center gap-2 text-xs">
+                  <Checkbox
+                    checked={scope === "selected"}
+                    onCheckedChange={(v) => setScope(v ? "selected" : "all")}
+                  />
+                  Use the dashboard community filter
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  This sync will cover <span className="font-medium text-foreground">{scopeLabel}</span>.
+                </span>
+              </div>
+
+              {progress.total > 0 || progress.running ? (
+                <div className="space-y-1 text-xs">
+                  <div className="h-1.5 w-full overflow-hidden rounded bg-muted">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
+                    <span>
+                      {progress.done} / {progress.total} work units
+                      {progress.failed ? ` · ${progress.failed} need retry` : ""}
+                    </span>
+                    {progress.current ? <span>Running: {progress.current}</span> : null}
+                    {progress.running ? (
+                      <Button size="sm" variant="ghost" onClick={() => (cancelRef.current = true)}>
+                        Cancel
+                      </Button>
+                    ) : null}
+                    {!progress.running && progress.runId ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => orchestrate({ mode: "full", resumeRunId: progress.runId! })}
+                        >
+                          Resume run
+                        </Button>
+                        {progress.failedUnits.length ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              orchestrate({
+                                mode: "full",
+                                resumeRunId: progress.runId!,
+                                onlyUnits: progress.failedUnits,
+                              })
+                            }
+                          >
+                            Retry failed
+                          </Button>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
 
             <DataTable
               columns={[
