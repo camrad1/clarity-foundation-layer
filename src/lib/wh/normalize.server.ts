@@ -300,7 +300,7 @@ export function normalizeActivity(raw: Rec, ctx: Ctx) {
 
 export function normalizeHousingContract(raw: Rec, ctx: Ctx) {
   const rec = aliasRecord(raw, "housing_contracts");
-  const depositAt = pickTs(rec, "deposit_received_at", "deposit_date");
+  const depositAt = pickTs(rec, "deposit_received_at", "deposit_received_on", "deposit_date");
   return {
     organization_id: ctx.organizationId,
     connection_id: ctx.connectionId,
