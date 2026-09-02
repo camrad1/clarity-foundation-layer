@@ -17,6 +17,9 @@ export const WH_CORE_TABLES = [
   "Units",
   "MarketingTouchpoints",
   "DepositTransactions",
+  // Investigation-only dataset: resident records, added to test whether
+  // WelcomeHome exposes deposit evidence outside DepositTransactions.
+  "Residents",
 ] as const;
 
 /**
@@ -99,6 +102,7 @@ export const WH_CORE_DESTINATION: Record<WhCoreTable, string> = {
   Units: "wh_units",
   MarketingTouchpoints: "wh_marketing_touchpoints",
   DepositTransactions: "wh_deposit_transactions",
+  Residents: "wh_residents",
 };
 
 /** Lookup type key stored in wh_lookups.lookup_type. */

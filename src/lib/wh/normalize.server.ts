@@ -193,6 +193,7 @@ export const WH_TABLE_PREFIX = {
   Units: "units",
   MarketingTouchpoints: "marketing_touchpoints",
   DepositTransactions: "deposit_transactions",
+  Residents: "residents",
 } as const;
 
 export function sourceId(rec: Rec): string | null {
@@ -449,6 +450,37 @@ export function normalizeDeposit(raw: Rec, ctx: Ctx) {
   };
 }
 
+/**
+ * Residents export. Verified headers (Rawlin, 2026-09-02) are people/address
+ * PII plus residents.*, care_types.* and communities.*. There is NO deposit,
+ * refund, on-hand or community-fee column, so nothing financial is mapped.
+ */
+export function normalizeResident(raw: Rec, ctx: Ctx) {
+  const rec = aliasRecord(raw, "residents");
+  return {
+    organization_id: ctx.organizationId,
+    connection_id: ctx.connectionId,
+    source_id: sourceId(rec)!,
+    community_id: ctx.communityId,
+    source_community_id: sourceCommunityId(rec),
+    prospect_source_id: pick(rec, "prospect_id", "prospects_id"),
+    person_source_id: pick(rec, "people_id", "person_id"),
+    care_type_label: pick(rec, "care_types_name"),
+    current_residence: pick(rec, "current_residence"),
+    first_resident: pickBool(rec, "first_resident"),
+    marital_status: pick(rec, "marital_status"),
+    veteran_status: pick(rec, "veteran_status"),
+    marked_deceased_at: pickTs(rec, "marked_deceased_at"),
+    yardi_code: pick(rec, "yardi_code"),
+    yardi_id: pick(rec, "yardi_id"),
+    yardi_p_code: pick(rec, "yardi_p_code"),
+    discarded_at: pickTs(rec, "discarded_at", "people_discarded_at"),
+    created_at_source: pickTs(rec, "created_at"),
+    updated_at_source: updatedAt(rec),
+    metadata: stripPii(raw),
+  };
+}
+
 export const NORMALIZERS = {
   Prospects: normalizeProspect,
   Activities: normalizeActivity,
@@ -456,4 +488,5 @@ export const NORMALIZERS = {
   Units: normalizeUnit,
   MarketingTouchpoints: normalizeTouchpoint,
   DepositTransactions: normalizeDeposit,
+  Residents: normalizeResident,
 } as const;
