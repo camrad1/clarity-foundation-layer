@@ -29,7 +29,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   WH_CORE_DESTINATION,
+  WH_INCREMENTAL_TABLES,
   WH_LOOKUP_KEY,
+
   WH_LOOKUP_SOURCE,
   WH_MAX_PAGES,
   WH_REFERRER_SAFE_FIELDS,
