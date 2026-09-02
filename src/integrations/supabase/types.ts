@@ -393,9 +393,12 @@ export type Database = {
           created_at: string
           credential_kind: string
           id: string
+          last_verification_error: string | null
+          last_verified_at: string | null
           organization_id: string
           rotated_at: string | null
           secret_ref: string
+          secret_value: string | null
           updated_at: string
         }
         Insert: {
@@ -403,9 +406,12 @@ export type Database = {
           created_at?: string
           credential_kind?: string
           id?: string
+          last_verification_error?: string | null
+          last_verified_at?: string | null
           organization_id: string
           rotated_at?: string | null
           secret_ref: string
+          secret_value?: string | null
           updated_at?: string
         }
         Update: {
@@ -413,9 +419,12 @@ export type Database = {
           created_at?: string
           credential_kind?: string
           id?: string
+          last_verification_error?: string | null
+          last_verified_at?: string | null
           organization_id?: string
           rotated_at?: string | null
           secret_ref?: string
+          secret_value?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1812,6 +1821,1119 @@ export type Database = {
           },
         ]
       }
+      wh_activities: {
+        Row: {
+          activity_type_id: string | null
+          community_id: string | null
+          completed_at: string | null
+          completed_local_date: string | null
+          completed_successfully: boolean | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          direction: string | null
+          discarded_at: string | null
+          id: string
+          ingested_at: string
+          metadata: Json
+          organization_id: string
+          prospect_source_id: string | null
+          raw_record_id: string | null
+          record_id: string | null
+          record_type: string | null
+          result_id: string | null
+          scheduled_at: string | null
+          scheduled_local_date: string | null
+          source_community_id: string | null
+          source_id: string
+          source_timezone: string | null
+          stage_id: string | null
+          updated_at: string
+          updated_at_source: string | null
+          user_id_source: string | null
+        }
+        Insert: {
+          activity_type_id?: string | null
+          community_id?: string | null
+          completed_at?: string | null
+          completed_local_date?: string | null
+          completed_successfully?: boolean | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          direction?: string | null
+          discarded_at?: string | null
+          id?: string
+          ingested_at?: string
+          metadata?: Json
+          organization_id: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          result_id?: string | null
+          scheduled_at?: string | null
+          scheduled_local_date?: string | null
+          source_community_id?: string | null
+          source_id: string
+          source_timezone?: string | null
+          stage_id?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+          user_id_source?: string | null
+        }
+        Update: {
+          activity_type_id?: string | null
+          community_id?: string | null
+          completed_at?: string | null
+          completed_local_date?: string | null
+          completed_successfully?: boolean | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          direction?: string | null
+          discarded_at?: string | null
+          id?: string
+          ingested_at?: string
+          metadata?: Json
+          organization_id?: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          result_id?: string | null
+          scheduled_at?: string | null
+          scheduled_local_date?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          source_timezone?: string | null
+          stage_id?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+          user_id_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_activities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_activities_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_activities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_activity_type_mappings: {
+        Row: {
+          activity_type_id: string
+          activity_type_label: string | null
+          category: Database["public"]["Enums"]["wh_activity_category"]
+          connection_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type_id: string
+          activity_type_label?: string | null
+          category?: Database["public"]["Enums"]["wh_activity_category"]
+          connection_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type_id?: string
+          activity_type_label?: string | null
+          category?: Database["public"]["Enums"]["wh_activity_category"]
+          connection_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_activity_type_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_activity_type_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_deposit_transactions: {
+        Row: {
+          amount: number | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          discarded_at: string | null
+          housing_contract_source_id: string | null
+          id: string
+          ingested_at: string
+          metadata: Json
+          occurred_at: string | null
+          occurred_local_date: string | null
+          organization_id: string
+          prospect_source_id: string | null
+          raw_record_id: string | null
+          refunded_at: string | null
+          source_community_id: string | null
+          source_id: string
+          transaction_type: string | null
+          updated_at: string
+          updated_at_source: string | null
+        }
+        Insert: {
+          amount?: number | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          discarded_at?: string | null
+          housing_contract_source_id?: string | null
+          id?: string
+          ingested_at?: string
+          metadata?: Json
+          occurred_at?: string | null
+          occurred_local_date?: string | null
+          organization_id: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          refunded_at?: string | null
+          source_community_id?: string | null
+          source_id: string
+          transaction_type?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Update: {
+          amount?: number | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          discarded_at?: string | null
+          housing_contract_source_id?: string | null
+          id?: string
+          ingested_at?: string
+          metadata?: Json
+          occurred_at?: string | null
+          occurred_local_date?: string | null
+          organization_id?: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          refunded_at?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          transaction_type?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_deposit_transactions_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_deposit_transactions_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_deposit_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_housing_contracts: {
+        Row: {
+          care_rate: number | null
+          care_type_id_source: string | null
+          community_fee: number | null
+          community_id: string | null
+          concessions: number | null
+          connection_id: string
+          contract_type: string | null
+          count_move_in: boolean | null
+          count_move_out: boolean | null
+          created_at: string
+          created_at_source: string | null
+          deposit_amount: number | null
+          deposit_received_at: string | null
+          deposit_received_date: string | null
+          discarded_at: string | null
+          financial_move_in_date: string | null
+          financial_move_out_date: string | null
+          id: string
+          ingested_at: string
+          is_transfer: boolean | null
+          metadata: Json
+          monthly_rate: number | null
+          move_in_date: string | null
+          move_out_date: string | null
+          move_out_reason_id: string | null
+          notice_date: string | null
+          occupancy_point_factor: number | null
+          organization_id: string
+          privacy_level_id: string | null
+          prospect_source_id: string | null
+          raw_record_id: string | null
+          resident_source_id: string | null
+          sales_counselor_id: string | null
+          source_community_id: string | null
+          source_id: string
+          status: string | null
+          stay_type: string | null
+          unit_source_id: string | null
+          updated_at: string
+          updated_at_source: string | null
+        }
+        Insert: {
+          care_rate?: number | null
+          care_type_id_source?: string | null
+          community_fee?: number | null
+          community_id?: string | null
+          concessions?: number | null
+          connection_id: string
+          contract_type?: string | null
+          count_move_in?: boolean | null
+          count_move_out?: boolean | null
+          created_at?: string
+          created_at_source?: string | null
+          deposit_amount?: number | null
+          deposit_received_at?: string | null
+          deposit_received_date?: string | null
+          discarded_at?: string | null
+          financial_move_in_date?: string | null
+          financial_move_out_date?: string | null
+          id?: string
+          ingested_at?: string
+          is_transfer?: boolean | null
+          metadata?: Json
+          monthly_rate?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          move_out_reason_id?: string | null
+          notice_date?: string | null
+          occupancy_point_factor?: number | null
+          organization_id: string
+          privacy_level_id?: string | null
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          resident_source_id?: string | null
+          sales_counselor_id?: string | null
+          source_community_id?: string | null
+          source_id: string
+          status?: string | null
+          stay_type?: string | null
+          unit_source_id?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Update: {
+          care_rate?: number | null
+          care_type_id_source?: string | null
+          community_fee?: number | null
+          community_id?: string | null
+          concessions?: number | null
+          connection_id?: string
+          contract_type?: string | null
+          count_move_in?: boolean | null
+          count_move_out?: boolean | null
+          created_at?: string
+          created_at_source?: string | null
+          deposit_amount?: number | null
+          deposit_received_at?: string | null
+          deposit_received_date?: string | null
+          discarded_at?: string | null
+          financial_move_in_date?: string | null
+          financial_move_out_date?: string | null
+          id?: string
+          ingested_at?: string
+          is_transfer?: boolean | null
+          metadata?: Json
+          monthly_rate?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          move_out_reason_id?: string | null
+          notice_date?: string | null
+          occupancy_point_factor?: number | null
+          organization_id?: string
+          privacy_level_id?: string | null
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          resident_source_id?: string | null
+          sales_counselor_id?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          status?: string | null
+          stay_type?: string | null
+          unit_source_id?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_housing_contracts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_housing_contracts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_housing_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_lookups: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          ingested_at: string
+          label: string | null
+          lookup_type: string
+          organization_id: string
+          payload: Json
+          source_community_id: string | null
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          ingested_at?: string
+          label?: string | null
+          lookup_type: string
+          organization_id: string
+          payload?: Json
+          source_community_id?: string | null
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          ingested_at?: string
+          label?: string | null
+          lookup_type?: string
+          organization_id?: string
+          payload?: Json
+          source_community_id?: string | null
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_lookups_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_lookups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_marketing_touchpoints: {
+        Row: {
+          campaign_name: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          id: string
+          ingested_at: string
+          lead_source_id: string | null
+          metadata: Json
+          occurred_at: string | null
+          occurred_local_date: string | null
+          organization_id: string
+          prospect_source_id: string | null
+          raw_record_id: string | null
+          source_community_id: string | null
+          source_id: string
+          updated_at: string
+          updated_at_source: string | null
+        }
+        Insert: {
+          campaign_name?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          id?: string
+          ingested_at?: string
+          lead_source_id?: string | null
+          metadata?: Json
+          occurred_at?: string | null
+          occurred_local_date?: string | null
+          organization_id: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          source_community_id?: string | null
+          source_id: string
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Update: {
+          campaign_name?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          id?: string
+          ingested_at?: string
+          lead_source_id?: string | null
+          metadata?: Json
+          occurred_at?: string | null
+          occurred_local_date?: string | null
+          organization_id?: string
+          prospect_source_id?: string | null
+          raw_record_id?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_marketing_touchpoints_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_marketing_touchpoints_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_marketing_touchpoints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_prospects: {
+        Row: {
+          account_id: string | null
+          active_at: string | null
+          close_reason_id: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          current_sales_counselor_id: string | null
+          discarded_at: string | null
+          expected_move_timing_id: string | null
+          id: string
+          ingested_at: string
+          initial_contact_at: string | null
+          last_contact_at: string | null
+          lead_source_id: string | null
+          merged_into_prospect_id: string | null
+          metadata: Json
+          next_activity_scheduled_at: string | null
+          organization_id: string
+          original_sales_counselor_id: string | null
+          raw_record_id: string | null
+          referrer_id: string | null
+          score_id: string | null
+          secondary_lead_source_id: string | null
+          source_community_id: string | null
+          source_id: string
+          stage_id: string | null
+          status: string | null
+          status_changed_at: string | null
+          updated_at: string
+          updated_at_source: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          active_at?: string | null
+          close_reason_id?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          current_sales_counselor_id?: string | null
+          discarded_at?: string | null
+          expected_move_timing_id?: string | null
+          id?: string
+          ingested_at?: string
+          initial_contact_at?: string | null
+          last_contact_at?: string | null
+          lead_source_id?: string | null
+          merged_into_prospect_id?: string | null
+          metadata?: Json
+          next_activity_scheduled_at?: string | null
+          organization_id: string
+          original_sales_counselor_id?: string | null
+          raw_record_id?: string | null
+          referrer_id?: string | null
+          score_id?: string | null
+          secondary_lead_source_id?: string | null
+          source_community_id?: string | null
+          source_id: string
+          stage_id?: string | null
+          status?: string | null
+          status_changed_at?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          active_at?: string | null
+          close_reason_id?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          current_sales_counselor_id?: string | null
+          discarded_at?: string | null
+          expected_move_timing_id?: string | null
+          id?: string
+          ingested_at?: string
+          initial_contact_at?: string | null
+          last_contact_at?: string | null
+          lead_source_id?: string | null
+          merged_into_prospect_id?: string | null
+          metadata?: Json
+          next_activity_scheduled_at?: string | null
+          organization_id?: string
+          original_sales_counselor_id?: string | null
+          raw_record_id?: string | null
+          referrer_id?: string | null
+          score_id?: string | null
+          secondary_lead_source_id?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          stage_id?: string | null
+          status?: string | null
+          status_changed_at?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_prospects_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_prospects_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_prospects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_score_mappings: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          level: Database["public"]["Enums"]["wh_score_level"]
+          organization_id: string
+          score_id: string
+          score_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          level?: Database["public"]["Enums"]["wh_score_level"]
+          organization_id: string
+          score_id: string
+          score_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          level?: Database["public"]["Enums"]["wh_score_level"]
+          organization_id?: string
+          score_id?: string
+          score_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_score_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_score_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_settings: {
+        Row: {
+          created_at: string
+          daily_snapshots_state: string
+          deposit_source: string
+          exclude_discarded_prospects: boolean
+          exclude_merged_prospects: boolean
+          hot_no_activity_mode: string
+          incremental_overlap_minutes: number
+          inquiry_date_field: string
+          move_in_date_field: string
+          move_out_date_field: string
+          organization_id: string
+          stalled_threshold_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          daily_snapshots_state?: string
+          deposit_source?: string
+          exclude_discarded_prospects?: boolean
+          exclude_merged_prospects?: boolean
+          hot_no_activity_mode?: string
+          incremental_overlap_minutes?: number
+          inquiry_date_field?: string
+          move_in_date_field?: string
+          move_out_date_field?: string
+          organization_id: string
+          stalled_threshold_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          daily_snapshots_state?: string
+          deposit_source?: string
+          exclude_discarded_prospects?: boolean
+          exclude_merged_prospects?: boolean
+          hot_no_activity_mode?: string
+          incremental_overlap_minutes?: number
+          inquiry_date_field?: string
+          move_in_date_field?: string
+          move_out_date_field?: string
+          organization_id?: string
+          stalled_threshold_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_source_communities: {
+        Row: {
+          connection_id: string
+          created_at: string
+          discovered_at: string
+          id: string
+          name: string | null
+          organization_id: string
+          payload: Json
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          discovered_at?: string
+          id?: string
+          name?: string | null
+          organization_id: string
+          payload?: Json
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          discovered_at?: string
+          id?: string
+          name?: string | null
+          organization_id?: string
+          payload?: Json
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_source_communities_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_source_communities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_sync_state: {
+        Row: {
+          connection_id: string
+          created_at: string
+          duration_ms: number | null
+          error_summary: string | null
+          id: string
+          last_attempted_at: string | null
+          last_mode: Database["public"]["Enums"]["wh_sync_mode"] | null
+          last_successful_at: string | null
+          organization_id: string
+          rows_failed: number
+          rows_inserted: number
+          rows_received: number
+          rows_unmapped: number
+          rows_updated: number
+          source_max_updated_at: string | null
+          source_table: string
+          updated_at: string
+          warnings: string[]
+          watermark: string | null
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_mode?: Database["public"]["Enums"]["wh_sync_mode"] | null
+          last_successful_at?: string | null
+          organization_id: string
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          source_table: string
+          updated_at?: string
+          warnings?: string[]
+          watermark?: string | null
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_mode?: Database["public"]["Enums"]["wh_sync_mode"] | null
+          last_successful_at?: string | null
+          organization_id?: string
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          source_table?: string
+          updated_at?: string
+          warnings?: string[]
+          watermark?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_sync_state_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_sync_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_sync_table_runs: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          created_at: string
+          duration_ms: number | null
+          error_summary: string | null
+          id: string
+          mode: Database["public"]["Enums"]["wh_sync_mode"]
+          organization_id: string
+          pages_fetched: number
+          raw_rows_stored: number
+          requested_after: string | null
+          rows_failed: number
+          rows_inserted: number
+          rows_received: number
+          rows_unmapped: number
+          rows_updated: number
+          source_max_updated_at: string | null
+          source_table: string
+          started_at: string
+          status: string
+          sync_run_id: string | null
+          warnings: string[]
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          created_at?: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          mode: Database["public"]["Enums"]["wh_sync_mode"]
+          organization_id: string
+          pages_fetched?: number
+          raw_rows_stored?: number
+          requested_after?: string | null
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          source_table: string
+          started_at?: string
+          status?: string
+          sync_run_id?: string | null
+          warnings?: string[]
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["wh_sync_mode"]
+          organization_id?: string
+          pages_fetched?: number
+          raw_rows_stored?: number
+          requested_after?: string | null
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          source_table?: string
+          started_at?: string
+          status?: string
+          sync_run_id?: string | null
+          warnings?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_sync_table_runs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_sync_table_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_sync_table_runs_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "source_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_units: {
+        Row: {
+          care_type_id_source: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          discarded_at: string | null
+          floor: string | null
+          floor_plan_id: string | null
+          id: string
+          ingested_at: string
+          market_rate: number | null
+          metadata: Json
+          occupancy_point_factor: number | null
+          off_census: boolean | null
+          organization_id: string
+          privacy_level_id: string | null
+          raw_record_id: string | null
+          source_community_id: string | null
+          source_id: string
+          square_feet: number | null
+          status: string | null
+          unit_name: string | null
+          unit_number: string | null
+          updated_at: string
+          updated_at_source: string | null
+        }
+        Insert: {
+          care_type_id_source?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          discarded_at?: string | null
+          floor?: string | null
+          floor_plan_id?: string | null
+          id?: string
+          ingested_at?: string
+          market_rate?: number | null
+          metadata?: Json
+          occupancy_point_factor?: number | null
+          off_census?: boolean | null
+          organization_id: string
+          privacy_level_id?: string | null
+          raw_record_id?: string | null
+          source_community_id?: string | null
+          source_id: string
+          square_feet?: number | null
+          status?: string | null
+          unit_name?: string | null
+          unit_number?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Update: {
+          care_type_id_source?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          discarded_at?: string | null
+          floor?: string | null
+          floor_plan_id?: string | null
+          id?: string
+          ingested_at?: string
+          market_rate?: number | null
+          metadata?: Json
+          occupancy_point_factor?: number | null
+          off_census?: boolean | null
+          organization_id?: string
+          privacy_level_id?: string | null
+          raw_record_id?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          square_feet?: number | null
+          status?: string | null
+          unit_name?: string | null
+          unit_number?: string | null
+          updated_at?: string
+          updated_at_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_units_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_units_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_units_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1987,6 +3109,17 @@ export type Database = {
         | "mismatch"
         | "approved"
         | "needs_review"
+      wh_activity_category:
+        | "tour"
+        | "re_tour"
+        | "call"
+        | "email"
+        | "outreach"
+        | "appointment"
+        | "other"
+        | "unmapped"
+      wh_score_level: "hot" | "warm" | "cold" | "unknown"
+      wh_sync_mode: "full" | "incremental"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2172,6 +3305,18 @@ export const Constants = {
         "approved",
         "needs_review",
       ],
+      wh_activity_category: [
+        "tour",
+        "re_tour",
+        "call",
+        "email",
+        "outreach",
+        "appointment",
+        "other",
+        "unmapped",
+      ],
+      wh_score_level: ["hot", "warm", "cold", "unknown"],
+      wh_sync_mode: ["full", "incremental"],
     },
   },
 } as const
