@@ -17,7 +17,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { WH_ALL_TABLES, WH_CORE_TABLES, type WhTable } from "./tables";
+import { WH_ALL_TABLES, WH_CORE_TABLES, WH_LOOKUP_SOURCE, type WhTable } from "./tables";
 
 const connectionInput = z.object({ connectionId: z.string().uuid() });
 
