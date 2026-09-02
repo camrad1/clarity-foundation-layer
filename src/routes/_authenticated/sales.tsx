@@ -273,13 +273,15 @@ function SalesIntelligence() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="funnel">Funnel</TabsTrigger>
-          <TabsTrigger value="pipeline">Pipeline health</TabsTrigger>
-          <TabsTrigger value="counselors">Counselors</TabsTrigger>
-          <TabsTrigger value="sources">Lead sources</TabsTrigger>
-          <TabsTrigger value="occupancy">Current occupancy</TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <TabsList>
+            <TabsTrigger value="funnel">Funnel</TabsTrigger>
+            <TabsTrigger value="pipeline">Pipeline health</TabsTrigger>
+            <TabsTrigger value="counselors">Counselors</TabsTrigger>
+            <TabsTrigger value="sources">Lead sources</TabsTrigger>
+            <TabsTrigger value="occupancy">Current occupancy</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* ---------------------------------------------------------------- Funnel */}
         <TabsContent value="funnel" className="space-y-8 pt-6">
