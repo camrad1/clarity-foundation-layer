@@ -110,31 +110,31 @@ function SalesIntelligence() {
     );
   }
 
-  const inquiries = candidate(s.inquiries, `Provisional: ${s.settings.inquiry_date_field}, community-local date.`);
+  const inquiries = candidate(s.inquiries, "Countable prospects whose WelcomeHome active date falls in the selected period.");
   const tours = s.mappings.tour
     ? candidate(
         s.tours,
-        `Provisional V-002: tour activities completed in the period whose WelcomeHome activity result is flagged successful. ${s.tourRecon.totalTourActivities} total tour activities, ${s.tourRecon.unsuccessfulTours} unsuccessful.`,
+        `Successful WelcomeHome tour activities completed in the selected period. ${s.tourRecon.totalTourActivities} total tour activities, ${s.tourRecon.unsuccessfulTours} unsuccessful.`,
       )
     : withheld("No WelcomeHome activity type is mapped to Tour yet.");
   const reTours = s.mappings.tour
     ? candidate(
         s.tourRecon.repeatTours,
-        "Provisional V-002: successful tours that are not the prospect's first completed tour (WelcomeHome first_completed_of_activity_type = false).",
+        "Successful repeat tours completed in the selected period.",
       )
     : withheld("Requires an activity type mapped to Tour.");
   const deposits = candidate(
     s.deposits,
-    "Provisional V-003: distinct depositors with a standard deposit (transaction_type = Deposit, deposit_type = Deposit) dated in the period. Refunds, waitlist deposits and zero-amount adjustment rows are excluded, and a depositor is never counted twice.",
+    "API-derived standard deposits. Known WelcomeHome reporting limitation documented in Validation Center.",
   );
 
   const moveIns = candidate(
     s.moveIns,
-    `Provisional V-004: count_move_in with ${s.settings.move_in_date_field}, excluding canceled leases. Transfer Ins are not counted.`,
+    "Counted move-ins based on financial move-in date, excluding canceled leases.",
   );
   const moveOuts = candidate(
     s.moveOuts,
-    `Provisional V-004: count_move_out with ${s.settings.move_out_date_field}, excluding canceled leases. Transfer Outs are not counted.`,
+    "Counted move-outs based on financial move-out date, excluding canceled leases.",
   );
   const net = candidate(s.moveIns - s.moveOuts, "Move-ins minus move-outs for the selected period.");
 
@@ -168,13 +168,13 @@ function SalesIntelligence() {
 
         <TabsContent value="funnel" className="space-y-6 pt-6">
           <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
-            <CandidateMetricCard label="New inquiries" candidate={inquiries} />
-            <CandidateMetricCard label="Completed tours" candidate={tours} />
-            <CandidateMetricCard label="Re-tours" candidate={reTours} />
+            <CandidateMetricCard label="New inquiries" candidate={inquiries} provisional={false} />
+            <CandidateMetricCard label="Completed tours" candidate={tours} provisional={false} />
+            <CandidateMetricCard label="Re-tours" candidate={reTours} provisional={false} />
             <CandidateMetricCard label="Deposits" candidate={deposits} />
-            <CandidateMetricCard label="Move-ins" candidate={moveIns} />
-            <CandidateMetricCard label="Move-outs" candidate={moveOuts} />
-            <CandidateMetricCard label="Net move-ins" candidate={net} />
+            <CandidateMetricCard label="Move-ins" candidate={moveIns} provisional={false} />
+            <CandidateMetricCard label="Move-outs" candidate={moveOuts} provisional={false} />
+            <CandidateMetricCard label="Net move-ins" candidate={net} provisional={false} />
             <div className="panel space-y-1 p-5">
               <p className="eyebrow">Pending move-ins / outs</p>
               <p className="font-display text-2xl font-semibold">
@@ -242,8 +242,8 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Tour reconciliation</h3>
               <p className="text-xs text-muted-foreground">
-                Candidate (V-002, provisional): tour activities completed in the period whose
-                WelcomeHome activity result is flagged successful.
+                Successful tours are tour activities completed in the period whose WelcomeHome
+                activity result is flagged successful.
               </p>
               <ul className="text-sm text-muted-foreground">
                 <li className="text-foreground">Successful tours (KPI): {s.tourRecon.successfulTours}</li>
@@ -264,9 +264,10 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Deposit and move-in reconciliation</h3>
               <p className="text-xs text-muted-foreground">
-                Candidate (V-003, provisional): distinct depositors with a standard deposit dated in
-                the selected period, matching WelcomeHome's Depositor List rather than a count of
-                transaction rows.
+                Deposits (provisional): distinct depositors with a standard deposit dated in the
+                selected period, matching WelcomeHome's Depositor List rather than a count of
+                transaction rows. A known WelcomeHome reporting limitation is documented in
+                Validation Center.
               </p>
               <ul className="text-sm text-muted-foreground">
                 <li>Counted depositors: {s.depositRecon.depositors}</li>
@@ -395,7 +396,7 @@ function SalesIntelligence() {
               WelcomeHome-equivalent rounded display. The denominator counts census-eligible
               residential units only; non-residential pseudo-units such as WAITLIST are excluded by
               a configurable rule, never by a community-specific override. Occupancy as of a past
-              date is not published: no historical-state source is available yet (V-005).
+              date is not published: no historical-state source is available yet.
             </p>
           </WithheldPanel>
           <UnitCensusDiagnostic />
