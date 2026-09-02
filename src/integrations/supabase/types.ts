@@ -3227,6 +3227,33 @@ export type Database = {
         }
         Returns: Json
       }
+      wh_successful_result_labels: {
+        Args: { _org_id: string }
+        Returns: string[]
+      }
+      wh_tour_page: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _mode?: string
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          activity_type_label: string
+          community_id: string
+          completed_local_date: string
+          first_completed_of_type: boolean
+          id: string
+          prospect_source_id: string
+          result_label: string
+          source_id: string
+          successful: boolean
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       app_role:
