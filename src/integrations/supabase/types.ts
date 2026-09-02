@@ -3227,6 +3227,7 @@ export type Database = {
         }
         Returns: Json
       }
+      wh_successful_result_ids: { Args: { _org_id: string }; Returns: string[] }
       wh_successful_result_labels: {
         Args: { _org_id: string }
         Returns: string[]
