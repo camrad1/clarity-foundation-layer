@@ -3226,6 +3226,27 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      wh_move_in_page: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _mode?: string
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          community_id: string
+          financial_move_in_date: string
+          id: string
+          prospect_source_id: string
+          source_id: string
+          status: string
+          total_count: number
+          unit_source_id: string
+        }[]
+      }
       wh_norm_unit_label: { Args: { _v: string }; Returns: string }
       wh_prospect_page: {
         Args: {
