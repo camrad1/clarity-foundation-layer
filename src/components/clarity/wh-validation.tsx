@@ -72,9 +72,9 @@ export function WhValidationQueue() {
       },
       {
         id: "V-005",
-        question: "How is occupancy defined against census units?",
+        question: "How is occupancy defined against census units? (current state only)",
         choice:
-          "Census-eligible residential units only — excludes off-census flags, discarded/inactive units and recognized non-residential pseudo-units (WAITLIST)",
+          "Current-state census-eligible residential units only — excludes off-census flags, discarded/inactive units and recognized non-residential pseudo-units (WAITLIST)",
         candidate: `${occ.occupiedUnitsCandidate} of ${occ.censusUnits} census-eligible units (${
           occ.censusUnits
             ? `${((occ.occupiedUnitsCandidate / occ.censusUnits) * 100).toFixed(1)}% raw / ${Math.round(
@@ -84,8 +84,9 @@ export function WhValidationQueue() {
         }); ${occ.totalUnits} total unit records, ${occ.offCensusUnits} off-census, ${occ.pseudoUnits} pseudo-unit, ${occ.inactiveUnits} inactive`,
         state: "pending",
         detail:
-          "PROVISIONAL — denominator matched to WelcomeHome for The Esther, Aug 2026 (census 103 of 104 unit records; the WAITLIST pseudo-unit is excluded by a configurable rule, never by a community-specific override). Occupied-unit derivation from housing contracts is still being reconciled against operational census, so no occupancy KPI is published.",
+          "CURRENT OCCUPANCY FORMULA RECONCILED for The Esther (92 of 103 census-eligible units = 89.3% raw / 89% rounded; census 103 of 104 unit records, the WAITLIST pseudo-unit excluded by a configurable rule, never a community-specific override). These components describe current source state and are NOT affected by the selected date range. HISTORICAL OCCUPANCY AS-OF DATE IS UNAVAILABLE: no historical-state source exists until WelcomeHome Daily Snapshots are enabled and validated, so historical wh.occupancy_pct stays unpublished and is never reconstructed from present-state rows.",
       },
+
 
       {
         id: "V-006",
