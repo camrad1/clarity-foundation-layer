@@ -10,6 +10,7 @@ import { ratio } from "@/lib/wh/metrics";
 import {
   candidate,
   useWhDepositPage,
+  useWhMoveInPage,
   useWhTourPage,
   useWhProspectPage,
   useWhSalesSummary,
@@ -289,6 +290,9 @@ function SalesIntelligence() {
           <TourDrillThrough />
 
           <DepositDrillThrough />
+
+          <MoveInDrillThrough />
+
 
         </TabsContent>
 
