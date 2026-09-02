@@ -227,16 +227,23 @@ function FlashReportPage() {
     occupied != null && budgetUnits ? occupied / budgetUnits : (data?.budget?.pct ?? null) != null && occPct != null ? occPct : null;
 
   const exportGrid = () => {
+    const careTypes = careTypeColumns(occ);
     const header = [
-      "Week", "Date range", "Total units", "Unit occupancy", "Unit budget", "Variance",
-      "OCC %", "Budget %", "MI", "MO", "Net", "Pending MI", "Pending MO",
-      "Inquiries", "Outreach", "Tours", "Re-Tours",
+      "Week / Date", "Date range", "Total Units", "Unit Occ", "Unit Budget", "Variance",
+      "OCC %", "Budget %", ...careTypes,
+      "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "NET",
+      "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
+    ];
+    const starting = [
+      "Starting #", "", ...Array(6 + careTypes.length).fill("snapshot required"),
+      ...Array(10).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
-      gridRow(w, occ?.totalUnits ?? null),
+      gridRow(w, occ?.totalUnits ?? null, careTypes),
     );
-    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [header, ...rowsOut]);
+    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [header, starting, ...rowsOut]);
   };
+
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading Flash context…</p>;
