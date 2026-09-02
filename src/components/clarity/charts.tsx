@@ -209,9 +209,9 @@ export function HorizontalBarChart({
   labelWidth = 150,
 }: {
   data: BarDatum[];
-  color?: string;
-  valueLabel?: string;
-  labelWidth?: number;
+  color?: string | undefined;
+  valueLabel?: string | undefined;
+  labelWidth?: number | undefined;
 }) {
   return (
     <ResponsiveContainer width="100%" height="100%">

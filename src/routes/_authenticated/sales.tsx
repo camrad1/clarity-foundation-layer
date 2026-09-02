@@ -684,8 +684,8 @@ function KpiCard({
   value: number | null;
   display?: string;
   note: string;
-  compare?: { previous: number; label: string };
-  invertDelta?: boolean;
+  compare?: { previous: number; label: string } | undefined;
+  invertDelta?: boolean | undefined;
 }) {
   const delta = compare && value != null ? value - compare.previous : null;
   const good = delta == null || delta === 0 ? null : invertDelta ? delta < 0 : delta > 0;
@@ -862,7 +862,7 @@ function CounselorChart({
   description: string;
   rows: BarDatum[];
   valueLabel: string;
-  color?: string;
+  color?: string | undefined;
 }) {
   const data = topN(rows, 8);
   return (
