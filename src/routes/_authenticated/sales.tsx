@@ -245,7 +245,10 @@ function SalesIntelligence() {
             </div>
 
           </section>
+
+          <DepositDrillThrough />
         </TabsContent>
+
 
         <TabsContent value="pipeline" className="space-y-6 pt-6">
           <section className="grid gap-4 md:grid-cols-4">
