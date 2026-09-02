@@ -124,12 +124,19 @@ function SalesIntelligence() {
     : withheld("Requires an activity type mapped to Tour.");
   const deposits = candidate(
     s.deposits,
-    "Provisional V-003: transaction_type = Deposit and deposit_type = Deposit. Refunds, waitlist deposits and other deposit types are excluded.",
+    "Provisional V-003: distinct depositors with a standard deposit (transaction_type = Deposit, deposit_type = Deposit) dated in the period. Refunds, waitlist deposits and zero-amount adjustment rows are excluded, and a depositor is never counted twice.",
   );
 
-  const moveIns = candidate(s.moveIns, `Provisional: count_move_in with ${s.settings.move_in_date_field}.`);
-  const moveOuts = candidate(s.moveOuts, `Provisional: count_move_out with ${s.settings.move_out_date_field}.`);
+  const moveIns = candidate(
+    s.moveIns,
+    `Provisional V-004: count_move_in with ${s.settings.move_in_date_field}, excluding canceled leases. Transfer Ins are not counted.`,
+  );
+  const moveOuts = candidate(
+    s.moveOuts,
+    `Provisional V-004: count_move_out with ${s.settings.move_out_date_field}, excluding canceled leases. Transfer Outs are not counted.`,
+  );
   const net = candidate(s.moveIns - s.moveOuts, "Move-ins minus move-outs for the selected period.");
+
   const hot = s.mappings.hot
     ? candidate(s.hot, "Open prospects whose score is mapped to Hot.")
     : withheld("No WelcomeHome score is mapped to Hot yet.");
