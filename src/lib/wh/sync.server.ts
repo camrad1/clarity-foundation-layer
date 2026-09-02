@@ -177,45 +177,43 @@ async function syncLookupTable(
   try {
     // Lookups are always refreshed in full: they are small and label changes
     // must never be missed by a watermark.
-    const scopes = args.targets.length ? args.targets : [];
+    const transport = WH_LOOKUP_SOURCE[args.table].kind;
+    // JSON lookups are account-wide, so they are fetched once, not per
+    // community. Only the Referrers export is community-scoped.
+    const scopes: (CommunityTarget | null)[] =
+      transport === "json" ? [null] : args.targets.length ? args.targets : [];
+
     for (const scope of scopes) {
-      let page = 1;
-      for (;;) {
-        const { records } = await whExportPage(auth, {
-          table: args.table,
-          communitySourceId: scope.sourceCommunityId,
-          page,
-          perPage: WH_MAX_PAGE_SIZE,
-        });
-        result.pagesFetched += 1;
-        result.rowsReceived += records.length;
-        for (const rec of records) {
-          const id = sourceId(rec);
-          if (!id) {
-            result.rowsFailed += 1;
-            continue;
-          }
-          const key = `${args.table}:${id}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          batch.push({
-            organization_id: args.organizationId,
-            connection_id: args.connectionId,
-            lookup_type: WH_LOOKUP_KEY[args.table],
-            source_id: id,
-            label:
-              rec["name"] ??
-              rec["label"] ??
-              rec["title"] ??
-              rec["full_name"] ??
-              rec["description"] ??
-              null,
-            source_community_id: scope.sourceCommunityId,
-            payload: rec,
-          });
+      const { records, pages } = await whLookup(auth, args.table, scope?.sourceCommunityId ?? null);
+      result.pagesFetched += pages;
+      result.rowsReceived += records.length;
+      for (const raw of records) {
+        // Referrers rows are people; keep only the non-identifying columns.
+        const rec: Rec =
+          args.table === "Referrers"
+            ? Object.fromEntries(
+                (WH_REFERRER_SAFE_FIELDS as readonly string[])
+                  .filter((k) => raw[k] !== undefined)
+                  .map((k) => [k, raw[k]!]),
+              )
+            : stripPii(raw);
+        const id = sourceId(rec) ?? rec["referrers_id"] ?? null;
+        if (!id) {
+          result.rowsFailed += 1;
+          continue;
         }
-        if (records.length < WH_MAX_PAGE_SIZE || page >= MAX_PAGES) break;
-        page += 1;
+        const key = `${args.table}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        batch.push({
+          organization_id: args.organizationId,
+          connection_id: args.connectionId,
+          lookup_type: WH_LOOKUP_KEY[args.table],
+          source_id: id,
+          label: rec["name"] ?? rec["label"] ?? rec["title"] ?? rec["scores_name"] ?? null,
+          source_community_id: scope?.sourceCommunityId ?? null,
+          payload: rec,
+        });
       }
     }
 
@@ -237,14 +235,18 @@ async function syncLookupTable(
       result.rowsUpdated += updated;
       result.rowsInserted += ids.length - updated;
     }
-    if (result.rowsFailed > 0) result.status = "partial";
   } catch (err) {
-    result.status = "failed";
-    result.error = safeError(err);
+    const message = safeError(err);
+    // A 404 means WelcomeHome does not serve this dataset at all — a permanent
+    // capability gap, not a transient sync error.
+    result.status = /\(404\)|not exposed/.test(message) ? "unsupported" : "failed";
+    result.error = message;
   }
+  result.status = classify(result);
   result.durationMs = Date.now() - started;
   return result;
 }
+
 
 async function syncCoreTable(
   admin: Admin,
