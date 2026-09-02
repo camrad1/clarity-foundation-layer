@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useOrgRole } from "@/lib/clarity-queries";
-import { useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
+import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 import {
   useDeleteFlashBudget,
   useDeleteFlashEntry,
@@ -534,10 +534,10 @@ function FlashReportPage() {
               empty={<EmptyState title="No hot leads" description="No open prospects mapped to the Hot score." />}
               columns={[
                 { key: "ref", header: "Hot lead reference", render: (r) => r.source_id },
-                { key: "stage", header: "Stage", render: (r) => labels.stage[r.stage ?? ""] ?? r.stage ?? "—" },
+                { key: "stage", header: "Stage", render: (r) => resolveLabel(labels.stage, r.stage, "—") },
                 { key: "next", header: "Next activity", render: (r) => (r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toLocaleDateString() : "—") },
                 { key: "last", header: "Last contact", render: (r) => (r.last_contact_at ? new Date(r.last_contact_at).toLocaleDateString() : "—") },
-                { key: "cnsl", header: "Counselor", render: (r) => labels.user[r.counselor ?? ""] ?? r.counselor ?? "—" },
+                { key: "cnsl", header: "Counselor", render: (r) => resolveLabel(labels.user, r.counselor, "—") },
                 {
                   key: "notes",
                   header: "Notes & updates",

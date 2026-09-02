@@ -36,7 +36,7 @@ import {
   type WhProspectBucket,
 } from "@/lib/wh/summary";
 
-import { useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
+import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -533,7 +533,7 @@ function SalesIntelligence() {
             >
               <HorizontalBarChart
                 data={s.stageDistribution.map((r) => ({
-                  label: labels.stage[r.id] ?? r.id,
+                  label: resolveLabel(labels.stage, r.id, "Unknown stage"),
                   value: r.n,
                 }))}
                 valueLabel="Open prospects"
@@ -581,20 +581,20 @@ function SalesIntelligence() {
             <CounselorChart
               title="Counselor activity"
               description="Completed activities in the selected period."
-              rows={s.counselors.map((c) => ({ label: labels.user[c.id] ?? c.id, value: c.activities }))}
+              rows={s.counselors.map((c) => ({ label: resolveLabel(labels.user, c.id, "Unknown counselor"), value: c.activities }))}
               valueLabel="Activities"
             />
             <CounselorChart
               title="Tours by counselor"
               description="Successful tour activities in the selected period."
-              rows={s.counselors.map((c) => ({ label: labels.user[c.id] ?? c.id, value: c.tours }))}
+              rows={s.counselors.map((c) => ({ label: resolveLabel(labels.user, c.id, "Unknown counselor"), value: c.tours }))}
               valueLabel="Tours"
               color={CHART_TOKENS.secondary}
             />
             <CounselorChart
               title="Move-ins by counselor"
               description="Counted move-ins attributed by contract sales counselor."
-              rows={s.counselors.map((c) => ({ label: labels.user[c.id] ?? c.id, value: c.moveIns }))}
+              rows={s.counselors.map((c) => ({ label: resolveLabel(labels.user, c.id, "Unknown counselor"), value: c.moveIns }))}
               valueLabel="Move-ins"
               color={CHART_TOKENS.tertiary}
             />
@@ -603,7 +603,7 @@ function SalesIntelligence() {
             <h2 className="text-sm font-semibold">All counselors</h2>
             <DataTable
               columns={[
-                { key: "user", header: "Counselor", render: (r: any) => labels.user[r.id] ?? r.id },
+                { key: "user", header: "Counselor", render: (r: any) => resolveLabel(labels.user, r.id, "Unknown counselor") },
                 { key: "act", header: "Activities", align: "right", render: (r: any) => r.activities },
                 { key: "tours", header: "Tours", align: "right", render: (r: any) => r.tours },
                 { key: "mi", header: "Move-ins", align: "right", render: (r: any) => r.moveIns },
@@ -626,7 +626,7 @@ function SalesIntelligence() {
             >
               <HorizontalBarChart
                 data={topN(
-                  s.leadSources.map((r) => ({ label: labels.leadSource[r.id] ?? r.id, value: r.inquiries })),
+                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.inquiries })),
                   10,
                 )}
                 valueLabel="Inquiries"
@@ -640,7 +640,7 @@ function SalesIntelligence() {
             >
               <HorizontalBarChart
                 data={topN(
-                  s.leadSources.map((r) => ({ label: labels.leadSource[r.id] ?? r.id, value: r.moveIns })),
+                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.moveIns })),
                   10,
                 )}
                 valueLabel="Move-ins"
@@ -651,7 +651,7 @@ function SalesIntelligence() {
 
           <LeadSourceRatioCard
             rows={s.leadSources.map((r) => ({
-              label: labels.leadSource[r.id] ?? r.id,
+              label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
               moveIns: r.moveIns,
             }))}
@@ -661,7 +661,7 @@ function SalesIntelligence() {
             <h2 className="text-sm font-semibold">All lead sources</h2>
             <DataTable
               columns={[
-                { key: "src", header: "Lead source", render: (r: any) => labels.leadSource[r.id] ?? r.id },
+                { key: "src", header: "Lead source", render: (r: any) => resolveLabel(labels.leadSource, r.id, "Unknown lead source") },
                 { key: "inq", header: "Inquiries", align: "right", render: (r: any) => r.inquiries },
                 { key: "mi", header: "Move-ins", align: "right", render: (r: any) => r.moveIns },
               ]}
@@ -1070,8 +1070,8 @@ function ProspectDrillThrough() {
         columns={[
           { key: "src", header: "Prospect", render: (p: any) => <code className="text-xs">{p.source_id}</code> },
           { key: "com", header: "Community", render: (p: any) => ctx.communityNames[p.community_id ?? ""] ?? "—" },
-          { key: "stage", header: "Stage", render: (p: any) => labels.stage[p.stage_id ?? ""] ?? "—" },
-          { key: "score", header: "Score", render: (p: any) => labels.score[p.score_id ?? ""] ?? "—" },
+          { key: "stage", header: "Stage", render: (p: any) => resolveLabel(labels.stage, p.stage_id, "—") },
+          { key: "score", header: "Score", render: (p: any) => resolveLabel(labels.score, p.score_id, "—") },
           {
             key: "next",
             header: "Scheduled",
@@ -1080,7 +1080,7 @@ function ProspectDrillThrough() {
           {
             key: "counselor",
             header: "Counselor",
-            render: (p: any) => labels.user[p.current_sales_counselor_id ?? ""] ?? "—",
+            render: (p: any) => resolveLabel(labels.user, p.current_sales_counselor_id, "—"),
           },
         ]}
         rows={(q.data?.rows ?? []) as any[]}
