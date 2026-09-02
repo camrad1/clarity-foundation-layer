@@ -1824,6 +1824,9 @@ export type Database = {
       wh_activities: {
         Row: {
           activity_type_id: string | null
+          activity_type_label: string | null
+          assigned_to_id: string | null
+          auto_performed: boolean | null
           community_id: string | null
           completed_at: string | null
           completed_local_date: string | null
@@ -1831,8 +1834,10 @@ export type Database = {
           connection_id: string
           created_at: string
           created_at_source: string | null
+          created_by_id: string | null
           direction: string | null
           discarded_at: string | null
+          first_completed_of_type: boolean | null
           id: string
           ingested_at: string
           metadata: Json
@@ -1842,18 +1847,23 @@ export type Database = {
           record_id: string | null
           record_type: string | null
           result_id: string | null
+          result_label: string | null
           scheduled_at: string | null
           scheduled_local_date: string | null
           source_community_id: string | null
           source_id: string
           source_timezone: string | null
           stage_id: string | null
+          stage_label: string | null
           updated_at: string
           updated_at_source: string | null
           user_id_source: string | null
         }
         Insert: {
           activity_type_id?: string | null
+          activity_type_label?: string | null
+          assigned_to_id?: string | null
+          auto_performed?: boolean | null
           community_id?: string | null
           completed_at?: string | null
           completed_local_date?: string | null
@@ -1861,8 +1871,10 @@ export type Database = {
           connection_id: string
           created_at?: string
           created_at_source?: string | null
+          created_by_id?: string | null
           direction?: string | null
           discarded_at?: string | null
+          first_completed_of_type?: boolean | null
           id?: string
           ingested_at?: string
           metadata?: Json
@@ -1872,18 +1884,23 @@ export type Database = {
           record_id?: string | null
           record_type?: string | null
           result_id?: string | null
+          result_label?: string | null
           scheduled_at?: string | null
           scheduled_local_date?: string | null
           source_community_id?: string | null
           source_id: string
           source_timezone?: string | null
           stage_id?: string | null
+          stage_label?: string | null
           updated_at?: string
           updated_at_source?: string | null
           user_id_source?: string | null
         }
         Update: {
           activity_type_id?: string | null
+          activity_type_label?: string | null
+          assigned_to_id?: string | null
+          auto_performed?: boolean | null
           community_id?: string | null
           completed_at?: string | null
           completed_local_date?: string | null
@@ -1891,8 +1908,10 @@ export type Database = {
           connection_id?: string
           created_at?: string
           created_at_source?: string | null
+          created_by_id?: string | null
           direction?: string | null
           discarded_at?: string | null
+          first_completed_of_type?: boolean | null
           id?: string
           ingested_at?: string
           metadata?: Json
@@ -1902,12 +1921,14 @@ export type Database = {
           record_id?: string | null
           record_type?: string | null
           result_id?: string | null
+          result_label?: string | null
           scheduled_at?: string | null
           scheduled_local_date?: string | null
           source_community_id?: string | null
           source_id?: string
           source_timezone?: string | null
           stage_id?: string | null
+          stage_label?: string | null
           updated_at?: string
           updated_at_source?: string | null
           user_id_source?: string | null
@@ -1991,10 +2012,12 @@ export type Database = {
           connection_id: string
           created_at: string
           created_at_source: string | null
+          deposit_type_id: string | null
           discarded_at: string | null
           housing_contract_source_id: string | null
           id: string
           ingested_at: string
+          is_refund: boolean | null
           metadata: Json
           occurred_at: string | null
           occurred_local_date: string | null
@@ -2002,6 +2025,7 @@ export type Database = {
           prospect_source_id: string | null
           raw_record_id: string | null
           refunded_at: string | null
+          resident_source_id: string | null
           source_community_id: string | null
           source_id: string
           transaction_type: string | null
@@ -2014,10 +2038,12 @@ export type Database = {
           connection_id: string
           created_at?: string
           created_at_source?: string | null
+          deposit_type_id?: string | null
           discarded_at?: string | null
           housing_contract_source_id?: string | null
           id?: string
           ingested_at?: string
+          is_refund?: boolean | null
           metadata?: Json
           occurred_at?: string | null
           occurred_local_date?: string | null
@@ -2025,6 +2051,7 @@ export type Database = {
           prospect_source_id?: string | null
           raw_record_id?: string | null
           refunded_at?: string | null
+          resident_source_id?: string | null
           source_community_id?: string | null
           source_id: string
           transaction_type?: string | null
@@ -2037,10 +2064,12 @@ export type Database = {
           connection_id?: string
           created_at?: string
           created_at_source?: string | null
+          deposit_type_id?: string | null
           discarded_at?: string | null
           housing_contract_source_id?: string | null
           id?: string
           ingested_at?: string
+          is_refund?: boolean | null
           metadata?: Json
           occurred_at?: string | null
           occurred_local_date?: string | null
@@ -2048,6 +2077,7 @@ export type Database = {
           prospect_source_id?: string | null
           raw_record_id?: string | null
           refunded_at?: string | null
+          resident_source_id?: string | null
           source_community_id?: string | null
           source_id?: string
           transaction_type?: string | null
@@ -2082,7 +2112,9 @@ export type Database = {
         Row: {
           care_rate: number | null
           care_type_id_source: string | null
+          care_type_label: string | null
           community_fee: number | null
+          community_fee_received_on: string | null
           community_id: string | null
           concessions: number | null
           connection_id: string
@@ -2097,26 +2129,37 @@ export type Database = {
           discarded_at: string | null
           financial_move_in_date: string | null
           financial_move_out_date: string | null
+          financial_status: string | null
           id: string
           ingested_at: string
           is_transfer: boolean | null
+          lease_canceled_on: string | null
+          leased_on: string | null
           metadata: Json
           monthly_rate: number | null
           move_in_date: string | null
           move_out_date: string | null
           move_out_reason_id: string | null
+          move_out_reason_label: string | null
           notice_date: string | null
           occupancy_point_factor: number | null
+          one_time_concession: number | null
           organization_id: string
           privacy_level_id: string | null
+          privacy_level_label: string | null
           prospect_source_id: string | null
           raw_record_id: string | null
+          recurring_concession: number | null
+          resident_count: number | null
           resident_source_id: string | null
+          resident_source_ids: string | null
+          risk_level: string | null
           sales_counselor_id: string | null
           source_community_id: string | null
           source_id: string
           status: string | null
           stay_type: string | null
+          unit_number: string | null
           unit_source_id: string | null
           updated_at: string
           updated_at_source: string | null
@@ -2124,7 +2167,9 @@ export type Database = {
         Insert: {
           care_rate?: number | null
           care_type_id_source?: string | null
+          care_type_label?: string | null
           community_fee?: number | null
+          community_fee_received_on?: string | null
           community_id?: string | null
           concessions?: number | null
           connection_id: string
@@ -2139,26 +2184,37 @@ export type Database = {
           discarded_at?: string | null
           financial_move_in_date?: string | null
           financial_move_out_date?: string | null
+          financial_status?: string | null
           id?: string
           ingested_at?: string
           is_transfer?: boolean | null
+          lease_canceled_on?: string | null
+          leased_on?: string | null
           metadata?: Json
           monthly_rate?: number | null
           move_in_date?: string | null
           move_out_date?: string | null
           move_out_reason_id?: string | null
+          move_out_reason_label?: string | null
           notice_date?: string | null
           occupancy_point_factor?: number | null
+          one_time_concession?: number | null
           organization_id: string
           privacy_level_id?: string | null
+          privacy_level_label?: string | null
           prospect_source_id?: string | null
           raw_record_id?: string | null
+          recurring_concession?: number | null
+          resident_count?: number | null
           resident_source_id?: string | null
+          resident_source_ids?: string | null
+          risk_level?: string | null
           sales_counselor_id?: string | null
           source_community_id?: string | null
           source_id: string
           status?: string | null
           stay_type?: string | null
+          unit_number?: string | null
           unit_source_id?: string | null
           updated_at?: string
           updated_at_source?: string | null
@@ -2166,7 +2222,9 @@ export type Database = {
         Update: {
           care_rate?: number | null
           care_type_id_source?: string | null
+          care_type_label?: string | null
           community_fee?: number | null
+          community_fee_received_on?: string | null
           community_id?: string | null
           concessions?: number | null
           connection_id?: string
@@ -2181,26 +2239,37 @@ export type Database = {
           discarded_at?: string | null
           financial_move_in_date?: string | null
           financial_move_out_date?: string | null
+          financial_status?: string | null
           id?: string
           ingested_at?: string
           is_transfer?: boolean | null
+          lease_canceled_on?: string | null
+          leased_on?: string | null
           metadata?: Json
           monthly_rate?: number | null
           move_in_date?: string | null
           move_out_date?: string | null
           move_out_reason_id?: string | null
+          move_out_reason_label?: string | null
           notice_date?: string | null
           occupancy_point_factor?: number | null
+          one_time_concession?: number | null
           organization_id?: string
           privacy_level_id?: string | null
+          privacy_level_label?: string | null
           prospect_source_id?: string | null
           raw_record_id?: string | null
+          recurring_concession?: number | null
+          resident_count?: number | null
           resident_source_id?: string | null
+          resident_source_ids?: string | null
+          risk_level?: string | null
           sales_counselor_id?: string | null
           source_community_id?: string | null
           source_id?: string
           status?: string | null
           stay_type?: string | null
+          unit_number?: string | null
           unit_source_id?: string | null
           updated_at?: string
           updated_at_source?: string | null
@@ -2288,6 +2357,7 @@ export type Database = {
       }
       wh_marketing_touchpoints: {
         Row: {
+          added_by_type: string | null
           campaign_name: string | null
           community_id: string | null
           connection_id: string
@@ -2296,6 +2366,8 @@ export type Database = {
           id: string
           ingested_at: string
           lead_source_id: string | null
+          lead_source_label: string | null
+          locked: boolean | null
           metadata: Json
           occurred_at: string | null
           occurred_local_date: string | null
@@ -2308,6 +2380,7 @@ export type Database = {
           updated_at_source: string | null
         }
         Insert: {
+          added_by_type?: string | null
           campaign_name?: string | null
           community_id?: string | null
           connection_id: string
@@ -2316,6 +2389,8 @@ export type Database = {
           id?: string
           ingested_at?: string
           lead_source_id?: string | null
+          lead_source_label?: string | null
+          locked?: boolean | null
           metadata?: Json
           occurred_at?: string | null
           occurred_local_date?: string | null
@@ -2328,6 +2403,7 @@ export type Database = {
           updated_at_source?: string | null
         }
         Update: {
+          added_by_type?: string | null
           campaign_name?: string | null
           community_id?: string | null
           connection_id?: string
@@ -2336,6 +2412,8 @@ export type Database = {
           id?: string
           ingested_at?: string
           lead_source_id?: string | null
+          lead_source_label?: string | null
+          locked?: boolean | null
           metadata?: Json
           occurred_at?: string | null
           occurred_local_date?: string | null
@@ -2376,6 +2454,7 @@ export type Database = {
           account_id: string | null
           active_at: string | null
           close_reason_id: string | null
+          close_reason_label: string | null
           community_id: string | null
           connection_id: string
           created_at: string
@@ -2383,11 +2462,15 @@ export type Database = {
           current_sales_counselor_id: string | null
           discarded_at: string | null
           expected_move_timing_id: string | null
+          expected_stay_type: string | null
           id: string
           ingested_at: string
           initial_contact_at: string | null
+          inquiry_date: string | null
           last_contact_at: string | null
+          lead_source_category: string | null
           lead_source_id: string | null
+          lead_source_label: string | null
           merged_into_prospect_id: string | null
           metadata: Json
           next_activity_scheduled_at: string | null
@@ -2396,10 +2479,12 @@ export type Database = {
           raw_record_id: string | null
           referrer_id: string | null
           score_id: string | null
+          score_label: string | null
           secondary_lead_source_id: string | null
           source_community_id: string | null
           source_id: string
           stage_id: string | null
+          stage_label: string | null
           status: string | null
           status_changed_at: string | null
           updated_at: string
@@ -2409,6 +2494,7 @@ export type Database = {
           account_id?: string | null
           active_at?: string | null
           close_reason_id?: string | null
+          close_reason_label?: string | null
           community_id?: string | null
           connection_id: string
           created_at?: string
@@ -2416,11 +2502,15 @@ export type Database = {
           current_sales_counselor_id?: string | null
           discarded_at?: string | null
           expected_move_timing_id?: string | null
+          expected_stay_type?: string | null
           id?: string
           ingested_at?: string
           initial_contact_at?: string | null
+          inquiry_date?: string | null
           last_contact_at?: string | null
+          lead_source_category?: string | null
           lead_source_id?: string | null
+          lead_source_label?: string | null
           merged_into_prospect_id?: string | null
           metadata?: Json
           next_activity_scheduled_at?: string | null
@@ -2429,10 +2519,12 @@ export type Database = {
           raw_record_id?: string | null
           referrer_id?: string | null
           score_id?: string | null
+          score_label?: string | null
           secondary_lead_source_id?: string | null
           source_community_id?: string | null
           source_id: string
           stage_id?: string | null
+          stage_label?: string | null
           status?: string | null
           status_changed_at?: string | null
           updated_at?: string
@@ -2442,6 +2534,7 @@ export type Database = {
           account_id?: string | null
           active_at?: string | null
           close_reason_id?: string | null
+          close_reason_label?: string | null
           community_id?: string | null
           connection_id?: string
           created_at?: string
@@ -2449,11 +2542,15 @@ export type Database = {
           current_sales_counselor_id?: string | null
           discarded_at?: string | null
           expected_move_timing_id?: string | null
+          expected_stay_type?: string | null
           id?: string
           ingested_at?: string
           initial_contact_at?: string | null
+          inquiry_date?: string | null
           last_contact_at?: string | null
+          lead_source_category?: string | null
           lead_source_id?: string | null
+          lead_source_label?: string | null
           merged_into_prospect_id?: string | null
           metadata?: Json
           next_activity_scheduled_at?: string | null
@@ -2462,10 +2559,12 @@ export type Database = {
           raw_record_id?: string | null
           referrer_id?: string | null
           score_id?: string | null
+          score_label?: string | null
           secondary_lead_source_id?: string | null
           source_community_id?: string | null
           source_id?: string
           stage_id?: string | null
+          stage_label?: string | null
           status?: string | null
           status_changed_at?: string | null
           updated_at?: string
@@ -2831,6 +2930,7 @@ export type Database = {
       wh_units: {
         Row: {
           care_type_id_source: string | null
+          care_type_label: string | null
           community_id: string | null
           connection_id: string
           created_at: string
@@ -2838,6 +2938,8 @@ export type Database = {
           discarded_at: string | null
           floor: string | null
           floor_plan_id: string | null
+          floor_plan_label: string | null
+          floor_plan_occupancy_points: number | null
           id: string
           ingested_at: string
           market_rate: number | null
@@ -2858,6 +2960,7 @@ export type Database = {
         }
         Insert: {
           care_type_id_source?: string | null
+          care_type_label?: string | null
           community_id?: string | null
           connection_id: string
           created_at?: string
@@ -2865,6 +2968,8 @@ export type Database = {
           discarded_at?: string | null
           floor?: string | null
           floor_plan_id?: string | null
+          floor_plan_label?: string | null
+          floor_plan_occupancy_points?: number | null
           id?: string
           ingested_at?: string
           market_rate?: number | null
@@ -2885,6 +2990,7 @@ export type Database = {
         }
         Update: {
           care_type_id_source?: string | null
+          care_type_label?: string | null
           community_id?: string | null
           connection_id?: string
           created_at?: string
@@ -2892,6 +2998,8 @@ export type Database = {
           discarded_at?: string | null
           floor?: string | null
           floor_plan_id?: string | null
+          floor_plan_label?: string | null
+          floor_plan_occupancy_points?: number | null
           id?: string
           ingested_at?: string
           market_rate?: number | null
@@ -3101,7 +3209,12 @@ export type Database = {
         | "competitor"
         | "other"
       query_match_type: "exact_phrase" | "contains" | "starts_with" | "regex"
-      sync_run_status: "running" | "success" | "partial" | "failed"
+      sync_run_status:
+        | "running"
+        | "success"
+        | "partial"
+        | "failed"
+        | "unsupported"
       url_match_type: "exact_url" | "url_contains" | "path_prefix" | "regex"
       validation_check_status:
         | "pending"
@@ -3296,7 +3409,13 @@ export const Constants = {
         "other",
       ],
       query_match_type: ["exact_phrase", "contains", "starts_with", "regex"],
-      sync_run_status: ["running", "success", "partial", "failed"],
+      sync_run_status: [
+        "running",
+        "success",
+        "partial",
+        "failed",
+        "unsupported",
+      ],
       url_match_type: ["exact_url", "url_contains", "path_prefix", "regex"],
       validation_check_status: [
         "pending",

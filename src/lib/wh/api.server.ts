@@ -10,7 +10,13 @@
  * WelcomeHome is read-only for ClarityIQ. Only GET requests are issued.
  */
 
-import { WH_API_BASE, WH_MAX_PAGE_SIZE, type WhTable } from "./tables";
+import {
+  WH_API_BASE,
+  WH_LOOKUP_SOURCE,
+  WH_MAX_PAGES,
+  type WhLookupTable,
+  type WhTable,
+} from "./tables";
 import { csvToRecords } from "./csv.server";
 
 export type WhAuth = { token: string };
@@ -28,11 +34,25 @@ export function safeError(err: unknown): string {
   return raw.replace(/Token\s+token=[^\s,;]+/gi, "Token token=[redacted]").slice(0, 500);
 }
 
+async function getUrl(auth: WhAuth, url: string | URL) {
+  return fetch(url, { method: "GET", headers: authHeaders(auth), redirect: "follow" });
+}
+
 async function get(auth: WhAuth, path: string, params?: Record<string, string>) {
   const url = new URL(`${WH_API_BASE}${path}`);
   for (const [k, v] of Object.entries(params ?? {})) url.searchParams.set(k, v);
-  const res = await fetch(url, { method: "GET", headers: authHeaders(auth), redirect: "follow" });
-  return res;
+  return getUrl(auth, url);
+}
+
+/**
+ * Reads the cursor for the next export page out of the RFC5988 `Link` header.
+ * WelcomeHome ignores page/per_page — this header is the only way to advance.
+ */
+export function nextPageUrl(res: Response): string | null {
+  const link = res.headers.get("link");
+  if (!link) return null;
+  const match = /<([^>]+)>\s*;\s*rel="next"/i.exec(link);
+  return match ? match[1]! : null;
 }
 
 /** GET /api/ping — connection test. Returns success plus a safe message. */
@@ -76,56 +96,113 @@ export async function whCommunities(auth: WhAuth): Promise<WhCommunity[]> {
     .filter((c) => c.source_id !== "");
 }
 
-export type WhPage = { records: Record<string, string>[]; count: number };
+export type WhPage = { records: Record<string, string>[]; nextUrl: string | null };
+
+function exportPath(table: WhTable, communitySourceId: string | null): string {
+  return communitySourceId
+    ? `/exports/community/${encodeURIComponent(communitySourceId)}/table/${table}`
+    : `/exports/table/${table}`;
+}
 
 /**
- * GET /exports/community/{community_id}/table/{table}
+ * Fetches ONE export page and returns the cursor URL for the next one.
  *
- * Pagination uses page/per_page with the maximum safe page size to minimize
- * API calls. `updatedAfter` maps to filters[updated_at_after] for incremental
- * synchronization.
+ * `updatedAfter` still maps to filters[updated_at_after] when a caller supplies
+ * it, but the exports carry no updated_at column, so callers cannot derive a
+ * watermark from the response (see WH_INCREMENTAL_TABLES).
  */
 export async function whExportPage(
   auth: WhAuth,
   opts: {
     table: WhTable;
     communitySourceId: string | null;
-    page: number;
-    perPage?: number;
+    cursorUrl?: string | null;
     updatedAfter?: string | null;
   },
 ): Promise<WhPage> {
-  const perPage = Math.min(opts.perPage ?? WH_MAX_PAGE_SIZE, WH_MAX_PAGE_SIZE);
-  const path = opts.communitySourceId
-    ? `/exports/community/${encodeURIComponent(opts.communitySourceId)}/table/${opts.table}`
-    : `/exports/table/${opts.table}`;
-  const params: Record<string, string> = {
-    page: String(opts.page),
-    per_page: String(perPage),
-  };
-  if (opts.updatedAfter) params["filters[updated_at_after]"] = opts.updatedAfter;
-
-  const res = await get(auth, path, params);
+  let res: Response;
+  if (opts.cursorUrl) {
+    res = await getUrl(auth, opts.cursorUrl);
+  } else {
+    const params: Record<string, string> = {};
+    if (opts.updatedAfter) params["filters[updated_at_after]"] = opts.updatedAfter;
+    res = await get(auth, exportPath(opts.table, opts.communitySourceId), params);
+  }
   if (res.status === 401 || res.status === 403) {
     throw new Error(`${opts.table}: unauthorized for this community`);
   }
+  if (res.status === 404) {
+    throw new Error(`${opts.table}: not exposed as an export table (404)`);
+  }
   if (!res.ok) throw new Error(`${opts.table}: export request failed (${res.status})`);
+
   const text = await res.text();
   const contentType = res.headers.get("content-type") ?? "";
+  let records: Record<string, string>[];
   if (contentType.includes("application/json")) {
     const json = JSON.parse(text);
     const rows: Record<string, unknown>[] = Array.isArray(json) ? json : (json.data ?? []);
-    const records = rows.map((r) => {
-      const flat: Record<string, string> = {};
-      for (const [k, v] of Object.entries(r)) {
-        flat[k] = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
-      }
-      return flat;
-    });
-    return { records, count: records.length };
+    records = rows.map(flatten);
+  } else {
+    records = csvToRecords(text);
   }
-  const records = csvToRecords(text);
-  return { records, count: records.length };
+  return { records, nextUrl: nextPageUrl(res) };
+}
+
+/** Walks every export page for a table by following the Link cursor. */
+export async function whExportAll(
+  auth: WhAuth,
+  opts: { table: WhTable; communitySourceId: string | null; updatedAfter?: string | null },
+): Promise<{ records: Record<string, string>[]; pages: number; truncated: boolean }> {
+  const records: Record<string, string>[] = [];
+  let cursorUrl: string | null = null;
+  let pages = 0;
+  for (;;) {
+    const page: WhPage = await whExportPage(auth, { ...opts, cursorUrl });
+    pages += 1;
+    records.push(...page.records);
+    if (!page.nextUrl || page.records.length === 0) {
+      return { records, pages, truncated: false };
+    }
+    if (pages >= WH_MAX_PAGES) return { records, pages, truncated: true };
+    cursorUrl = page.nextUrl;
+  }
+}
+
+function flatten(r: Record<string, unknown>): Record<string, string> {
+  const flat: Record<string, string> = {};
+  for (const [k, v] of Object.entries(r)) {
+    flat[k] = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+  }
+  return flat;
+}
+
+/**
+ * Fetches a lookup dimension from whichever transport WelcomeHome actually
+ * serves it on. JSON lookups are account-wide top-level endpoints; only
+ * Referrers is a per-community CSV export.
+ */
+export async function whLookup(
+  auth: WhAuth,
+  table: WhLookupTable,
+  communitySourceId: string | null,
+): Promise<{ records: Record<string, string>[]; pages: number; transport: "json" | "export" }> {
+  const source = WH_LOOKUP_SOURCE[table];
+  if (source.kind === "export") {
+    const { records, pages } = await whExportAll(auth, {
+      table,
+      communitySourceId,
+    });
+    return { records, pages, transport: "export" };
+  }
+  const res = await get(auth, `/${source.path}`);
+  if (res.status === 401 || res.status === 403) {
+    throw new Error(`${table}: unauthorized (${res.status})`);
+  }
+  if (!res.ok) throw new Error(`${table}: lookup request failed (${res.status})`);
+  const json = JSON.parse(await res.text());
+  const rows: Record<string, unknown>[] = Array.isArray(json) ? json : (json.data ?? []);
+  return { records: rows.map(flatten), pages: 1, transport: "json" };
 }
 
 /**
@@ -138,9 +215,10 @@ export async function whDailySnapshotState(
   table = "HousingContracts",
 ): Promise<"available" | "not_configured"> {
   try {
-    const res = await get(auth, `/exports/daily_snapshots/table/${table}`, { per_page: "1" });
+    const res = await get(auth, `/exports/daily_snapshots/table/${table}`);
     return res.ok ? "available" : "not_configured";
   } catch {
     return "not_configured";
   }
 }
+

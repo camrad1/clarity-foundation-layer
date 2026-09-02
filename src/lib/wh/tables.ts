@@ -19,7 +19,16 @@ export const WH_CORE_TABLES = [
   "DepositTransactions",
 ] as const;
 
-/** Lookup dimensions. Missing lookups degrade mapping, not fact ingestion. */
+/**
+ * Lookup dimensions. Missing lookups degrade mapping, not fact ingestion.
+ *
+ * IMPORTANT (verified against the live API on 2026-09-02): lookups are NOT
+ * bulk-export tables. `/exports/community/{id}/table/{Lookup}` returns 404 with
+ * `Invalid table, must be one of [...]`. Every lookup below is served by a
+ * dedicated top-level JSON endpoint instead, except Referrers, which IS a valid
+ * export table (and whose dedicated `/referrers` endpoint returns 401 for this
+ * token scope).
+ */
 export const WH_LOOKUP_TABLES = [
   "LeadSources",
   "Stages",
@@ -39,7 +48,48 @@ export type WhCoreTable = (typeof WH_CORE_TABLES)[number];
 export type WhLookupTable = (typeof WH_LOOKUP_TABLES)[number];
 export type WhTable = WhCoreTable | WhLookupTable;
 
+/**
+ * How each lookup is actually retrieved.
+ * - `json`  → GET /api/{path}, returns a JSON array (account-wide, not per community)
+ * - `export`→ GET /api/exports/community/{id}/table/{path}, returns CSV
+ */
+export const WH_LOOKUP_SOURCE: Record<
+  WhLookupTable,
+  { kind: "json" | "export"; path: string }
+> = {
+  LeadSources: { kind: "json", path: "lead_sources" },
+  Stages: { kind: "json", path: "stages" },
+  Scores: { kind: "json", path: "scores" },
+  ActivityTypes: { kind: "json", path: "activity_types" },
+  ActivityResults: { kind: "json", path: "activity_results" },
+  CareTypes: { kind: "json", path: "care_types" },
+  FloorPlans: { kind: "json", path: "floor_plans" },
+  PrivacyLevels: { kind: "json", path: "privacy_levels" },
+  CloseReasons: { kind: "json", path: "close_reasons" },
+  Traits: { kind: "json", path: "traits" },
+  Users: { kind: "json", path: "users" },
+  Referrers: { kind: "export", path: "Referrers" },
+};
+
+/**
+ * Referrers rows are person records. Only these non-identifying fields are
+ * retained; names, emails, phones, addresses and free-text stories are dropped
+ * before anything is stored.
+ */
+export const WH_REFERRER_SAFE_FIELDS = [
+  "referrers_id",
+  "referrers_status",
+  "referrers_created_at",
+  "referrers_active_at",
+  "referrers_discarded_at",
+  "referrers_organization_id",
+  "scores_name",
+  "communities_id",
+  "communities_name",
+] as const;
+
 export const WH_ALL_TABLES: WhTable[] = [...WH_LOOKUP_TABLES, ...WH_CORE_TABLES];
+
 
 /** Normalized destination table for each core dataset. */
 export const WH_CORE_DESTINATION: Record<WhCoreTable, string> = {
@@ -100,16 +150,27 @@ export const WH_SCORE_LEVEL_LABELS: Record<WhScoreLevel, string> = {
   unknown: "Unknown",
 };
 
-/** Maximum page size WelcomeHome allows on bulk exports. */
-export const WH_MAX_PAGE_SIZE = 10000;
-/** Default page size documented by WelcomeHome. */
-export const WH_DEFAULT_PAGE_SIZE = 1000;
+/**
+ * PAGINATION (verified against the live API on 2026-09-02)
+ *
+ * Bulk exports IGNORE `page` / `per_page`. They return a fixed ~1,000-row page
+ * and a `Link: <...?cursor=...>; rel="next"` header. The absence of that header
+ * is the only end-of-stream signal. Following the cursor turns the previously
+ * observed 1,000-row ceiling into real totals (Activities: 42,561 rows for a
+ * single community).
+ */
+export const WH_PAGE_CURSOR_HEADER = "link";
+/** Safety valve so a malformed cursor loop can never run unbounded. */
+export const WH_MAX_PAGES = 500;
 
 /**
- * Tables that support `filters[updated_at_after]`. Lookup dimensions are small
- * and are always refreshed in full so label changes are never missed.
+ * `filters[updated_at_after]` is accepted by the API, but the CSV exports do
+ * NOT expose an `updated_at` column, so no watermark can be derived from the
+ * returned rows. Incremental mode therefore degrades to a full refresh and is
+ * reported as such rather than silently claiming to be incremental.
  */
-export const WH_INCREMENTAL_TABLES: WhTable[] = [...WH_CORE_TABLES];
+export const WH_INCREMENTAL_TABLES: WhTable[] = [];
+
 
 export function isCoreTable(table: string): table is WhCoreTable {
   return (WH_CORE_TABLES as readonly string[]).includes(table);

@@ -273,7 +273,107 @@ export const whRunSync = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Replays rows already captured in source_records_raw through the current
+ * normalizers, without calling WelcomeHome again. This is how a normalization
+ * fix is validated against the exact payloads that previously failed — the raw
+ * rows are read, never deleted, so the evidence stays intact.
+ */
+export const whReprocessRaw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        connectionId: z.string().uuid(),
+        table: z.string().optional(),
+        limit: z.number().int().min(1).max(20000).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
+    const admin = await adminClient();
+    const { NORMALIZERS } = await import("./normalize.server");
+    const { WH_CORE_DESTINATION } = await import("./tables");
+
+    const { data: mappings } = await admin
+      .from("community_source_mappings")
+      .select("external_id, community_id, communities(id, timezone, organization_id)")
+      .eq("organization_id", organizationId)
+      .eq("source_type", "welcomehome")
+      .eq("active", true);
+    const byExternal = new Map<string, { communityId: string; timezone: string | null }>();
+    for (const m of mappings ?? []) {
+      const row = m as any;
+      if (row.communities?.organization_id !== organizationId) continue;
+      byExternal.set(String(row.external_id), {
+        communityId: row.community_id as string,
+        timezone: (row.communities?.timezone as string | null) ?? null,
+      });
+    }
+
+    let query = admin
+      .from("source_records_raw")
+      .select("id, record_type, payload, source_community_external_id, community_id")
+      .eq("connection_id", connectionId)
+      .eq("source_type", "welcomehome")
+      .order("created_at", { ascending: true })
+      .limit(data.limit ?? 5000);
+    if (data.table) query = query.eq("record_type", data.table);
+    const { data: raws, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const perTable: Record<string, { attempted: number; recovered: number; stillFailing: number }> =
+      {};
+
+    const buckets = new Map<string, any[]>();
+    for (const r of raws ?? []) {
+      const row = r as any;
+      const table = String(row.record_type);
+      if (!(table in NORMALIZERS)) continue;
+      const stat = (perTable[table] ??= { attempted: 0, recovered: 0, stillFailing: 0 });
+      stat.attempted += 1;
+      const scope = byExternal.get(String(row.source_community_external_id ?? ""));
+      try {
+        const normalized = (NORMALIZERS as any)[table](row.payload as Record<string, string>, {
+          organizationId,
+          connectionId,
+          communityId: scope?.communityId ?? (row.community_id as string | null),
+          timezone: scope?.timezone ?? null,
+        });
+        if (!normalized.source_id) {
+          stat.stillFailing += 1;
+          continue;
+        }
+        const list = buckets.get(table) ?? [];
+        list.push(normalized);
+        buckets.set(table, list);
+      } catch {
+        stat.stillFailing += 1;
+      }
+    }
+
+    for (const [table, rows] of buckets) {
+      const destination = (WH_CORE_DESTINATION as Record<string, string>)[table];
+      if (!destination) continue;
+      for (let i = 0; i < rows.length; i += 500) {
+        const slice = rows.slice(i, i + 500);
+        const { error: upErr } = await admin
+          .from(destination)
+          .upsert(slice, { onConflict: "connection_id,source_id" });
+        if (upErr) {
+          perTable[table]!.stillFailing += slice.length;
+          continue;
+        }
+        perTable[table]!.recovered += slice.length;
+      }
+    }
+
+    return { ok: true, tables: perTable };
+  });
+
 /** Seeds mapping rows for newly discovered activity types and scores. */
+
 export const whSeedMappingRows = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => connectionInput.parse(d))

@@ -28,24 +28,34 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  WH_CORE_TABLES,
   WH_CORE_DESTINATION,
+  WH_INCREMENTAL_TABLES,
   WH_LOOKUP_KEY,
-  WH_LOOKUP_TABLES,
-  WH_MAX_PAGE_SIZE,
+
+  WH_LOOKUP_SOURCE,
+  WH_MAX_PAGES,
+  WH_REFERRER_SAFE_FIELDS,
   isCoreTable,
   type WhCoreTable,
   type WhLookupTable,
   type WhTable,
 } from "./tables";
-import { NORMALIZERS, sourceId, updatedAt, type Rec } from "./normalize.server";
-import { safeError, whExportPage, type WhAuth } from "./api.server";
+import { NORMALIZERS, sourceId, stripPii, updatedAt, type Rec } from "./normalize.server";
+import { safeError, whExportPage, whLookup, type WhAuth } from "./api.server";
 
 type Admin = SupabaseClient<any, "public", any>;
 
+/**
+ * `unsupported` is a first-class outcome: WelcomeHome genuinely does not expose
+ * some datasets on the transport we ask for. Reporting that as `success` (or as
+ * a generic failure) is what made the first real sync look healthy while it
+ * ingested nothing.
+ */
+export type TableStatus = "success" | "partial" | "failed" | "skipped" | "unsupported";
+
 export type TableResult = {
   table: WhTable;
-  status: "success" | "partial" | "failed" | "skipped";
+  status: TableStatus;
   mode: "full" | "incremental";
   rowsReceived: number;
   rowsInserted: number;
@@ -67,7 +77,21 @@ export type CommunityTarget = {
 };
 
 const CHUNK = 500;
-const MAX_PAGES = 200; // hard stop: 200 x 10,000 rows per community/table
+
+/**
+ * Decides the outcome of a table from what actually landed in the warehouse.
+ * Receiving rows and persisting none is a FAILURE, not a success — that exact
+ * case previously reported "Success" with zero normalized records.
+ */
+function classify(result: TableResult): TableStatus {
+  if (result.status === "failed" || result.status === "unsupported") return result.status;
+  const persisted = result.rowsInserted + result.rowsUpdated;
+  if (result.rowsReceived === 0) return "success";
+  if (persisted === 0) return "failed";
+  if (result.rowsFailed > 0 || result.rowsUnmapped > 0) return "partial";
+  return "success";
+}
+
 
 async function upsertChunk(
   admin: Admin,
@@ -155,45 +179,54 @@ async function syncLookupTable(
   try {
     // Lookups are always refreshed in full: they are small and label changes
     // must never be missed by a watermark.
-    const scopes = args.targets.length ? args.targets : [];
+    const transport = WH_LOOKUP_SOURCE[args.table].kind;
+    // JSON lookups are account-wide, so they are fetched once, not per
+    // community. Only the Referrers export is community-scoped.
+    const scopes: (CommunityTarget | null)[] =
+      transport === "json" ? [null] : args.targets.length ? args.targets : [];
+
     for (const scope of scopes) {
-      let page = 1;
-      for (;;) {
-        const { records } = await whExportPage(auth, {
-          table: args.table,
-          communitySourceId: scope.sourceCommunityId,
-          page,
-          perPage: WH_MAX_PAGE_SIZE,
-        });
-        result.pagesFetched += 1;
-        result.rowsReceived += records.length;
-        for (const rec of records) {
-          const id = sourceId(rec);
-          if (!id) {
-            result.rowsFailed += 1;
-            continue;
-          }
-          const key = `${args.table}:${id}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          batch.push({
-            organization_id: args.organizationId,
-            connection_id: args.connectionId,
-            lookup_type: WH_LOOKUP_KEY[args.table],
-            source_id: id,
-            label:
-              rec["name"] ??
-              rec["label"] ??
-              rec["title"] ??
-              rec["full_name"] ??
-              rec["description"] ??
-              null,
-            source_community_id: scope.sourceCommunityId,
-            payload: rec,
-          });
+      const { records, pages } = await whLookup(auth, args.table, scope?.sourceCommunityId ?? null);
+      result.pagesFetched += pages;
+      result.rowsReceived += records.length;
+      for (const raw of records) {
+        // Referrers rows are people; keep only the non-identifying columns.
+        // Users are staff, not prospects/residents: their display name is kept
+        // so counselor attribution is readable, but contact details are not.
+        let rec: Rec;
+        let staffName: string | null = null;
+        if (args.table === "Referrers") {
+          rec = Object.fromEntries(
+            (WH_REFERRER_SAFE_FIELDS as readonly string[])
+              .filter((k) => raw[k] !== undefined)
+              .map((k) => [k, raw[k]!]),
+          );
+        } else if (args.table === "Users") {
+          rec = stripPii(raw);
+          staffName = [raw["first_name"], raw["last_name"]].filter(Boolean).join(" ").trim() || null;
+          if (staffName) rec["display_name"] = staffName;
+        } else {
+          rec = stripPii(raw);
         }
-        if (records.length < WH_MAX_PAGE_SIZE || page >= MAX_PAGES) break;
-        page += 1;
+        const id = sourceId(rec) ?? rec["referrers_id"] ?? null;
+        if (!id) {
+          result.rowsFailed += 1;
+          continue;
+        }
+        const key = `${args.table}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        batch.push({
+          organization_id: args.organizationId,
+          connection_id: args.connectionId,
+          lookup_type: WH_LOOKUP_KEY[args.table],
+          source_id: id,
+          label:
+            rec["name"] ?? staffName ?? rec["label"] ?? rec["title"] ?? rec["scores_name"] ?? null,
+
+          source_community_id: scope?.sourceCommunityId ?? null,
+          payload: rec,
+        });
       }
     }
 
@@ -215,14 +248,18 @@ async function syncLookupTable(
       result.rowsUpdated += updated;
       result.rowsInserted += ids.length - updated;
     }
-    if (result.rowsFailed > 0) result.status = "partial";
   } catch (err) {
-    result.status = "failed";
-    result.error = safeError(err);
+    const message = safeError(err);
+    // A 404 means WelcomeHome does not serve this dataset at all — a permanent
+    // capability gap, not a transient sync error.
+    result.status = /\(404\)|not exposed/.test(message) ? "unsupported" : "failed";
+    result.error = message;
   }
+  result.status = classify(result);
   result.durationMs = Date.now() - started;
   return result;
 }
+
 
 async function syncCoreTable(
   admin: Admin,
@@ -258,35 +295,37 @@ async function syncCoreTable(
 
   try {
     for (const scope of args.targets) {
-      let page = 1;
+      // Exports ignore page/per_page; the Link cursor is the only way forward.
+      let cursorUrl: string | null = null;
+      let pages = 0;
       for (;;) {
-        const { records } = await whExportPage(auth, {
+        const { records, nextUrl } = await whExportPage(auth, {
           table: args.table,
           communitySourceId: scope.sourceCommunityId,
-          page,
-          perPage: WH_MAX_PAGE_SIZE,
+          cursorUrl,
           updatedAfter: args.updatedAfter,
         });
+        pages += 1;
         result.pagesFetched += 1;
         result.rowsReceived += records.length;
 
         const good: Record<string, unknown>[] = [];
         const bad: Rec[] = [];
         for (const rec of records) {
-          if (!sourceId(rec)) {
-            bad.push(rec);
-            result.rowsFailed += 1;
-            continue;
-          }
           try {
-            good.push(
-              normalize(rec, {
-                organizationId: args.organizationId,
-                connectionId: args.connectionId,
-                communityId: scope.communityId,
-                timezone: scope.timezone,
-              }) as Record<string, unknown>,
-            );
+            const row = normalize(rec, {
+              organizationId: args.organizationId,
+              connectionId: args.connectionId,
+              communityId: scope.communityId,
+              timezone: scope.timezone,
+            }) as Record<string, unknown>;
+            if (!row["source_id"]) {
+              bad.push(rec);
+              result.rowsFailed += 1;
+            } else {
+              good.push(row);
+              if (!row["community_id"]) result.rowsUnmapped += 1;
+            }
           } catch {
             bad.push(rec);
             result.rowsFailed += 1;
@@ -324,15 +363,24 @@ async function syncCoreTable(
           result.rowsUpdated += updated;
         }
 
-        if (records.length < WH_MAX_PAGE_SIZE || page >= MAX_PAGES) break;
-        page += 1;
+        if (!nextUrl || records.length === 0) break;
+        if (pages >= WH_MAX_PAGES) {
+          result.warnings.push(
+            `${args.table}: stopped after ${WH_MAX_PAGES} pages for ${scope.sourceCommunityId}; more rows remain`,
+          );
+          result.rowsFailed += 1;
+          break;
+        }
+        cursorUrl = nextUrl;
       }
     }
-    if (result.rowsFailed > 0) result.status = "partial";
   } catch (err) {
-    result.status = "failed";
-    result.error = safeError(err);
+    const message = safeError(err);
+    result.status = /\(404\)|not exposed/.test(message) ? "unsupported" : "failed";
+    result.error = message;
   }
+  result.status = classify(result);
+
 
   result.durationMs = Date.now() - started;
   return result;
@@ -373,7 +421,10 @@ export async function runWelcomeHomeSync(
 
   for (const table of args.tables) {
     let updatedAfter: string | null = null;
-    if (args.mode === "incremental" && isCoreTable(table)) {
+    // WelcomeHome exports expose no updated_at column, so no watermark can be
+    // derived and incremental mode honestly degrades to a full refresh.
+    const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(table);
+    if (args.mode === "incremental" && supportsIncremental) {
       const { data: state } = await admin
         .from("wh_sync_state")
         .select("watermark, source_max_updated_at")
@@ -387,6 +438,7 @@ export async function runWelcomeHomeSync(
         ).toISOString();
       }
     }
+
 
     await admin.from("wh_sync_state").upsert(
       {
@@ -414,7 +466,14 @@ export async function runWelcomeHomeSync(
           targets: args.targets,
         });
 
+    if (args.mode === "incremental" && !supportsIncremental && isCoreTable(table)) {
+      result.warnings.push(
+        "WelcomeHome exports expose no updated_at column; a full refresh was performed instead of an incremental one.",
+      );
+    }
+
     results.push(result);
+
 
     await admin.from("wh_sync_table_runs").insert({
       organization_id: args.organizationId,
@@ -468,14 +527,15 @@ export async function runWelcomeHomeSync(
     );
   }
 
+  // Run status reflects what was actually persisted. A run is only "success"
+  // when every table succeeded; anything degraded is at best "partial", and a
+  // run where no core table landed data is a failure.
   const coreResults = results.filter((r) => isCoreTable(r.table));
-  const anyFailed = results.some((r) => r.status === "failed");
-  const coreAllFailed = coreResults.length > 0 && coreResults.every((r) => r.status === "failed");
-  const status: "success" | "partial" | "failed" = coreAllFailed
-    ? "failed"
-    : anyFailed || results.some((r) => r.status === "partial")
-      ? "partial"
-      : "success";
+  const coreOk = coreResults.filter((r) => r.status === "success" || r.status === "partial");
+  const allClean = results.every((r) => r.status === "success" || r.status === "skipped");
+  const status: "success" | "partial" | "failed" =
+    coreResults.length > 0 && coreOk.length === 0 ? "failed" : allClean ? "success" : "partial";
+
 
   const totals = results.reduce(
     (acc, r) => ({
@@ -524,4 +584,4 @@ export async function runWelcomeHomeSync(
   return { syncRunId, results, status };
 }
 
-export const ALL_SYNC_TABLES: WhTable[] = [...WH_LOOKUP_TABLES, ...WH_CORE_TABLES];
+export { WH_ALL_TABLES as ALL_SYNC_TABLES } from "./tables";
