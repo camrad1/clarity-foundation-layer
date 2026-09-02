@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ratio } from "@/lib/wh/metrics";
 import {
   candidate,
+  useWhDepositPage,
   useWhProspectPage,
   useWhSalesSummary,
   withheld,
   type WhProspectBucket,
 } from "@/lib/wh/summary";
+
 import { useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 
 export const Route = createFileRoute("/_authenticated/sales")({
