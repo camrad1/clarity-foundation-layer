@@ -92,8 +92,9 @@ export function useWhLookupCoverage(organizationId: string | null, communityIds:
     queryFn: async () => {
       const { data, error } = await supabase.rpc("wh_lookup_coverage", {
         _org_id: organizationId!,
-        _community_ids: communityIds.length ? communityIds : undefined,
+        ...(communityIds.length ? { _community_ids: communityIds } : {}),
       });
+
       if (error) throw error;
       return (data ?? []) as {
         lookup_type: string;
