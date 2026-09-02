@@ -189,51 +189,225 @@ export const whCheckDailySnapshots = createServerFn({ method: "POST" })
     return { state };
   });
 
-/** Full or incremental synchronization. */
-export const whRunSync = createServerFn({ method: "POST" })
+/**
+ * SCALABLE SYNC ORCHESTRATION
+ * ---------------------------
+ * A portfolio sync is NEVER one HTTP request. `whPlanSync` creates a parent run
+ * and returns the bounded work units (one source table x one mapped community,
+ * plus account-wide lookup datasets fetched once). The browser then calls
+ * `whRunSyncUnit` for each unit — each of which is individually authorized
+ * server-side and uses the server-held API token — and finally `whFinalizeSync`
+ * to aggregate the parent status. Request duration therefore depends on one
+ * dataset for one community, not on portfolio size.
+ */
+
+type MappedTarget = { communityId: string; sourceCommunityId: string; timezone: string | null; name: string };
+
+/** Active WelcomeHome mappings for the organization. This is the ONLY source of
+ *  external community IDs — a caller can never submit an arbitrary one. */
+async function mappedTargets(admin: any, organizationId: string): Promise<MappedTarget[]> {
+  const { data: mappings } = await admin
+    .from("community_source_mappings")
+    .select("external_id, community_id, communities(id, name, timezone, organization_id)")
+    .eq("organization_id", organizationId)
+    .eq("source_type", "welcomehome")
+    .eq("active", true);
+  return (mappings ?? [])
+    .filter((m: any) => m.communities?.organization_id === organizationId)
+    .map((m: any) => ({
+      communityId: m.community_id as string,
+      sourceCommunityId: String(m.external_id),
+      timezone: (m.communities?.timezone as string | null) ?? null,
+      name: (m.communities?.name as string | null) ?? "Community",
+    }));
+}
+
+export type WhWorkUnit = {
+  key: string;
+  table: string;
+  /** null = account-wide dataset (fetched once, not once per community). */
+  communityId: string | null;
+  communityName: string | null;
+  scope: "community" | "account";
+};
+
+function buildUnits(tables: string[], targets: MappedTarget[]): WhWorkUnit[] {
+  const units: WhWorkUnit[] = [];
+  for (const table of tables) {
+    const lookup = (WH_LOOKUP_SOURCE as Record<string, { kind: string }>)[table];
+    // Account-wide JSON lookups are fetched once per run, never once per
+    // community. Community-scoped datasets (all core tables and the Referrers
+    // export) get one unit per mapped community.
+    if (lookup && lookup.kind === "json") {
+      units.push({ key: `${table}:*`, table, communityId: null, communityName: null, scope: "account" });
+      continue;
+    }
+    for (const t of targets) {
+      units.push({
+        key: `${table}:${t.communityId}`,
+        table,
+        communityId: t.communityId,
+        communityName: t.name,
+        scope: "community",
+      });
+    }
+  }
+  return units;
+}
+
+/**
+ * Creates (or resumes) a parent sync run and returns the work units still to
+ * do. Resuming never repeats units that already completed successfully in that
+ * run, and community scope is always explicit — "all mapped communities" is a
+ * choice the caller makes, never a silent default.
+ */
+export const whPlanSync = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
         connectionId: z.string().uuid(),
         mode: z.enum(["full", "incremental"]),
+        /** null/absent = every mapped community; otherwise an explicit subset. */
+        communityIds: z.array(z.string().uuid()).optional(),
         tables: z.array(z.string()).optional(),
+        /** Resume/retry an existing parent run instead of starting a new one. */
+        resumeRunId: z.string().uuid().optional(),
+        /** Resume mode: skip units that already succeeded in that run. */
+        retryFailedOnly: z.boolean().optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
     const admin = await adminClient();
-    const { runWelcomeHomeSync } = await import("./sync.server");
-    const token = await loadToken(admin, connectionId);
 
-    // Canonical community mappings decide what may be ingested. An unmapped
-    // WelcomeHome community is never pulled, so it can never contaminate a
-    // mapped community's KPI.
-    const { data: mappings } = await admin
-      .from("community_source_mappings")
-      .select("external_id, community_id, communities(id, timezone, organization_id)")
-      .eq("organization_id", organizationId)
-      .eq("source_type", "welcomehome")
-      .eq("active", true);
-
-    const targets = (mappings ?? [])
-      .filter((m: any) => m.communities?.organization_id === organizationId)
-      .map((m: any) => ({
-        communityId: m.community_id as string,
-        sourceCommunityId: String(m.external_id),
-        timezone: (m.communities?.timezone as string | null) ?? null,
-      }));
+    const all = await mappedTargets(admin, organizationId);
+    const targets = data.communityIds?.length
+      ? all.filter((t) => data.communityIds!.includes(t.communityId))
+      : all;
 
     if (!targets.length) {
       return {
-        ok: false,
-        status: "failed" as const,
+        ok: false as const,
         syncRunId: null as string | null,
-        results: [],
-        message:
-          "No active WelcomeHome community mappings. Map at least one community before syncing.",
+        units: [] as WhWorkUnit[],
+        skipped: [] as WhWorkUnit[],
+        message: all.length
+          ? "None of the selected communities has an active WelcomeHome mapping."
+          : "No active WelcomeHome community mappings. Map at least one community before syncing.",
       };
+    }
+
+    const requested = (data.tables?.length ? data.tables : WH_ALL_TABLES) as WhTable[];
+    const tables = requested.filter((t) => (WH_ALL_TABLES as string[]).includes(t));
+    let units = buildUnits(tables, targets);
+
+    let syncRunId: string;
+    if (data.resumeRunId) {
+      const { data: parent } = await admin
+        .from("source_sync_runs")
+        .select("id")
+        .eq("id", data.resumeRunId)
+        .eq("organization_id", organizationId)
+        .eq("connection_id", connectionId)
+        .maybeSingle();
+      if (!parent) throw new Error("Sync run not found for this connection");
+      syncRunId = parent.id as string;
+    } else {
+      const { data: run, error } = await admin
+        .from("source_sync_runs")
+        .insert({
+          organization_id: organizationId,
+          connection_id: connectionId,
+          status: "queued",
+          sync_cursor: {
+            mode: data.mode,
+            tables,
+            communityIds: targets.map((t) => t.communityId),
+            totalUnits: units.length,
+          },
+        })
+        .select("id")
+        .single();
+      if (error || !run) throw new Error(`Unable to start sync run: ${error?.message ?? "unknown"}`);
+      syncRunId = run.id as string;
+    }
+
+    // Successful (or permanently unsupported) units are never redone on a
+    // resume — data already in the warehouse stays untouched.
+    let skipped: WhWorkUnit[] = [];
+    if (data.resumeRunId && data.retryFailedOnly !== false) {
+      const { data: done } = await admin
+        .from("wh_sync_table_runs")
+        .select("source_table, community_id, status")
+        .eq("sync_run_id", syncRunId)
+        .in("status", ["success", "unsupported"]);
+      const doneKeys = new Set(
+        (done ?? []).map((r: any) => `${r.source_table}:${r.community_id ?? "*"}`),
+      );
+      skipped = units.filter((u) => doneKeys.has(u.key));
+      units = units.filter((u) => !doneKeys.has(u.key));
+    }
+
+    await admin
+      .from("source_sync_runs")
+      .update({ status: "running" })
+      .eq("id", syncRunId);
+    await admin
+      .from("data_source_connections")
+      .update({ status: "syncing", last_attempted_sync_at: new Date().toISOString() })
+      .eq("id", connectionId)
+      .eq("organization_id", organizationId);
+
+    return { ok: true as const, syncRunId, units, skipped, message: null as string | null };
+  });
+
+/**
+ * Runs exactly ONE bounded work unit. Security: the caller must be able to
+ * manage the connection (guard), the parent run must belong to the same
+ * organization AND connection, and the requested canonical community must have
+ * an active WelcomeHome mapping in that organization — the external WelcomeHome
+ * ID is read from that mapping, never from the request.
+ */
+export const whRunSyncUnit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        connectionId: z.string().uuid(),
+        syncRunId: z.string().uuid(),
+        mode: z.enum(["full", "incremental"]),
+        table: z.string(),
+        communityId: z.string().uuid().nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
+    const admin = await adminClient();
+
+    if (!(WH_ALL_TABLES as string[]).includes(data.table)) throw new Error("Unknown source table");
+
+    const { data: parent } = await admin
+      .from("source_sync_runs")
+      .select("id")
+      .eq("id", data.syncRunId)
+      .eq("organization_id", organizationId)
+      .eq("connection_id", connectionId)
+      .maybeSingle();
+    if (!parent) throw new Error("Sync run not found for this connection");
+
+    const all = await mappedTargets(admin, organizationId);
+    let target: MappedTarget | null = null;
+    if (data.communityId) {
+      target = all.find((t) => t.communityId === data.communityId) ?? null;
+      if (!target) throw new Error("Community has no active WelcomeHome mapping in this organization");
+    } else {
+      const lookup = (WH_LOOKUP_SOURCE as Record<string, { kind: string }>)[data.table];
+      if (!lookup || lookup.kind !== "json") {
+        throw new Error("This dataset is community-scoped and requires a mapped community");
+      }
     }
 
     const { data: settings } = await admin
@@ -242,36 +416,141 @@ export const whRunSync = createServerFn({ method: "POST" })
       .eq("organization_id", organizationId)
       .maybeSingle();
 
-    const requested = (data.tables?.length ? data.tables : WH_ALL_TABLES) as WhTable[];
-    const tables = requested.filter((t) => (WH_ALL_TABLES as string[]).includes(t));
+    const { runWelcomeHomeSyncUnit } = await import("./sync.server");
+    const token = await loadToken(admin, connectionId);
 
-    const outcome = await runWelcomeHomeSync(
+    const result = await runWelcomeHomeSyncUnit(
       admin,
       { token },
       {
         organizationId,
         connectionId,
+        syncRunId: data.syncRunId,
+        table: data.table as WhTable,
+        target: target
+          ? {
+              communityId: target.communityId,
+              sourceCommunityId: target.sourceCommunityId,
+              timezone: target.timezone,
+            }
+          : null,
         mode: data.mode,
-        tables,
-        targets,
         overlapMinutes: settings?.incremental_overlap_minutes ?? 120,
       },
     );
 
-    const failedCore = outcome.results.filter(
-      (r) => r.status === "failed" && (WH_CORE_TABLES as readonly string[]).includes(r.table),
-    );
-
     return {
-      ok: outcome.status !== "failed",
-      status: outcome.status,
-      syncRunId: outcome.syncRunId,
-      results: outcome.results,
-      message: failedCore.length
-        ? `Core table(s) failed: ${failedCore.map((r) => r.table).join(", ")}`
-        : null,
+      table: result.table,
+      communityId: data.communityId ?? null,
+      status: result.status,
+      rowsReceived: result.rowsReceived,
+      rowsInserted: result.rowsInserted,
+      rowsUpdated: result.rowsUpdated,
+      rowsFailed: result.rowsFailed,
+      pagesFetched: result.pagesFetched,
+      durationMs: result.durationMs,
+      error: result.error,
+      warnings: result.warnings,
     };
   });
+
+/**
+ * Aggregates the child work units into an honest parent status. A run is only
+ * `success` when every requested unit completed cleanly (or is permanently
+ * unsupported); anything else is `partial`, and a run where no core unit landed
+ * data is `failed`. An interrupted browser simply leaves the run `running`
+ * until it is resumed — never falsely complete.
+ */
+export const whFinalizeSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        connectionId: z.string().uuid(),
+        syncRunId: z.string().uuid(),
+        expectedUnits: z.number().int().min(0),
+        canceled: z.boolean().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
+    const admin = await adminClient();
+
+    const { data: children } = await admin
+      .from("wh_sync_table_runs")
+      .select("source_table, community_id, status, rows_received, rows_inserted, rows_updated, rows_failed, source_max_updated_at, error_summary")
+      .eq("sync_run_id", data.syncRunId)
+      .eq("organization_id", organizationId);
+
+    const rows = (children ?? []) as any[];
+    // De-duplicate retries: the latest row per unit key wins.
+    const latest = new Map<string, any>();
+    for (const r of rows) latest.set(`${r.source_table}:${r.community_id ?? "*"}`, r);
+    const units = [...latest.values()];
+
+    const core = units.filter((r) => (WH_CORE_TABLES as readonly string[]).includes(r.source_table));
+    const coreOk = core.filter((r) => r.status === "success" || r.status === "partial");
+    const allClean = units.every((r) => r.status === "success" || r.status === "unsupported");
+    const complete = units.length >= data.expectedUnits;
+
+    const status = data.canceled
+      ? "canceled"
+      : core.length > 0 && coreOk.length === 0
+        ? "failed"
+        : allClean && complete
+          ? "success"
+          : "partial";
+
+    const totals = units.reduce(
+      (a, r) => ({
+        received: a.received + (r.rows_received ?? 0),
+        inserted: a.inserted + (r.rows_inserted ?? 0),
+        updated: a.updated + (r.rows_updated ?? 0),
+        failed: a.failed + (r.rows_failed ?? 0),
+      }),
+      { received: 0, inserted: 0, updated: 0, failed: 0 },
+    );
+
+    await admin
+      .from("source_sync_runs")
+      .update({
+        status,
+        completed_at: new Date().toISOString(),
+        records_received: totals.received,
+        records_inserted: totals.inserted,
+        records_updated: totals.updated,
+        records_failed: totals.failed,
+        error_summary:
+          units
+            .filter((r) => r.error_summary)
+            .map((r) => `${r.source_table}${r.community_id ? "" : " (account-wide)"}: ${r.error_summary}`)
+            .join(" | ")
+            .slice(0, 1000) || null,
+      })
+      .eq("id", data.syncRunId);
+
+    const through = units
+      .map((r) => r.source_max_updated_at as string | null)
+      .filter((d): d is string => !!d)
+      .sort();
+
+    await admin
+      .from("data_source_connections")
+      .update({
+        status: status === "failed" ? "needs_attention" : "connected",
+        last_attempted_sync_at: new Date().toISOString(),
+        ...(status === "success" || status === "partial"
+          ? { last_successful_sync_at: new Date().toISOString() }
+          : {}),
+        ...(through.length ? { data_through_date: String(through[through.length - 1]).slice(0, 10) } : {}),
+      })
+      .eq("id", connectionId)
+      .eq("organization_id", organizationId);
+
+    return { status, totals, unitsCompleted: units.length, expectedUnits: data.expectedUnits };
+  });
+
 
 /**
  * Replays rows already captured in source_records_raw through the current
