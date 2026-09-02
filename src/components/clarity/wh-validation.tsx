@@ -55,21 +55,24 @@ export function WhValidationQueue() {
       {
         id: "V-003",
         question: "Are deposits counted from DepositTransactions or contract fields?",
-        choice: `${settings.deposit_source} — transaction_type = Deposit AND deposit_type = Deposit`,
-        candidate: `${s.deposits} (standard transactions ${recon.fromTransactions} vs contracts ${recon.fromContracts}; refunds ${recon.refunds}, waitlist ${recon.waitlist}, other types ${recon.otherTypes} excluded)`,
-        state: recon.fromTransactions === recon.fromContracts ? "pending" : "mismatch",
+        choice:
+          "Distinct depositors with a standard deposit (transaction_type = Deposit AND deposit_type = Deposit, amount > 0) dated in the period",
+        candidate: `${s.deposits} depositors (from ${recon.fromTransactions} standard transaction rows; ${recon.zeroAmountRows} zero-amount adjustments, ${recon.refunds} refunds, ${recon.waitlist} waitlist, ${recon.otherTypes} other types excluded; contracts ${recon.fromContracts})`,
+        state: "pending",
         detail:
-          "PROVISIONAL — matched to WelcomeHome Rack & Stack for The Esther, Aug 1–31 2026 (5 vs 5). Refund, Waitlist Deposit and Community Fee rows are preserved but never counted; amount sign is never used.",
+          "PROVISIONAL — depositor-based rule matched to the WelcomeHome Depositor List. The Esther Aug 2026 returns 5 (official 5). The Rawlin Aug 2026 returns 2 against an official 3: the third depositor's standard deposit is dated 2026-09-01 in the WelcomeHome API while the official Depositor List shows 08/25, so the rule was NOT bent to force a match. Deposit dates now use the source calendar date; the previous timezone conversion shifted them one day earlier. Refunds and waitlist rows are preserved but never counted; amount sign is never used.",
       },
 
       {
         id: "V-004",
         question: "Which contract dates define move-in and move-out?",
-        choice: `${settings.move_in_date_field} / ${settings.move_out_date_field}`,
-        candidate: `${s.moveIns} in / ${s.moveOuts} out`,
+        choice: `${settings.move_in_date_field} / ${settings.move_out_date_field}, count_move_in / count_move_out true, canceled leases excluded`,
+        candidate: `${s.moveIns} in / ${s.moveOuts} out (transfer ins ${s.moveRecon.transferIns}, transfer outs ${s.moveRecon.transferOuts}, canceled excluded ${s.moveRecon.canceledMoveIns} in / ${s.moveRecon.canceledMoveOuts} out)`,
         state: "pending",
-        detail: "Only contracts flagged count_move_in / count_move_out are included.",
+        detail:
+          "PROVISIONAL — matched across two communities for Aug 2026: The Esther 2 in / 2 out and The Rawlin 7 in / 7 out, both equal to the official Rack & Stack. Transfer Ins carry count_move_in = false in the source and are therefore already excluded; the normalized is_transfer flag is NULL portfolio-wide and is deliberately not used. Canceled leases (lease_canceled_on set) are excluded but retained for audit.",
       },
+
       {
         id: "V-005",
         question: "How is occupancy defined against census units? (current state only)",

@@ -261,26 +261,27 @@ function SalesIntelligence() {
               </ul>
             </div>
             <div className="panel space-y-2 p-5">
-              <h3 className="text-sm font-semibold">Deposit source comparison</h3>
+              <h3 className="text-sm font-semibold">Deposit and move-in reconciliation</h3>
               <p className="text-xs text-muted-foreground">
-                Candidate (V-003, provisional): transaction_type = Deposit AND deposit_type =
-                Deposit, dated in the selected period.
+                Candidate (V-003, provisional): distinct depositors with a standard deposit dated in
+                the selected period, matching WelcomeHome's Depositor List rather than a count of
+                transaction rows.
               </p>
               <ul className="text-sm text-muted-foreground">
-                <li>Standard DepositTransactions: {s.depositRecon.fromTransactions}</li>
+                <li>Counted depositors: {s.depositRecon.depositors}</li>
+                <li>Standard deposit transaction rows: {s.depositRecon.fromTransactions}</li>
                 <li>HousingContract deposit fields: {s.depositRecon.fromContracts}</li>
               </ul>
               <p className="eyebrow pt-2">Diagnostic components — not KPI values</p>
               <ul className="text-xs text-muted-foreground">
+                <li>Zero-amount adjustment rows: {s.depositRecon.zeroAmountRows}</li>
                 <li>Refund transactions: {s.depositRecon.refunds}</li>
                 <li>Waitlist Deposit transactions: {s.depositRecon.waitlist}</li>
                 <li>Other deposit types: {s.depositRecon.otherTypes}</li>
+                <li>Transfer Ins (not counted as move-ins): {s.moveRecon.transferIns}</li>
+                <li>Transfer Outs (not counted as move-outs): {s.moveRecon.transferOuts}</li>
+                <li>Canceled leases excluded — in: {s.moveRecon.canceledMoveIns}, out: {s.moveRecon.canceledMoveOuts}</li>
               </ul>
-              {s.depositRecon.fromTransactions !== s.depositRecon.fromContracts ? (
-                <p className="text-xs text-warning">
-                  The two sources disagree. Resolve V-003 before treating deposits as validated.
-                </p>
-              ) : null}
             </div>
 
           </section>
@@ -288,6 +289,7 @@ function SalesIntelligence() {
           <TourDrillThrough />
 
           <DepositDrillThrough />
+
         </TabsContent>
 
 
