@@ -34,7 +34,7 @@ import {
   useWhSyncState,
   useWhTableRuns,
 } from "@/lib/wh/queries";
-import { WH_CORE_TABLES } from "@/lib/wh/tables";
+import { WH_ALL_TABLES, WH_CORE_TABLES } from "@/lib/wh/tables";
 import { useAppState } from "@/state/app-state";
 
 
@@ -160,6 +160,8 @@ function WelcomeHomeAdmin() {
   // size except the number of units, so adding communities never turns one
   // request into a timeout.
   const [scope, setScope] = useState<"selected" | "all">("selected");
+  // "" = every supported table; otherwise exactly one dataset.
+  const [tableScope, setTableScope] = useState<string>("");
   const [progress, setProgress] = useState<{
     total: number;
     done: number;
@@ -204,6 +206,7 @@ function WelcomeHomeAdmin() {
           connectionId,
           mode: opts.mode,
           ...(scopedCommunityIds ? { communityIds: scopedCommunityIds } : {}),
+          ...(tableScope ? { tables: [tableScope] } : {}),
           ...(opts.resumeRunId ? { resumeRunId: opts.resumeRunId } : {}),
         },
       });
@@ -488,6 +491,32 @@ function WelcomeHomeAdmin() {
                 <span className="text-xs text-muted-foreground">
                   This sync will cover <span className="font-medium text-foreground">{scopeLabel}</span>.
                 </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Label className="text-xs font-medium" htmlFor="wh-table-scope">
+                  Tables
+                </Label>
+                <select
+                  id="wh-table-scope"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                  value={tableScope}
+                  onChange={(e) => setTableScope(e.target.value)}
+                  disabled={progress.running}
+                >
+                  <option value="">All supported tables</option>
+                  {WH_ALL_TABLES.map((t) => (
+                    <option key={t} value={t}>
+                      {t} only
+                    </option>
+                  ))}
+                </select>
+                {tableScope ? (
+                  <span className="text-xs text-muted-foreground">
+                    Only <span className="font-medium text-foreground">{tableScope}</span> will be
+                    synced for the scope above.
+                  </span>
+                ) : null}
               </div>
 
               {progress.total > 0 || progress.running ? (
