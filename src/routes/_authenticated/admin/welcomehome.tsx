@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: WelcomeHomeAdmin;
+  component: WelcomeHomeAdmin,
 });
 
 function fmt(d: string | null | undefined) {
