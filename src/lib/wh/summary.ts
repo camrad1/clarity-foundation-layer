@@ -325,3 +325,87 @@ export const UNIT_EXCLUSION_LABELS: Record<string, string> = {
   inactive: "Discarded or inactive unit record",
   pseudo_unit: "Non-residential pseudo-unit",
 };
+
+export type WhMoveInRow = {
+  id: string;
+  source_id: string;
+  community_id: string | null;
+  prospect_source_id: string | null;
+  unit_source_id: string | null;
+  financial_move_in_date: string | null;
+  status: string | null;
+  total_count: number;
+};
+
+/**
+ * Paginated drill-through for the Move-In KPI (V-004). `mode = "move_in"`
+ * returns exactly the contracts the KPI counts (count_move_in true, financial
+ * move-in date in period, lease not canceled); `mode = "transfer_in"` is a
+ * diagnostic listing of in-period contracts the source marks non-countable.
+ * Filtering and authorization happen server-side in wh_move_in_page.
+ */
+export function useWhMoveInPage(
+  organizationId: string | null,
+  communityIds: string[],
+  start: string,
+  end: string,
+  mode: "move_in" | "transfer_in",
+  page: number,
+  pageSize = 50,
+) {
+  return useQuery({
+    queryKey: ["wh_move_in_page", organizationId, communityIds.join(","), start, end, mode, page, pageSize],
+    enabled: !!organizationId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("wh_move_in_page", {
+        _org_id: organizationId,
+        _start: start,
+        _end: end,
+        _community_ids: communityIds.length ? communityIds : null,
+        _mode: mode,
+        _limit: pageSize,
+        _offset: page * pageSize,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as WhMoveInRow[];
+      return { rows, total: rows.length ? Number(rows[0]!.total_count) : 0 };
+    },
+  });
+}
+
+export type MetricValidationRecord = {
+  id: string;
+  community_id: string | null;
+  metric_key: string;
+  metric_version: number | null;
+  period_start: string;
+  period_end: string;
+  calculated_value: number | null;
+  expected_value: number | null;
+  difference: number | null;
+  status: string;
+  official_source: string | null;
+  evidence_scope: string;
+  reviewer_notes: string | null;
+  validated_at: string | null;
+};
+
+/** Persisted reconciliation evidence for the organization (RLS: org admins). */
+export function useMetricValidationEvidence(organizationId: string | null, prefix = "wh.") {
+  return useQuery({
+    queryKey: ["metric_validation_checks", organizationId, prefix],
+    enabled: !!organizationId,
+    queryFn: async (): Promise<MetricValidationRecord[]> => {
+      const { data, error } = await (supabase as any)
+        .from("metric_validation_checks")
+        .select(
+          "id, community_id, metric_key, metric_version, period_start, period_end, calculated_value, expected_value, difference, status, official_source, evidence_scope, reviewer_notes, validated_at",
+        )
+        .eq("organization_id", organizationId)
+        .like("metric_key", `${prefix}%`)
+        .order("metric_key");
+      if (error) throw error;
+      return (data ?? []) as MetricValidationRecord[];
+    },
+  });
+}
