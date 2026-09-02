@@ -352,23 +352,33 @@ function SalesIntelligence() {
 
         <TabsContent value="occupancy" className="space-y-6 pt-6">
           <WithheldPanel
-            title="Occupancy percentage is withheld"
-            description="ClarityIQ will not publish an occupancy KPI until the candidate calculation is reconciled against official operational census (V-005). The raw source components are shown so you can audit them."
+            title="Occupancy percentage is provisional"
+            description="ClarityIQ will not publish an occupancy KPI until the candidate calculation is reconciled against operational census in more than one community (V-005). Every component of the denominator is shown so it can be audited."
           >
             <div className="grid gap-4 md:grid-cols-3">
-              <Stat label="Total units" value={s.occupancy.totalUnits} />
-              <Stat label="Off-census units" value={s.occupancy.offCensusUnits} />
-              <Stat label="Census units" value={s.occupancy.censusUnits} />
+              <Stat label="Total unit records" value={s.occupancy.totalUnits} />
+              <Stat label="Explicit off-census units" value={s.occupancy.offCensusUnits} />
+              <Stat label="Pseudo/non-residential units" value={s.occupancy.pseudoUnits} />
+              <Stat label="Inactive/discarded units" value={s.occupancy.inactiveUnits} />
+              <Stat label="Census-eligible units" value={s.occupancy.censusUnits} />
               <Stat label="Occupied (candidate)" value={s.occupancy.occupiedUnitsCandidate} />
               <Stat label="On notice" value={s.occupancy.noticeCount} />
               <Stat label="Pending move-ins" value={s.occupancy.pendingMoveIns} />
             </div>
             <p className="pt-3 text-xs text-muted-foreground">
-              Candidate ratio, shown for reconciliation only:{" "}
-              {pct(ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits))}
+              Candidate occupancy, shown for reconciliation only:{" "}
+              {pct(ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits))} raw ·{" "}
+              {s.occupancy.censusUnits
+                ? `${Math.round((s.occupancy.occupiedUnitsCandidate / s.occupancy.censusUnits) * 100)}%`
+                : "—"}{" "}
+              WelcomeHome-equivalent rounded display. The denominator counts census-eligible
+              residential units only; non-residential pseudo-units such as WAITLIST are excluded by
+              a configurable rule, never by a community-specific override.
             </p>
           </WithheldPanel>
+          <UnitCensusDiagnostic />
         </TabsContent>
+
       </Tabs>
     </div>
   );
