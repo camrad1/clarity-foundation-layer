@@ -10,6 +10,7 @@ import { ratio } from "@/lib/wh/metrics";
 import {
   candidate,
   useWhDepositPage,
+  useWhTourPage,
   useWhProspectPage,
   useWhSalesSummary,
   withheld,
@@ -274,6 +275,8 @@ function SalesIntelligence() {
 
           </section>
 
+          <TourDrillThrough />
+
           <DepositDrillThrough />
         </TabsContent>
 
@@ -452,6 +455,95 @@ function ProspectDrillThrough() {
  * applies the same V-003 filter as the KPI, so this list always reconciles to
  * the displayed Deposit count. No resident or prospect PII is returned.
  */
+/**
+ * Tour KPI drill-through (V-002). Server-paginated through wh_tour_page: the
+ * default view lists exactly the successful tours behind the KPI, and the
+ * diagnostic view lists every tour activity in the period. No prospect PII.
+ */
+function TourDrillThrough() {
+  const ctx = useWhContext();
+  const [page, setPage] = useState(0);
+  const [mode, setMode] = useState<"successful" | "all">("successful");
+  const q = useWhTourPage(
+    ctx.organizationId,
+    ctx.communityIds,
+    ctx.dateRange.start,
+    ctx.dateRange.end,
+    mode,
+    page,
+    PAGE_SIZE,
+  );
+  const total = q.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">
+            {mode === "successful" ? "Counted tour activities" : "All tour activities (diagnostic)"}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {mode === "successful"
+              ? "Exactly the rows behind the Completed tours candidate: tour activities with a successful WelcomeHome result, completed in the selected period."
+              : "Every completed tour activity in the period, including results WelcomeHome does not treat as successful."}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setMode((m) => (m === "successful" ? "all" : "successful"));
+            setPage(0);
+          }}
+        >
+          {mode === "successful" ? "Show all tour activities" : "Show counted tours only"}
+        </Button>
+      </div>
+      <DataTable
+        columns={[
+          { key: "src", header: "Activity", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
+          { key: "date", header: "Completed", render: (r: any) => r.completed_local_date ?? "—" },
+          { key: "result", header: "Result", render: (r: any) => r.result_label ?? "—" },
+          {
+            key: "ok",
+            header: "Counted",
+            render: (r: any) => (r.successful ? "Yes" : "No"),
+          },
+          {
+            key: "seq",
+            header: "Sequence",
+            render: (r: any) => (r.first_completed_of_type ? "Initial" : "Repeat"),
+          },
+          {
+            key: "prospect",
+            header: "Prospect",
+            render: (r: any) => <code className="text-xs">{r.prospect_source_id ?? "—"}</code>,
+          },
+        ]}
+        rows={(q.data?.rows ?? []) as any[]}
+        loading={q.isLoading}
+        empty={<EmptyState title="No tour activities" description="Nothing matches the current selection." />}
+      />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {total.toLocaleString()} {mode === "successful" ? "counted tours" : "tour activities"} · page{" "}
+          {page + 1} of {pages}
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DepositDrillThrough() {
   const ctx = useWhContext();
   const [page, setPage] = useState(0);

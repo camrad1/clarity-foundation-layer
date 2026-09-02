@@ -41,13 +41,16 @@ export function WhValidationQueue() {
       },
       {
         id: "V-002",
-        question: "Which activity types are tours, and is Re-Tour distinct?",
-        choice: s.mappings.tour ? "Tour mapped" : "Not mapped",
-        candidate: `${s.mappings.tour ? s.tours : "Withheld"} tours / ${
-          s.mappings.re_tour ? s.reTours : "Withheld"
-        } re-tours`,
+        question: "Which tour activities count, and is Re-Tour distinct?",
+        choice: s.mappings.tour
+          ? "Tour activity AND WelcomeHome activity result flagged successful, completed in the period"
+          : "Not mapped",
+        candidate: s.mappings.tour
+          ? `${s.tourRecon.successfulTours} successful tours (initial ${s.tourRecon.initialTours}, repeat ${s.tourRecon.repeatTours}) of ${s.tourRecon.totalTourActivities} total tour activities; ${s.tourRecon.unsuccessfulTours} unsuccessful excluded`
+          : "Withheld",
         state: s.mappings.tour ? "pending" : "needs_review",
-        detail: "Re-tours are never inferred from a second tour on the same prospect.",
+        detail:
+          "PROVISIONAL — matched to WelcomeHome Flash Activities for The Esther, Aug 1–31 2026 (successful 21 vs 21, initial 16, repeat 5, total 25). Successful is taken from the ActivityResults lookup flag, not from labels. Initial vs repeat uses WelcomeHome's first_completed_of_activity_type flag, never an inferred tour sequence.",
       },
       {
         id: "V-003",
