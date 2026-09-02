@@ -2012,6 +2012,7 @@ export type Database = {
           connection_id: string
           created_at: string
           created_at_source: string | null
+          deposit_type: string | null
           deposit_type_id: string | null
           discarded_at: string | null
           housing_contract_source_id: string | null
@@ -2038,6 +2039,7 @@ export type Database = {
           connection_id: string
           created_at?: string
           created_at_source?: string | null
+          deposit_type?: string | null
           deposit_type_id?: string | null
           discarded_at?: string | null
           housing_contract_source_id?: string | null
@@ -2064,6 +2066,7 @@ export type Database = {
           connection_id?: string
           created_at?: string
           created_at_source?: string | null
+          deposit_type?: string | null
           deposit_type_id?: string | null
           discarded_at?: string | null
           housing_contract_source_id?: string | null
@@ -3171,6 +3174,27 @@ export type Database = {
           last_sync_rows: number
           source_table: string
           stored_rows: number
+        }[]
+      }
+      wh_deposit_page: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          amount: number
+          community_id: string
+          deposit_type: string
+          id: string
+          occurred_local_date: string
+          prospect_source_id: string
+          source_id: string
+          total_count: number
+          transaction_type: string
         }[]
       }
       wh_prospect_page: {

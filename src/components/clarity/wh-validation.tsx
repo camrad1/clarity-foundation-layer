@@ -52,11 +52,13 @@ export function WhValidationQueue() {
       {
         id: "V-003",
         question: "Are deposits counted from DepositTransactions or contract fields?",
-        choice: settings.deposit_source,
-        candidate: `${s.deposits} (transactions ${recon.fromTransactions} vs contracts ${recon.fromContracts})`,
+        choice: `${settings.deposit_source} — transaction_type = Deposit AND deposit_type = Deposit`,
+        candidate: `${s.deposits} (standard transactions ${recon.fromTransactions} vs contracts ${recon.fromContracts}; refunds ${recon.refunds}, waitlist ${recon.waitlist}, other types ${recon.otherTypes} excluded)`,
         state: recon.fromTransactions === recon.fromContracts ? "pending" : "mismatch",
-        detail: "Refunded and discarded deposits are excluded from the transaction count.",
+        detail:
+          "PROVISIONAL — matched to WelcomeHome Rack & Stack for The Esther, Aug 1–31 2026 (5 vs 5). Refund, Waitlist Deposit and Community Fee rows are preserved but never counted; amount sign is never used.",
       },
+
       {
         id: "V-004",
         question: "Which contract dates define move-in and move-out?",

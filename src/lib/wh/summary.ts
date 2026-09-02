@@ -32,7 +32,14 @@ export type WhSalesSummary = {
   tours: number;
   reTours: number;
   deposits: number;
-  depositRecon: { fromTransactions: number; fromContracts: number };
+  depositRecon: {
+    fromTransactions: number;
+    fromContracts: number;
+    refunds: number;
+    waitlist: number;
+    otherTypes: number;
+  };
+
   moveIns: number;
   moveOuts: number;
   pending: { pendingIn: number; pendingOut: number };
@@ -132,6 +139,51 @@ export type WhCompletenessRow = {
   last_sync_rows: number | null;
   last_sync_at: string | null;
 };
+
+export type WhDepositRow = {
+  id: string;
+  source_id: string;
+  community_id: string | null;
+  prospect_source_id: string | null;
+  transaction_type: string | null;
+  deposit_type: string | null;
+  amount: number | null;
+  occurred_local_date: string | null;
+  total_count: number;
+};
+
+/**
+ * Paginated drill-through for the Deposit KPI. Returns only the transactions
+ * the KPI counts (V-003: transaction_type = Deposit AND deposit_type =
+ * Deposit), filtered server-side; refunds and waitlist deposits never appear.
+ */
+export function useWhDepositPage(
+  organizationId: string | null,
+  communityIds: string[],
+  start: string,
+  end: string,
+  page: number,
+  pageSize = 50,
+) {
+  return useQuery({
+    queryKey: ["wh_deposit_page", organizationId, communityIds.join(","), start, end, page, pageSize],
+    enabled: !!organizationId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("wh_deposit_page", {
+        _org_id: organizationId,
+        _start: start,
+        _end: end,
+        _community_ids: communityIds.length ? communityIds : null,
+        _limit: pageSize,
+        _offset: page * pageSize,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as WhDepositRow[];
+      return { rows, total: rows.length ? Number(rows[0]!.total_count) : 0 };
+    },
+  });
+}
+
 
 /** Stored volume per source table vs the most recent sync's persisted rows. */
 export function useWhCompleteness(organizationId: string | null, communityIds: string[]) {

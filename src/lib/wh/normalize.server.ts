@@ -424,9 +424,15 @@ export function normalizeDeposit(raw: Rec, ctx: Ctx) {
       "contract_id",
       "housing_contracts_id",
     ),
-    transaction_type: pick(rec, "transaction_type", "type", "deposit_types_name"),
+    // WelcomeHome exposes the refund flag separately from the deposit type.
+    // transaction_type is the Deposit/Refund axis; deposit_type is the
+    // Deposit / Waitlist Deposit / Community Fee axis. Neither is ever
+    // inferred from the amount's sign.
+    transaction_type: pickBool(rec, "refund", "is_refund") ? "Refund" : "Deposit",
+    deposit_type: pick(rec, "deposit_type", "deposit_types_name", "type"),
     deposit_type_id: pick(rec, "deposit_type_id", "deposit_types_id"),
     is_refund: pickBool(rec, "refund", "is_refund"),
+
     amount: pickNum(rec, "amount"),
     occurred_at: occurred,
     occurred_local_date: localDate(occurred, ctx.timezone),

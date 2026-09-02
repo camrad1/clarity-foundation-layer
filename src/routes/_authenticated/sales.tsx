@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ratio } from "@/lib/wh/metrics";
 import {
   candidate,
+  useWhDepositPage,
   useWhProspectPage,
   useWhSalesSummary,
   withheld,
   type WhProspectBucket,
 } from "@/lib/wh/summary";
+
 import { useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 
 export const Route = createFileRoute("/_authenticated/sales")({
@@ -110,7 +112,11 @@ function SalesIntelligence() {
   const reTours = s.mappings.re_tour
     ? candidate(s.reTours, "Provisional: activities of a type mapped to Re-Tour.")
     : withheld("Re-Tour is not inferred from repeat tours. Map an activity type to Re-Tour first.");
-  const deposits = candidate(s.deposits, "Provisional: deposit transactions, refunds and discards excluded.");
+  const deposits = candidate(
+    s.deposits,
+    "Provisional V-003: transaction_type = Deposit and deposit_type = Deposit. Refunds, waitlist deposits and other deposit types are excluded.",
+  );
+
   const moveIns = candidate(s.moveIns, `Provisional: count_move_in with ${s.settings.move_in_date_field}.`);
   const moveOuts = candidate(s.moveOuts, `Provisional: count_move_out with ${s.settings.move_out_date_field}.`);
   const net = candidate(s.moveIns - s.moveOuts, "Move-ins minus move-outs for the selected period.");
@@ -218,11 +224,18 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Deposit source comparison</h3>
               <p className="text-xs text-muted-foreground">
-                Both candidate sources are shown side by side until V-003 is reconciled.
+                Candidate (V-003, provisional): transaction_type = Deposit AND deposit_type =
+                Deposit, dated in the selected period.
               </p>
               <ul className="text-sm text-muted-foreground">
-                <li>DepositTransactions: {s.depositRecon.fromTransactions}</li>
+                <li>Standard DepositTransactions: {s.depositRecon.fromTransactions}</li>
                 <li>HousingContract deposit fields: {s.depositRecon.fromContracts}</li>
+              </ul>
+              <p className="eyebrow pt-2">Diagnostic components — not KPI values</p>
+              <ul className="text-xs text-muted-foreground">
+                <li>Refund transactions: {s.depositRecon.refunds}</li>
+                <li>Waitlist Deposit transactions: {s.depositRecon.waitlist}</li>
+                <li>Other deposit types: {s.depositRecon.otherTypes}</li>
               </ul>
               {s.depositRecon.fromTransactions !== s.depositRecon.fromContracts ? (
                 <p className="text-xs text-warning">
@@ -230,8 +243,12 @@ function SalesIntelligence() {
                 </p>
               ) : null}
             </div>
+
           </section>
+
+          <DepositDrillThrough />
         </TabsContent>
+
 
         <TabsContent value="pipeline" className="space-y-6 pt-6">
           <section className="grid gap-4 md:grid-cols-4">
@@ -402,7 +419,75 @@ function ProspectDrillThrough() {
   );
 }
 
+/**
+ * Deposit KPI drill-through. Server-paginated through wh_deposit_page, which
+ * applies the same V-003 filter as the KPI, so this list always reconciles to
+ * the displayed Deposit count. No resident or prospect PII is returned.
+ */
+function DepositDrillThrough() {
+  const ctx = useWhContext();
+  const [page, setPage] = useState(0);
+  const q = useWhDepositPage(
+    ctx.organizationId,
+    ctx.communityIds,
+    ctx.dateRange.start,
+    ctx.dateRange.end,
+    page,
+    PAGE_SIZE,
+  );
+  const total = q.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold">Counted deposit transactions</h3>
+        <p className="text-xs text-muted-foreground">
+          Exactly the rows behind the Deposit candidate: transaction_type = Deposit and deposit_type
+          = Deposit, dated in the selected period.
+        </p>
+      </div>
+      <DataTable
+        columns={[
+          { key: "src", header: "Transaction", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
+          { key: "date", header: "Date", render: (r: any) => r.occurred_local_date ?? "—" },
+          { key: "type", header: "Deposit type", render: (r: any) => r.deposit_type ?? "—" },
+          {
+            key: "amt",
+            header: "Amount",
+            align: "right",
+            render: (r: any) => (r.amount == null ? "—" : Number(r.amount).toLocaleString()),
+          },
+          {
+            key: "prospect",
+            header: "Prospect",
+            render: (r: any) => <code className="text-xs">{r.prospect_source_id ?? "—"}</code>,
+          },
+        ]}
+        rows={(q.data?.rows ?? []) as any[]}
+        loading={q.isLoading}
+        empty={<EmptyState title="No counted deposits" description="No standard deposit transactions in this selection." />}
+      />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {total.toLocaleString()} counted {total === 1 ? "deposit" : "deposits"} · page {page + 1} of {pages}
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
+
   return (
     <div className="panel space-y-1 p-5">
       <p className="eyebrow">{label}</p>
