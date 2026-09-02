@@ -10,6 +10,7 @@ import { GRAIN_LABELS, type GrainKey } from "@/lib/gsc/parse";
 import { useActiveGrainCoverage } from "@/lib/gsc/queries";
 import { WhCompletenessPanel } from "@/components/clarity/wh-completeness";
 import { WhHealthSection } from "@/components/clarity/wh-health";
+import { WhLookupCoveragePanel } from "@/components/clarity/wh-lookup-coverage";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/data-health")({
@@ -229,6 +230,7 @@ function DataHealth() {
 
       <WhHealthSection organizationId={organizationId} />
       <WhCompletenessPanel />
+      <WhLookupCoveragePanel />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Coverage</h2>

@@ -55,22 +55,58 @@ export function useWhSourceCommunities(connectionId: string | null) {
   });
 }
 
-export function useWhLookups(connectionId: string | null, lookupType?: string) {
+/**
+ * Bounded lookup read.
+ *
+ * `lookupTypes` narrows the fetch to the dimensions a screen actually needs.
+ * This matters: the Referrers dimension alone is ~900 rows, so an unfiltered
+ * read hit PostgREST's default 1000-row ceiling and silently truncated the
+ * lead_source / stage / user rows that label resolution depends on.
+ */
+export function useWhLookups(connectionId: string | null, lookupTypes?: string | string[]) {
+  const types = lookupTypes == null ? null : Array.isArray(lookupTypes) ? lookupTypes : [lookupTypes];
   return useQuery({
-    queryKey: ["wh_lookups", connectionId, lookupType ?? "all"],
+    queryKey: ["wh_lookups", connectionId, types ? types.join(",") : "all"],
     enabled: !!connectionId,
     queryFn: async () => {
       let q = supabase
         .from("wh_lookups")
         .select("id, lookup_type, source_id, label")
         .eq("connection_id", connectionId!);
-      if (lookupType) q = q.eq("lookup_type", lookupType);
-      const { data, error } = await q.order("label");
+      if (types) q = types.length === 1 ? q.eq("lookup_type", types[0]!) : q.in("lookup_type", types);
+      const { data, error } = await q.order("label").range(0, 4999);
       if (error) throw error;
       return data ?? [];
     },
   });
 }
+
+/**
+ * Referential coverage of label lookups over normalized WelcomeHome facts.
+ * Server-side and tenant/community authorized: no fact rows reach the browser.
+ */
+export function useWhLookupCoverage(organizationId: string | null, communityIds: string[]) {
+  return useQuery({
+    queryKey: ["wh_lookup_coverage", organizationId, communityIds.join(",")],
+    enabled: !!organizationId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("wh_lookup_coverage", {
+        _org_id: organizationId!,
+        ...(communityIds.length ? { _community_ids: communityIds } : {}),
+      });
+
+      if (error) throw error;
+      return (data ?? []) as {
+        lookup_type: string;
+        referenced: number;
+        resolved: number;
+        unresolved: number;
+        unresolved_ids: string[];
+      }[];
+    },
+  });
+}
+
 
 export function useWhActivityMappings(connectionId: string | null) {
   return useQuery({

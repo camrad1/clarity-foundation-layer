@@ -89,14 +89,18 @@ export function useWhContext() {
   };
 }
 
-/** Label lookups for lead sources, users, stages, scores. */
+/** Label lookups for lead sources, users, stages, scores, care types. */
+const LABEL_LOOKUP_TYPES = ["lead_source", "user", "stage", "score", "care_type"];
+
 export function useWhLabelMaps(connectionId: string | null) {
-  const lookups = useWhLookups(connectionId);
+  const lookups = useWhLookups(connectionId, LABEL_LOOKUP_TYPES);
   return useMemo(() => {
     const by: Record<string, Record<string, string>> = {};
     for (const l of (lookups.data ?? []) as any[]) {
+      const label = typeof l.label === "string" ? l.label.trim() : "";
+      if (!label) continue; // never fall back to the raw source id as a label
       by[l.lookup_type] = by[l.lookup_type] ?? {};
-      by[l.lookup_type]![l.source_id] = l.label ?? l.source_id;
+      by[l.lookup_type]![l.source_id] = label;
     }
     return {
       leadSource: by["lead_source"] ?? {},
@@ -108,3 +112,19 @@ export function useWhLabelMaps(connectionId: string | null) {
     };
   }, [lookups.data, lookups.isLoading]);
 }
+
+/**
+ * Resolve a source id to its WelcomeHome label. Unresolved ids never surface as
+ * raw numbers in the UI; they collapse to a neutral fallback and the id stays
+ * available for admin diagnostics (Data Health → lookup coverage).
+ */
+export function resolveLabel(
+  map: Record<string, string>,
+  id: string | null | undefined,
+  fallback = "Unknown",
+): string {
+  const key = (id ?? "").trim();
+  if (!key) return fallback;
+  return map[key] ?? fallback;
+}
+

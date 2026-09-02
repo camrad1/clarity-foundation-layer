@@ -3706,6 +3706,16 @@ export type Database = {
         Args: { _community_ids: string[]; _org_id: string }
         Returns: string[]
       }
+      wh_lookup_coverage: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          lookup_type: string
+          referenced: number
+          resolved: number
+          unresolved: number
+          unresolved_ids: string[]
+        }[]
+      }
       wh_move_in_page: {
         Args: {
           _community_ids?: string[]
