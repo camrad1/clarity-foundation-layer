@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: WelcomeHomeAdmin;
+  component: WelcomeHomeAdmin,
 });
 
 function fmt(d: string | null | undefined) {
@@ -78,6 +78,7 @@ function WelcomeHomeAdmin() {
 
   const createConnection = useMutation({
     mutationFn: async () => {
+      if (!organizationId) throw new Error("No organization selected");
       const { error } = await supabase.from("data_source_connections").insert({
         organization_id: organizationId,
         source_type: "welcomehome",

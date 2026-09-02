@@ -29,6 +29,8 @@ import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
+import { Route as AuthenticatedAdminWelcomehomeRouteImport } from './routes/_authenticated/admin/welcomehome'
+import { Route as AuthenticatedAdminWhMappingsRouteImport } from './routes/_authenticated/admin/wh-mappings'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
 import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './routes/_authenticated/marketing/opportunities'
 import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
@@ -144,6 +146,18 @@ const AuthenticatedAdminValidationRoute =
     path: '/admin/validation',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminWelcomehomeRoute =
+  AuthenticatedAdminWelcomehomeRouteImport.update({
+    id: '/admin/welcomehome',
+    path: '/admin/welcomehome',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminWhMappingsRoute =
+  AuthenticatedAdminWhMappingsRouteImport.update({
+    id: '/admin/wh-mappings',
+    path: '/admin/wh-mappings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMarketingIndexRoute =
   AuthenticatedMarketingIndexRouteImport.update({
     id: '/',
@@ -195,6 +209,8 @@ export interface FileRoutesByFullPath {
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
+  '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -220,6 +236,8 @@ export interface FileRoutesByTo {
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
+  '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -248,6 +266,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
+  '/_authenticated/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
+  '/_authenticated/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
   '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -276,6 +296,8 @@ export interface FileRouteTypes {
     | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/admin/welcomehome'
+    | '/admin/wh-mappings'
     | '/marketing/opportunities'
     | '/marketing/pages'
     | '/marketing/queries'
@@ -301,6 +323,8 @@ export interface FileRouteTypes {
     | '/admin/query-rules'
     | '/admin/url-rules'
     | '/admin/validation'
+    | '/admin/welcomehome'
+    | '/admin/wh-mappings'
     | '/marketing/opportunities'
     | '/marketing/pages'
     | '/marketing/queries'
@@ -328,6 +352,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/query-rules'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
+    | '/_authenticated/admin/welcomehome'
+    | '/_authenticated/admin/wh-mappings'
     | '/_authenticated/marketing/opportunities'
     | '/_authenticated/marketing/pages'
     | '/_authenticated/marketing/queries'
@@ -483,6 +509,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminValidationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/welcomehome': {
+      id: '/_authenticated/admin/welcomehome'
+      path: '/admin/welcomehome'
+      fullPath: '/admin/welcomehome'
+      preLoaderRoute: typeof AuthenticatedAdminWelcomehomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/wh-mappings': {
+      id: '/_authenticated/admin/wh-mappings'
+      path: '/admin/wh-mappings'
+      fullPath: '/admin/wh-mappings'
+      preLoaderRoute: typeof AuthenticatedAdminWhMappingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/marketing/': {
       id: '/_authenticated/marketing/'
       path: '/'
@@ -562,6 +602,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
   AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
+  AuthenticatedAdminWelcomehomeRoute: typeof AuthenticatedAdminWelcomehomeRoute
+  AuthenticatedAdminWhMappingsRoute: typeof AuthenticatedAdminWhMappingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -582,6 +624,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminQueryRulesRoute: AuthenticatedAdminQueryRulesRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
   AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
+  AuthenticatedAdminWelcomehomeRoute: AuthenticatedAdminWelcomehomeRoute,
+  AuthenticatedAdminWhMappingsRoute: AuthenticatedAdminWhMappingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

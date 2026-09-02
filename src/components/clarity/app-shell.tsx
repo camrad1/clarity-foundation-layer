@@ -10,6 +10,7 @@ import {
   Goal,
   LayoutDashboard,
   Link2,
+  PlugZap,
   LogOut,
   Ruler,
   ShieldCheck,
@@ -52,6 +53,8 @@ const ADMIN: NavItem[] = [
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },
   { to: "/admin/query-rules", label: "Query Classification", icon: Tags },
   { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
+  { to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap },
+  { to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 },
   { to: "/admin/data-sources", label: "Data Sources", icon: Database },
   { to: "/admin/metrics", label: "Metric Registry", icon: Ruler },
   { to: "/admin/goals", label: "Goals", icon: Goal },
@@ -170,6 +173,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavLink
                 item={{ to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload }}
                 active={pathname === "/admin/gsc-imports"}
+              />
+              <NavLink
+                item={{ to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap }}
+                active={pathname === "/admin/welcomehome"}
+              />
+              <NavLink
+                item={{ to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 }}
+                active={pathname === "/admin/wh-mappings"}
               />
             </div>
           ) : null}
