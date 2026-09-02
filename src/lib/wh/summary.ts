@@ -10,9 +10,12 @@ import type { CandidateValue } from "./metrics";
  * it never downloads prospect, activity, contract or deposit rows to count
  * them, so KPI accuracy does not depend on any client row limit.
  *
- * Authorization is enforced twice: the RPCs reject an organization the caller
- * has no membership in, and every underlying read still runs under row level
- * security (the functions are SECURITY INVOKER).
+ * Authorization: the aggregate/drill-through RPCs are SECURITY DEFINER (chosen
+ * for performance over large activity volumes) and enforce access explicitly —
+ * they reject any organization the caller has no membership in and restrict
+ * every read to the caller's authorized community allow-list. Internal helpers
+ * such as the successful-ActivityResult resolver are not executable by browser
+ * users; only these guarded functions may use them.
  */
 
 export type WhSalesSummary = {
