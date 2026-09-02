@@ -32,7 +32,14 @@ export type WhSalesSummary = {
   tours: number;
   reTours: number;
   deposits: number;
-  depositRecon: { fromTransactions: number; fromContracts: number };
+  depositRecon: {
+    fromTransactions: number;
+    fromContracts: number;
+    refunds: number;
+    waitlist: number;
+    otherTypes: number;
+  };
+
   moveIns: number;
   moveOuts: number;
   pending: { pendingIn: number; pendingOut: number };

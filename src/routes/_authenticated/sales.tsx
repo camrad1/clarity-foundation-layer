@@ -110,7 +110,11 @@ function SalesIntelligence() {
   const reTours = s.mappings.re_tour
     ? candidate(s.reTours, "Provisional: activities of a type mapped to Re-Tour.")
     : withheld("Re-Tour is not inferred from repeat tours. Map an activity type to Re-Tour first.");
-  const deposits = candidate(s.deposits, "Provisional: deposit transactions, refunds and discards excluded.");
+  const deposits = candidate(
+    s.deposits,
+    "Provisional V-003: transaction_type = Deposit and deposit_type = Deposit. Refunds, waitlist deposits and other deposit types are excluded.",
+  );
+
   const moveIns = candidate(s.moveIns, `Provisional: count_move_in with ${s.settings.move_in_date_field}.`);
   const moveOuts = candidate(s.moveOuts, `Provisional: count_move_out with ${s.settings.move_out_date_field}.`);
   const net = candidate(s.moveIns - s.moveOuts, "Move-ins minus move-outs for the selected period.");
@@ -218,11 +222,18 @@ function SalesIntelligence() {
             <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Deposit source comparison</h3>
               <p className="text-xs text-muted-foreground">
-                Both candidate sources are shown side by side until V-003 is reconciled.
+                Candidate (V-003, provisional): transaction_type = Deposit AND deposit_type =
+                Deposit, dated in the selected period.
               </p>
               <ul className="text-sm text-muted-foreground">
-                <li>DepositTransactions: {s.depositRecon.fromTransactions}</li>
+                <li>Standard DepositTransactions: {s.depositRecon.fromTransactions}</li>
                 <li>HousingContract deposit fields: {s.depositRecon.fromContracts}</li>
+              </ul>
+              <p className="eyebrow pt-2">Diagnostic components — not KPI values</p>
+              <ul className="text-xs text-muted-foreground">
+                <li>Refund transactions: {s.depositRecon.refunds}</li>
+                <li>Waitlist Deposit transactions: {s.depositRecon.waitlist}</li>
+                <li>Other deposit types: {s.depositRecon.otherTypes}</li>
               </ul>
               {s.depositRecon.fromTransactions !== s.depositRecon.fromContracts ? (
                 <p className="text-xs text-warning">
@@ -230,6 +241,7 @@ function SalesIntelligence() {
                 </p>
               ) : null}
             </div>
+
           </section>
         </TabsContent>
 
