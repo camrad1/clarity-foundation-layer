@@ -50,7 +50,7 @@ export function WhValidationQueue() {
           : "Withheld",
         state: s.mappings.tour ? "pending" : "needs_review",
         detail:
-          "PROVISIONAL — matched to WelcomeHome Flash Activities for The Esther, Aug 1–31 2026 (successful 21 vs 21, initial 16, repeat 5, total 25). Successful is taken from the ActivityResults lookup flag, not from labels. Initial vs repeat uses WelcomeHome's first_completed_of_activity_type flag, never an inferred tour sequence.",
+          "PROVISIONAL — matched to WelcomeHome Flash Activities for The Esther, Aug 1–31 2026 (successful 21 vs 21, initial 16, repeat 5, total 25). Successful is matched on the WelcomeHome ActivityResult source ID flagged successful in the lookup payload — never on the result label, which is display only. Initial vs repeat uses WelcomeHome's first_completed_of_activity_type flag, never an inferred tour sequence.",
       },
       {
         id: "V-003",
