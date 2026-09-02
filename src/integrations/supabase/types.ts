@@ -3497,6 +3497,8 @@ export type Database = {
         | "appointment"
         | "other"
         | "unmapped"
+        | "text"
+        | "salesmail"
       wh_score_level: "hot" | "warm" | "cold" | "unknown"
       wh_sync_mode: "full" | "incremental"
     }
@@ -3701,6 +3703,8 @@ export const Constants = {
         "appointment",
         "other",
         "unmapped",
+        "text",
+        "salesmail",
       ],
       wh_score_level: ["hot", "warm", "cold", "unknown"],
       wh_sync_mode: ["full", "incremental"],
