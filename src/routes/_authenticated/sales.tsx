@@ -117,7 +117,7 @@ function SalesIntelligence() {
       return rows.get(id)!;
     };
     for (const a of facts.activities) {
-      const id = a.owner_user_id ?? a.assigned_user_id ?? null;
+      const id = a.user_id_source;
       if (!id || a.discarded_at) continue;
       const d = a.completed_local_date;
       if (!d || d < start || d > end) continue;
