@@ -36,6 +36,11 @@ export function OccupancyReconciliationPanel() {
       <DataTable
         loading={occ.isLoading}
         rows={rows}
+        empty={
+          <p className="p-6 text-sm text-muted-foreground">
+            No WelcomeHome unit records for this selection yet.
+          </p>
+        }
         columns={[
           { key: "name", header: "Community", render: (r: CommunityOccupancy) => r.name },
           {
