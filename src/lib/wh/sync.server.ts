@@ -408,7 +408,10 @@ export async function runWelcomeHomeSync(
 
   for (const table of args.tables) {
     let updatedAfter: string | null = null;
-    if (args.mode === "incremental" && isCoreTable(table)) {
+    // WelcomeHome exports expose no updated_at column, so no watermark can be
+    // derived and incremental mode honestly degrades to a full refresh.
+    const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(table);
+    if (args.mode === "incremental" && supportsIncremental) {
       const { data: state } = await admin
         .from("wh_sync_state")
         .select("watermark, source_max_updated_at")
@@ -422,6 +425,7 @@ export async function runWelcomeHomeSync(
         ).toISOString();
       }
     }
+
 
     await admin.from("wh_sync_state").upsert(
       {
