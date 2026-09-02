@@ -107,11 +107,17 @@ function SalesIntelligence() {
 
   const inquiries = candidate(s.inquiries, `Provisional: ${s.settings.inquiry_date_field}, community-local date.`);
   const tours = s.mappings.tour
-    ? candidate(s.tours, "Provisional: completed activities of a type mapped to Tour.")
+    ? candidate(
+        s.tours,
+        `Provisional V-002: tour activities completed in the period whose WelcomeHome activity result is flagged successful. ${s.tourRecon.totalTourActivities} total tour activities, ${s.tourRecon.unsuccessfulTours} unsuccessful.`,
+      )
     : withheld("No WelcomeHome activity type is mapped to Tour yet.");
-  const reTours = s.mappings.re_tour
-    ? candidate(s.reTours, "Provisional: activities of a type mapped to Re-Tour.")
-    : withheld("Re-Tour is not inferred from repeat tours. Map an activity type to Re-Tour first.");
+  const reTours = s.mappings.tour
+    ? candidate(
+        s.tourRecon.repeatTours,
+        "Provisional V-002: successful tours that are not the prospect's first completed tour (WelcomeHome first_completed_of_activity_type = false).",
+      )
+    : withheld("Requires an activity type mapped to Tour.");
   const deposits = candidate(
     s.deposits,
     "Provisional V-003: transaction_type = Deposit and deposit_type = Deposit. Refunds, waitlist deposits and other deposit types are excluded.",
