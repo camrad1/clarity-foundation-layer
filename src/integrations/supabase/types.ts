@@ -3573,6 +3573,112 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      wh_flash_deposits: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          amount: number
+          care_type: string
+          community_id: string
+          deposit_date: string
+          depositor_key: string
+          expected_move_in_date: string
+          prospect_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_hot_leads: {
+        Args: {
+          _community_ids?: string[]
+          _limit?: number
+          _offset?: number
+          _org_id: string
+        }
+        Returns: {
+          community_id: string
+          counselor: string
+          last_contact_at: string
+          lead_source: string
+          next_activity_scheduled_at: string
+          source_id: string
+          stage: string
+          status: string
+          total_count: number
+        }[]
+      }
+      wh_flash_move_ins: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          is_transfer: boolean
+          monthly_rate: number
+          move_in_date: string
+          prospect_source_id: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_move_outs: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          move_out_date: string
+          notice_date: string
+          prospect_source_id: string
+          reason: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_notices: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          expected_move_out_date: string
+          notice_date: string
+          reason: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
       wh_flash_occupancy: {
         Args: { _org_id: string; _scope: string[] }
         Returns: Json
