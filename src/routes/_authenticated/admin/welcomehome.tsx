@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,20 +12,31 @@ import { StatusPill } from "@/components/clarity/status-pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/lib/clarity-queries";
 import {
   whCheckDailySnapshots,
   whCredentialStatus,
   whDiscoverCommunities,
-  whRunSync,
+  whFinalizeSync,
+  whPlanSync,
+  whRunSyncUnit,
   whSaveCredential,
   whSeedMappingRows,
   whTestConnection,
+  type WhWorkUnit,
 } from "@/lib/wh/welcomehome.functions";
-import { useWhConnection, useWhSourceCommunities, useWhSyncState, useWhTableRuns } from "@/lib/wh/queries";
+import {
+  useWhCommunityMappings,
+  useWhConnection,
+  useWhSourceCommunities,
+  useWhSyncState,
+  useWhTableRuns,
+} from "@/lib/wh/queries";
 import { WH_CORE_TABLES } from "@/lib/wh/tables";
 import { useAppState } from "@/state/app-state";
+
 
 export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
   head: () => ({
