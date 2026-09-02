@@ -182,7 +182,7 @@ function WelcomeHomeAdmin() {
 
   const scopedCommunityIds = useMemo(() => {
     if (scope === "all") return undefined;
-    if (communityScope.mode === "all") return undefined;
+    if (communityScope.mode !== "communities") return undefined;
     return communityScope.communityIds;
   }, [scope, communityScope]);
 
