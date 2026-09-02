@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { RecordFormDialog } from "@/components/clarity/record-form-dialog";
 import { StatusPill } from "@/components/clarity/status-pill";
+import { CommunityEditDialog } from "@/components/clarity/community-edit-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
@@ -138,6 +139,17 @@ function Communities() {
           { key: "tz", header: "Timezone", render: (r) => r.timezone },
           { key: "units", header: "Units", align: "right", render: (r) => r.unit_count ?? "—" },
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
+          {
+            key: "edit",
+            header: "",
+            align: "right",
+            render: (r) => (
+              <CommunityEditDialog
+                community={r as never}
+                regions={(regions.data ?? []).map((x) => ({ id: x.id, name: x.name }))}
+              />
+            ),
+          },
         ]}
       />
     </div>
