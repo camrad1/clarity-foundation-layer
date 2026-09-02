@@ -515,7 +515,7 @@ export async function runWelcomeHomeSync(
       last_attempted_sync_at: new Date().toISOString(),
       ...(status !== "failed" ? { last_successful_sync_at: new Date().toISOString() } : {}),
       ...(throughDates.length
-        ? { data_through_date: throughDates[throughDates.length - 1].slice(0, 10) }
+        ? { data_through_date: String(throughDates[throughDates.length - 1]).slice(0, 10) }
         : {}),
     })
     .eq("id", args.connectionId)
