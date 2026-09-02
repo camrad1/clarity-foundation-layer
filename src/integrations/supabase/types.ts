@@ -2597,6 +2597,106 @@ export type Database = {
           },
         ]
       }
+      wh_residents: {
+        Row: {
+          care_type_label: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_at_source: string | null
+          current_residence: string | null
+          discarded_at: string | null
+          first_resident: boolean | null
+          id: string
+          marital_status: string | null
+          marked_deceased_at: string | null
+          metadata: Json
+          organization_id: string
+          person_source_id: string | null
+          prospect_source_id: string | null
+          source_community_id: string | null
+          source_id: string
+          updated_at: string
+          updated_at_source: string | null
+          veteran_status: string | null
+          yardi_code: string | null
+          yardi_id: string | null
+          yardi_p_code: string | null
+        }
+        Insert: {
+          care_type_label?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_at_source?: string | null
+          current_residence?: string | null
+          discarded_at?: string | null
+          first_resident?: boolean | null
+          id?: string
+          marital_status?: string | null
+          marked_deceased_at?: string | null
+          metadata?: Json
+          organization_id: string
+          person_source_id?: string | null
+          prospect_source_id?: string | null
+          source_community_id?: string | null
+          source_id: string
+          updated_at?: string
+          updated_at_source?: string | null
+          veteran_status?: string | null
+          yardi_code?: string | null
+          yardi_id?: string | null
+          yardi_p_code?: string | null
+        }
+        Update: {
+          care_type_label?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_at_source?: string | null
+          current_residence?: string | null
+          discarded_at?: string | null
+          first_resident?: boolean | null
+          id?: string
+          marital_status?: string | null
+          marked_deceased_at?: string | null
+          metadata?: Json
+          organization_id?: string
+          person_source_id?: string | null
+          prospect_source_id?: string | null
+          source_community_id?: string | null
+          source_id?: string
+          updated_at?: string
+          updated_at_source?: string | null
+          veteran_status?: string | null
+          yardi_code?: string | null
+          yardi_id?: string | null
+          yardi_p_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_residents_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_residents_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_residents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wh_score_mappings: {
         Row: {
           connection_id: string
