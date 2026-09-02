@@ -407,7 +407,9 @@ export function normalizeTouchpoint(raw: Rec, ctx: Ctx) {
 
 export function normalizeDeposit(raw: Rec, ctx: Ctx) {
   const rec = aliasRecord(raw, "deposit_transactions");
-  const occurred = pickTs(rec, "occurred_at", "transaction_at", "received_at", "created_at");
+  // The export names this column simply `date`; there is no created_at.
+  const occurred = pickTs(rec, "occurred_at", "transaction_at", "received_at", "date", "created_at");
+
   return {
     organization_id: ctx.organizationId,
     connection_id: ctx.connectionId,
