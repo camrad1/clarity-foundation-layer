@@ -3164,6 +3164,45 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      wh_data_completeness: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          last_sync_at: string
+          last_sync_rows: number
+          source_table: string
+          stored_rows: number
+        }[]
+      }
+      wh_prospect_page: {
+        Args: {
+          _bucket?: string
+          _community_ids?: string[]
+          _limit?: number
+          _offset?: number
+          _org_id: string
+        }
+        Returns: {
+          community_id: string
+          current_sales_counselor_id: string
+          id: string
+          last_contact_at: string
+          next_activity_scheduled_at: string
+          score_id: string
+          source_id: string
+          stage_id: string
+          status: string
+          total_count: number
+        }[]
+      }
+      wh_sales_summary: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
