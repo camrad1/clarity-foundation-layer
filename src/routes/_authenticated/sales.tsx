@@ -419,7 +419,75 @@ function ProspectDrillThrough() {
   );
 }
 
+/**
+ * Deposit KPI drill-through. Server-paginated through wh_deposit_page, which
+ * applies the same V-003 filter as the KPI, so this list always reconciles to
+ * the displayed Deposit count. No resident or prospect PII is returned.
+ */
+function DepositDrillThrough() {
+  const ctx = useWhContext();
+  const [page, setPage] = useState(0);
+  const q = useWhDepositPage(
+    ctx.organizationId,
+    ctx.communityIds,
+    ctx.dateRange.start,
+    ctx.dateRange.end,
+    page,
+    PAGE_SIZE,
+  );
+  const total = q.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold">Counted deposit transactions</h3>
+        <p className="text-xs text-muted-foreground">
+          Exactly the rows behind the Deposit candidate: transaction_type = Deposit and deposit_type
+          = Deposit, dated in the selected period.
+        </p>
+      </div>
+      <DataTable
+        columns={[
+          { key: "src", header: "Transaction", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
+          { key: "date", header: "Date", render: (r: any) => r.occurred_local_date ?? "—" },
+          { key: "type", header: "Deposit type", render: (r: any) => r.deposit_type ?? "—" },
+          {
+            key: "amt",
+            header: "Amount",
+            align: "right",
+            render: (r: any) => (r.amount == null ? "—" : Number(r.amount).toLocaleString()),
+          },
+          {
+            key: "prospect",
+            header: "Prospect",
+            render: (r: any) => <code className="text-xs">{r.prospect_source_id ?? "—"}</code>,
+          },
+        ]}
+        rows={(q.data?.rows ?? []) as any[]}
+        loading={q.isLoading}
+        empty={<EmptyState title="No counted deposits" description="No standard deposit transactions in this selection." />}
+      />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {total.toLocaleString()} counted {total === 1 ? "deposit" : "deposits"} · page {page + 1} of {pages}
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
+
   return (
     <div className="panel space-y-1 p-5">
       <p className="eyebrow">{label}</p>
