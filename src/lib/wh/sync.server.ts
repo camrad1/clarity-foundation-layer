@@ -560,4 +560,4 @@ export async function runWelcomeHomeSync(
   return { syncRunId, results, status };
 }
 
-export const ALL_SYNC_TABLES: WhTable[] = [...WH_LOOKUP_TABLES, ...WH_CORE_TABLES];
+export { WH_ALL_TABLES as ALL_SYNC_TABLES } from "./tables";
