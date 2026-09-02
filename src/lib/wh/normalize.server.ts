@@ -338,7 +338,7 @@ export function normalizeHousingContract(raw: Rec, ctx: Ctx) {
     occupancy_point_factor: pickNum(rec, "occupancy_point_factor", "occupancy_points"),
     monthly_rate: pickNum(rec, "monthly_rate", "rate", "base_rate"),
     care_rate: pickNum(rec, "care_rate"),
-    community_fee: pickNum(rec, "community_fee"),
+    community_fee: pickNum(rec, "community_fee", "community_fee_amount"),
     concessions: pickNum(rec, "concessions", "concession_amount"),
     one_time_concession: pickNum(rec, "one_time_concession"),
     recurring_concession: pickNum(rec, "recurring_concession"),
