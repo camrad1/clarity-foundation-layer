@@ -184,3 +184,32 @@
   font-weight: 600;
   color: var(--color-muted-foreground);
 }
+
+/* ------------------------------------------------------------------ */
+/* Print / PDF (Flash Report and any other printable page)             */
+/* ------------------------------------------------------------------ */
+.print-only { display: none; }
+
+@media print {
+  aside,
+  header.sticky,
+  .no-print { display: none !important; }
+
+  .print-only { display: block !important; }
+
+  main { max-width: none !important; padding: 0 !important; }
+
+  body { background: #fff; }
+
+  .panel,
+  section,
+  table { break-inside: avoid; page-break-inside: avoid; }
+
+  table { width: 100%; font-size: 10px; }
+
+  /* Expand collapsed trackers so the printed Flash is complete. */
+  [data-slot="accordion-content"],
+  [data-radix-collection-item] [hidden] { display: block !important; height: auto !important; }
+
+  a[href]::after { content: none !important; }
+}
