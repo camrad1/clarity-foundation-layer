@@ -74,7 +74,8 @@ function WelcomeHomeAdmin() {
   const runs = useWhTableRuns(connectionId, 40);
   const [token, setToken] = useState("");
   const mappings = useWhCommunityMappings(organizationId);
-  const { selectedCommunityIds } = useAppState() as { selectedCommunityIds?: string[] };
+  const { communityScope } = useAppState();
+
 
   const save = useServerFn(whSaveCredential);
   const test = useServerFn(whTestConnection);
