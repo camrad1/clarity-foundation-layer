@@ -615,7 +615,54 @@ function FlashReportPage() {
 
 /* -------------------------------------------------------------- */
 
-function gridRow(w: FlashPeriod, totalUnits: number | null) {
+/** Dense summary strip: legacy grouped heading + inline metrics. */
+function CompactRow({
+  heading,
+  items,
+}: {
+  heading: string;
+  items: { label: string; value: React.ReactNode; tone?: "neutral" | "up" | "down" }[];
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:w-48 md:shrink-0">
+        {heading}
+      </p>
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        {items.map((it) => (
+          <div key={it.label} className="flex items-baseline gap-1.5">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{it.label}</span>
+            <span
+              className={cn(
+                "font-display text-base font-semibold tabular-nums",
+                it.tone === "up" && "text-success",
+                it.tone === "down" && "text-destructive",
+              )}
+            >
+              {it.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------- */
+/* Week-by-week grid                                                */
+/* -------------------------------------------------------------- */
+
+/**
+ * Care-type occupancy columns are derived from the community's configured care
+ * types (`occupancy.byCareType`) — never hard-coded. A single-care-type scope
+ * adds no columns.
+ */
+function careTypeColumns(occ: FlashReport["occupancy"] | null | undefined): string[] {
+  const list = occ?.byCareType ?? [];
+  return list.length > 1 ? list.map((c) => c.careType) : [];
+}
+
+function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[]) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
   const occupied = o?.occupiedUnits ?? null;
@@ -629,11 +676,16 @@ function gridRow(w: FlashPeriod, totalUnits: number | null) {
     variance ?? "",
     occupied != null && o?.censusUnits ? ((occupied / o.censusUnits) * 100).toFixed(1) : "",
     occupied != null && b ? ((occupied / b) * 100).toFixed(1) : "",
+    ...careTypes.map((ct) => {
+      const row = o?.byCareType.find((c) => c.careType === ct);
+      return row ? `${row.occupied}/${row.units}` : "snapshot required";
+    }),
     w.moveIns,
     w.moveOuts,
     w.net,
     w.pendingIn,
     w.pendingOut,
+    w.pendingNet,
     w.inquiries,
     w.outreach,
     w.tours,
@@ -641,56 +693,160 @@ function gridRow(w: FlashPeriod, totalUnits: number | null) {
   ];
 }
 
+const GROUP_BORDER = "border-l border-border";
+
+function WeekByWeekGrid({
+  data,
+  loading,
+  occ,
+}: {
+  data: FlashReport | undefined;
+  loading: boolean;
+  occ: FlashReport["occupancy"] | null;
+}) {
+  const careTypes = careTypeColumns(occ);
+  const groups: { label: string; cols: string[] }[] = [
+    { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
+    { label: "Current MIMO", cols: ["MIs", "MOs", "NET"] },
+    { label: "This month – pending MIMO", cols: ["Pending Move Ins", "Pending Outs", "NET"] },
+    { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
+  ];
+  const totalCols = 1 + groups.reduce((n, g) => n + g.cols.length, 0);
+
+  return (
+    <div className="panel overflow-x-auto">
+      <table className="w-full min-w-[1100px] text-sm">
+        <thead>
+          {/* Grouped legacy heading row — visually dominant */}
+          <tr className="bg-muted text-[11px] font-semibold uppercase tracking-wider text-foreground">
+            <th className="whitespace-nowrap px-3 py-2 text-left">Week / Date</th>
+            {groups.map((g) => (
+              <th
+                key={g.label}
+                colSpan={g.cols.length}
+                className={cn("whitespace-nowrap px-3 py-2 text-center", GROUP_BORDER)}
+              >
+                {g.label}
+              </th>
+            ))}
+          </tr>
+          {/* Subheading row — lighter */}
+          <tr className="border-b border-border bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
+            <th className="px-3 py-1.5 text-left font-medium" />
+            {groups.map((g) =>
+              g.cols.map((c, i) => (
+                <th
+                  key={`${g.label}-${c}`}
+                  className={cn("whitespace-nowrap px-3 py-1.5 text-right font-medium", i === 0 && GROUP_BORDER)}
+                >
+                  {c}
+                </th>
+              )),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {/* Legacy "Starting #" row. Structured now; populated once immutable
+              daily snapshots exist. Current-state occupancy is deliberately NOT
+              backfilled here. */}
+          <StartingRow careTypes={careTypes} totalCols={totalCols} />
+          {(data?.weeks ?? []).map((w) => (
+            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} />
+          ))}
+          {data ? (
+            <GridRow w={data.month} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} emphasis />
+          ) : null}
+          {!data && !loading ? (
+            <tr>
+              <td className="px-3 py-6 text-muted-foreground" colSpan={totalCols}>
+                No Flash data for this month.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols: number }) {
+  const occCols = 6 + careTypes.length;
+  return (
+    <tr className="border-b border-border/60 bg-muted/20 text-muted-foreground">
+      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
+      <td className={cn("px-3 py-2 text-center text-[11px] italic", GROUP_BORDER)} colSpan={occCols}>
+        Snapshot required — month-start occupancy needs the nightly daily snapshot
+      </td>
+      <td className={cn("px-3 py-2 text-right text-[11px]", GROUP_BORDER)} colSpan={totalCols - 1 - occCols}>
+        —
+      </td>
+    </tr>
+  );
+}
+
 function GridRow({
   w,
   totalUnits,
+  careTypes,
   emphasis,
 }: {
   w: FlashPeriod;
   totalUnits: number | null;
+  careTypes: string[];
   emphasis?: boolean;
 }) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
   const occupied = o?.occupiedUnits ?? null;
   const variance = occupied != null && b != null ? occupied - b : null;
-  const na = <span className="text-muted-foreground/70">snapshot req.</span>;
+  const na = <span className="text-[11px] italic text-muted-foreground/70">snapshot req.</span>;
+  const cell = "px-3 py-2 text-right tabular-nums";
   return (
     <tr
       className={cn(
         "border-b border-border/60 last:border-0",
-        emphasis && "bg-muted/40 font-medium",
+        emphasis && "border-t-2 border-t-border bg-muted/50 font-semibold",
         w.isCurrent && !emphasis && "bg-primary/5",
       )}
     >
-      <td className="whitespace-nowrap px-3 py-2">{w.label}</td>
-      <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-        {formatDay(w.start)} – {formatDay(w.end)}
+      <td className="whitespace-nowrap px-3 py-2">
+        <span className="font-medium">{w.label}</span>
+        <span className="ml-2 text-[11px] text-muted-foreground">
+          {formatDay(w.start)} – {formatDay(w.end)}
+        </span>
       </td>
-      <td className="px-3 py-2">{o ? o.totalUnits : (totalUnits ?? "—")}</td>
-      <td className="px-3 py-2">{occupied ?? na}</td>
-      <td className="px-3 py-2">{b ?? "—"}</td>
-      <td className={cn("px-3 py-2", variance != null && (variance >= 0 ? "text-success" : "text-destructive"))}>
+      <td className={cn(cell, GROUP_BORDER)}>{o ? o.totalUnits : (totalUnits ?? "—")}</td>
+      <td className={cell}>{occupied ?? na}</td>
+      <td className={cell}>{b ?? "—"}</td>
+      <td className={cn(cell, variance != null && (variance >= 0 ? "text-success" : "text-destructive"))}>
         {variance == null ? (occupied == null ? na : "—") : variance > 0 ? `+${variance}` : variance}
       </td>
-      <td className="px-3 py-2">
+      <td className={cell}>
         {occupied != null && o?.censusUnits ? `${((occupied / o.censusUnits) * 100).toFixed(1)}%` : na}
       </td>
-      <td className="px-3 py-2">
-        {occupied == null ? na : b ? `${((occupied / b) * 100).toFixed(1)}%` : "—"}
-      </td>
-      <td className="px-3 py-2">{w.moveIns}</td>
-      <td className="px-3 py-2">{w.moveOuts}</td>
-      <td className="px-3 py-2">{w.net}</td>
-      <td className="px-3 py-2">{w.pendingIn}</td>
-      <td className="px-3 py-2">{w.pendingOut}</td>
-      <td className="px-3 py-2">{w.inquiries}</td>
-      <td className="px-3 py-2">{w.outreach}</td>
-      <td className="px-3 py-2">{w.tours}</td>
-      <td className="px-3 py-2">{w.reTours}</td>
+      <td className={cell}>{occupied == null ? na : b ? `${((occupied / b) * 100).toFixed(1)}%` : "—"}</td>
+      {careTypes.map((ct) => {
+        const row = o?.byCareType.find((c) => c.careType === ct);
+        return (
+          <td key={ct} className={cell}>
+            {row ? `${row.occupied}/${row.units}` : na}
+          </td>
+        );
+      })}
+      <td className={cn(cell, GROUP_BORDER)}>{w.moveIns}</td>
+      <td className={cell}>{w.moveOuts}</td>
+      <td className={cell}>{w.net > 0 ? `+${w.net}` : w.net}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn}</td>
+      <td className={cell}>{w.pendingOut}</td>
+      <td className={cell}>{w.pendingNet > 0 ? `+${w.pendingNet}` : w.pendingNet}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.inquiries}</td>
+      <td className={cell}>{w.outreach}</td>
+      <td className={cell}>{w.tours}</td>
+      <td className={cell}>{w.reTours}</td>
     </tr>
   );
 }
+
 
 /* -------------------------------------------------------------- */
 /* Manual note cell                                                 */
