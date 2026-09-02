@@ -34,6 +34,10 @@ const STATUS_TONE: Record<string, Tone> = {
   success: "positive",
   partial: "warning",
   running: "info",
+  skipped: "neutral",
+  // The source system does not expose this dataset at all.
+  unsupported: "neutral",
+
 };
 
 export function StatusPill({ status, className }: { status: string; className?: string }) {
