@@ -150,16 +150,27 @@ export const WH_SCORE_LEVEL_LABELS: Record<WhScoreLevel, string> = {
   unknown: "Unknown",
 };
 
-/** Maximum page size WelcomeHome allows on bulk exports. */
-export const WH_MAX_PAGE_SIZE = 10000;
-/** Default page size documented by WelcomeHome. */
-export const WH_DEFAULT_PAGE_SIZE = 1000;
+/**
+ * PAGINATION (verified against the live API on 2026-09-02)
+ *
+ * Bulk exports IGNORE `page` / `per_page`. They return a fixed ~1,000-row page
+ * and a `Link: <...?cursor=...>; rel="next"` header. The absence of that header
+ * is the only end-of-stream signal. Following the cursor turns the previously
+ * observed 1,000-row ceiling into real totals (Activities: 42,561 rows for a
+ * single community).
+ */
+export const WH_PAGE_CURSOR_HEADER = "link";
+/** Safety valve so a malformed cursor loop can never run unbounded. */
+export const WH_MAX_PAGES = 500;
 
 /**
- * Tables that support `filters[updated_at_after]`. Lookup dimensions are small
- * and are always refreshed in full so label changes are never missed.
+ * `filters[updated_at_after]` is accepted by the API, but the CSV exports do
+ * NOT expose an `updated_at` column, so no watermark can be derived from the
+ * returned rows. Incremental mode therefore degrades to a full refresh and is
+ * reported as such rather than silently claiming to be incremental.
  */
-export const WH_INCREMENTAL_TABLES: WhTable[] = [...WH_CORE_TABLES];
+export const WH_INCREMENTAL_TABLES: WhTable[] = [];
+
 
 export function isCoreTable(table: string): table is WhCoreTable {
   return (WH_CORE_TABLES as readonly string[]).includes(table);
