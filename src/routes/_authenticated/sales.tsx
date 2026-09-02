@@ -228,6 +228,28 @@ function SalesIntelligence() {
               </ul>
             </div>
             <div className="panel space-y-2 p-5">
+              <h3 className="text-sm font-semibold">Tour reconciliation</h3>
+              <p className="text-xs text-muted-foreground">
+                Candidate (V-002, provisional): tour activities completed in the period whose
+                WelcomeHome activity result is flagged successful.
+              </p>
+              <ul className="text-sm text-muted-foreground">
+                <li className="text-foreground">Successful tours (KPI): {s.tourRecon.successfulTours}</li>
+                <li>Initial tours: {s.tourRecon.initialTours}</li>
+                <li>Repeat tours: {s.tourRecon.repeatTours}</li>
+              </ul>
+              <p className="eyebrow pt-2">Diagnostic components — not KPI values</p>
+              <ul className="text-xs text-muted-foreground">
+                <li>Total tour activities: {s.tourRecon.totalTourActivities}</li>
+                <li>Unsuccessful / excluded: {s.tourRecon.unsuccessfulTours}</li>
+                {s.tourRecon.byResult.map((r) => (
+                  <li key={r.result}>
+                    {r.result}: {r.n} ({r.successful ? "successful" : "not successful"})
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="panel space-y-2 p-5">
               <h3 className="text-sm font-semibold">Deposit source comparison</h3>
               <p className="text-xs text-muted-foreground">
                 Candidate (V-003, provisional): transaction_type = Deposit AND deposit_type =
