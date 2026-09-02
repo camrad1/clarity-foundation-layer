@@ -455,7 +455,14 @@ export async function runWelcomeHomeSync(
           targets: args.targets,
         });
 
+    if (args.mode === "incremental" && !supportsIncremental && isCoreTable(table)) {
+      result.warnings.push(
+        "WelcomeHome exports expose no updated_at column; a full refresh was performed instead of an incremental one.",
+      );
+    }
+
     results.push(result);
+
 
     await admin.from("wh_sync_table_runs").insert({
       organization_id: args.organizationId,
