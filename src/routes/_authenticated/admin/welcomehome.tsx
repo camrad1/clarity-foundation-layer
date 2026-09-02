@@ -443,11 +443,13 @@ function WelcomeHomeAdmin() {
               <div>
                 <h2 className="text-sm font-semibold">Synchronization</h2>
                 <p className="text-xs text-muted-foreground">
-                  Full sync retrieves every mapped community. Incremental sync uses each table's own
-                  watermark with a safety overlap, and source-ID upsert keeps it idempotent.
+                  Sync runs as bounded work units — one dataset for one community per request — so
+                  duration does not grow with portfolio size. Progress is saved continuously and any
+                  interrupted run can be resumed. Incremental sync uses each table's own watermark with a
+                  safety overlap, and source-ID upsert keeps it idempotent.
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -459,20 +461,88 @@ function WelcomeHomeAdmin() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => runSync.mutate("incremental")}
-                  disabled={!credential.data?.configured || runSync.isPending}
+                  onClick={() => orchestrate({ mode: "incremental" })}
+                  disabled={!credential.data?.configured || progress.running}
                 >
                   <RefreshCw className="size-4" /> Incremental sync
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => runSync.mutate("full")}
-                  disabled={!credential.data?.configured || runSync.isPending}
+                  onClick={() => orchestrate({ mode: "full" })}
+                  disabled={!credential.data?.configured || progress.running}
                 >
                   Full sync
                 </Button>
               </div>
             </div>
+
+            <div className="rounded-lg border border-border/60 bg-card/40 p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-4">
+                <Label className="text-xs font-medium">Sync scope</Label>
+                <label className="flex items-center gap-2 text-xs">
+                  <Checkbox
+                    checked={scope === "selected"}
+                    onCheckedChange={(v) => setScope(v ? "selected" : "all")}
+                  />
+                  Use the dashboard community filter
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  This sync will cover <span className="font-medium text-foreground">{scopeLabel}</span>.
+                </span>
+              </div>
+
+              {progress.total > 0 || progress.running ? (
+                <div className="space-y-1 text-xs">
+                  <div className="h-1.5 w-full overflow-hidden rounded bg-muted">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
+                    <span>
+                      {progress.done} / {progress.total} work units
+                      {progress.failed ? ` · ${progress.failed} need retry` : ""}
+                    </span>
+                    {progress.current ? <span>Running: {progress.current}</span> : null}
+                    {progress.running ? (
+                      <Button size="sm" variant="ghost" onClick={() => (cancelRef.current = true)}>
+                        Cancel
+                      </Button>
+                    ) : null}
+                    {!progress.running && progress.runId ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => orchestrate({ mode: "full", resumeRunId: progress.runId! })}
+                        >
+                          Resume run
+                        </Button>
+                        {progress.failedUnits.length ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              orchestrate({
+                                mode: "full",
+                                resumeRunId: progress.runId!,
+                                onlyUnits: progress.failedUnits,
+                              })
+                            }
+                          >
+                            Retry failed
+                          </Button>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
 
             <DataTable
               columns={[
