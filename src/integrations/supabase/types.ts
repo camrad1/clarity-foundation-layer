@@ -3175,7 +3175,7 @@ export type Database = {
       }
       wh_prospect_page: {
         Args: {
-          _bucket?: string
+          _bucket: string
           _community_ids?: string[]
           _limit?: number
           _offset?: number
