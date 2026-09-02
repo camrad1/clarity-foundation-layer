@@ -37,6 +37,8 @@ import {
 } from "@/lib/wh/summary";
 
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
+import { effectiveBudget } from "@/lib/wh/occupancy";
+import { useFlashBudgets } from "@/lib/flash/queries";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -171,6 +173,7 @@ function priorPeriod(start: string, end: string) {
 function SalesIntelligence() {
   const ctx = useWhContext();
   const labels = useWhLabelMaps(ctx.connectionId);
+  const budgets = useFlashBudgets(ctx.organizationId);
   const summary = useWhSalesSummary(
     ctx.organizationId,
     ctx.communityIds,
@@ -226,6 +229,7 @@ function SalesIntelligence() {
   }
 
   const s = summary.data;
+  const budgetRows = budgets.data ?? [];
 
   if (!s || s.exclusions.total === 0) {
     return (
@@ -263,6 +267,15 @@ function SalesIntelligence() {
   const occDisplay = s.occupancy.censusUnits
     ? `${Math.round((s.occupancy.occupiedUnitsCandidate / s.occupancy.censusUnits) * 100)}%`
     : "—";
+
+  // Budgeted occupied units in force today, summed over the communities in scope.
+  const budgetUnits = ctx.communityIds.reduce<number | null>((acc, id) => {
+    const b = effectiveBudget(budgetRows, id);
+    const units =
+      b?.budget_occupied_units != null ? Number(b.budget_occupied_units) : null;
+    return units == null ? acc : (acc ?? 0) + units;
+  }, null);
+  const occVariance = budgetUnits == null ? null : s.occupancy.occupiedUnitsCandidate - budgetUnits;
 
   return (
     <div className="space-y-8">
@@ -331,6 +344,16 @@ function SalesIntelligence() {
               value={s.moveIns - s.moveOuts}
               note="Move-ins minus move-outs for the selected period."
               compare={p ? cmp(s.moveIns - s.moveOuts, p.moveIns - p.moveOuts) : undefined}
+            />
+            <KpiCard
+              label="Current occupancy"
+              value={s.occupancy.occupiedUnitsCandidate}
+              display={occDisplay}
+              note={`${s.occupancy.occupiedUnitsCandidate} of ${s.occupancy.censusUnits} census-eligible units. ${
+                budgetUnits == null
+                  ? "No budgeted occupancy configured for this scope."
+                  : `Budget ${budgetUnits} units · variance ${occVariance! >= 0 ? "+" : ""}${occVariance}.`
+              } Current state, not affected by the date filter.`}
             />
             <KpiCard
               label="Pending move-ins / outs"

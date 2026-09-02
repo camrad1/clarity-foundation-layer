@@ -11,6 +11,7 @@ import { useActiveGrainCoverage } from "@/lib/gsc/queries";
 import { WhCompletenessPanel } from "@/components/clarity/wh-completeness";
 import { WhHealthSection } from "@/components/clarity/wh-health";
 import { WhLookupCoveragePanel } from "@/components/clarity/wh-lookup-coverage";
+import { OccupancyReconciliationPanel } from "@/components/clarity/occupancy-reconciliation";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/data-health")({
@@ -231,6 +232,7 @@ function DataHealth() {
       <WhHealthSection organizationId={organizationId} />
       <WhCompletenessPanel />
       <WhLookupCoveragePanel />
+      <OccupancyReconciliationPanel />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Coverage</h2>

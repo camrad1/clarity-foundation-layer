@@ -114,6 +114,7 @@ export type Database = {
           slug: string
           state: string | null
           status: Database["public"]["Enums"]["entity_status"]
+          street_address: string | null
           timezone: string
           unit_count: number | null
           updated_at: string
@@ -130,6 +131,7 @@ export type Database = {
           slug: string
           state?: string | null
           status?: Database["public"]["Enums"]["entity_status"]
+          street_address?: string | null
           timezone?: string
           unit_count?: number | null
           updated_at?: string
@@ -146,6 +148,7 @@ export type Database = {
           slug?: string
           state?: string | null
           status?: Database["public"]["Enums"]["entity_status"]
+          street_address?: string | null
           timezone?: string
           unit_count?: number | null
           updated_at?: string
@@ -3542,6 +3545,10 @@ export type Database = {
           activities: number
           category: string
         }[]
+      }
+      wh_current_occupancy: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: Json
       }
       wh_data_completeness: {
         Args: { _community_ids?: string[]; _org_id: string }
