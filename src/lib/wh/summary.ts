@@ -45,9 +45,12 @@ export type WhSalesSummary = {
     successfulResultLabels: string[];
     byResult: { result: string; successful: boolean; n: number }[];
   };
+  /** V-003: distinct depositors with a standard deposit dated in the period. */
   deposits: number;
   depositRecon: {
+    depositors: number;
     fromTransactions: number;
+    zeroAmountRows: number;
     fromContracts: number;
     refunds: number;
     waitlist: number;
@@ -56,7 +59,16 @@ export type WhSalesSummary = {
 
   moveIns: number;
   moveOuts: number;
+  moveRecon: {
+    moveIns: number;
+    transferIns: number;
+    canceledMoveIns: number;
+    moveOuts: number;
+    transferOuts: number;
+    canceledMoveOuts: number;
+  };
   pending: { pendingIn: number; pendingOut: number };
+
   pipeline: number;
   hot: number;
   hotNoActivity: number;

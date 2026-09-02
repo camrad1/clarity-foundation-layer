@@ -435,7 +435,12 @@ export function normalizeDeposit(raw: Rec, ctx: Ctx) {
 
     amount: pickNum(rec, "amount"),
     occurred_at: occurred,
-    occurred_local_date: localDate(occurred, ctx.timezone),
+    // WelcomeHome exposes the deposit date as a calendar date, not an instant.
+    // Converting it through a timezone shifted every deposit one day earlier,
+    // so the source date is taken verbatim when present.
+    occurred_local_date:
+      pickDate(rec, "date", "transaction_date", "occurred_on") ?? localDate(occurred, ctx.timezone),
+
     refunded_at: pickTs(rec, "refunded_at"),
     created_at_source: pickTs(rec, "created_at"),
     updated_at_source: updatedAt(rec),
