@@ -629,3 +629,40 @@ function Stat({ label, value, sub }: { label: string; value: number | string; su
     </div>
   );
 }
+
+/**
+ * Unit reconciliation diagnostic: which WelcomeHome Unit records were removed
+ * from the census denominator, and why. Computed server-side; no resident data.
+ */
+function UnitCensusDiagnostic() {
+  const ctx = useWhContext();
+  const q = useWhUnitCensusReport(ctx.organizationId, ctx.communityIds);
+  const rows = q.data ?? [];
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold">Excluded unit records</h2>
+        <p className="text-xs text-muted-foreground">
+          Every Unit record held back from the census denominator, with the deterministic reason.
+          Total unit records stay intact in the source.
+        </p>
+      </div>
+      <DataTable
+        columns={[
+          { key: "src", header: "Source ID", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "num", header: "Unit number", render: (r: any) => r.unit_number ?? "—" },
+          { key: "fp", header: "Floor plan", render: (r: any) => r.floor_plan_label ?? "—" },
+          {
+            key: "why",
+            header: "Exclusion reason",
+            render: (r: any) => UNIT_EXCLUSION_LABELS[r.exclusion_reason] ?? r.exclusion_reason,
+          },
+        ]}
+        rows={rows as any[]}
+        loading={q.isLoading}
+        empty={<EmptyState title="No units excluded" description="Every unit record is census-eligible." />}
+      />
+    </section>
+  );
+}
