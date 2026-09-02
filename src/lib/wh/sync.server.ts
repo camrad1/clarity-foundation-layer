@@ -191,14 +191,23 @@ async function syncLookupTable(
       result.rowsReceived += records.length;
       for (const raw of records) {
         // Referrers rows are people; keep only the non-identifying columns.
-        const rec: Rec =
-          args.table === "Referrers"
-            ? Object.fromEntries(
-                (WH_REFERRER_SAFE_FIELDS as readonly string[])
-                  .filter((k) => raw[k] !== undefined)
-                  .map((k) => [k, raw[k]!]),
-              )
-            : stripPii(raw);
+        // Users are staff, not prospects/residents: their display name is kept
+        // so counselor attribution is readable, but contact details are not.
+        let rec: Rec;
+        let staffName: string | null = null;
+        if (args.table === "Referrers") {
+          rec = Object.fromEntries(
+            (WH_REFERRER_SAFE_FIELDS as readonly string[])
+              .filter((k) => raw[k] !== undefined)
+              .map((k) => [k, raw[k]!]),
+          );
+        } else if (args.table === "Users") {
+          rec = stripPii(raw);
+          staffName = [raw["first_name"], raw["last_name"]].filter(Boolean).join(" ").trim() || null;
+          if (staffName) rec["display_name"] = staffName;
+        } else {
+          rec = stripPii(raw);
+        }
         const id = sourceId(rec) ?? rec["referrers_id"] ?? null;
         if (!id) {
           result.rowsFailed += 1;
@@ -212,7 +221,9 @@ async function syncLookupTable(
           connection_id: args.connectionId,
           lookup_type: WH_LOOKUP_KEY[args.table],
           source_id: id,
-          label: rec["name"] ?? rec["label"] ?? rec["title"] ?? rec["scores_name"] ?? null,
+          label:
+            rec["name"] ?? staffName ?? rec["label"] ?? rec["title"] ?? rec["scores_name"] ?? null,
+
           source_community_id: scope?.sourceCommunityId ?? null,
           payload: rec,
         });
