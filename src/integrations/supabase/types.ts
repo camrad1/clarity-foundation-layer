@@ -471,6 +471,230 @@ export type Database = {
         }
         Relationships: []
       }
+      flash_manual_entries: {
+        Row: {
+          attended_count: number | null
+          community_id: string
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          id: string
+          invited_count: number | null
+          kind: string
+          notes: string | null
+          organization_id: string
+          reporting_month: string | null
+          reporting_week_start: string | null
+          target_audience: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attended_count?: number | null
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          entry_date: string
+          id?: string
+          invited_count?: number | null
+          kind?: string
+          notes?: string | null
+          organization_id: string
+          reporting_month?: string | null
+          reporting_week_start?: string | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attended_count?: number | null
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          id?: string
+          invited_count?: number | null
+          kind?: string
+          notes?: string | null
+          organization_id?: string
+          reporting_month?: string | null
+          reporting_week_start?: string | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_manual_entries_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_manual_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_note_revisions: {
+        Row: {
+          body: string
+          community_id: string
+          edited_at: string
+          edited_by: string | null
+          id: string
+          note_id: string
+          organization_id: string
+        }
+        Insert: {
+          body: string
+          community_id: string
+          edited_at?: string
+          edited_by?: string | null
+          id?: string
+          note_id: string
+          organization_id: string
+        }
+        Update: {
+          body?: string
+          community_id?: string
+          edited_at?: string
+          edited_by?: string | null
+          id?: string
+          note_id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_note_revisions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "flash_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_notes: {
+        Row: {
+          body: string
+          community_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          organization_id: string
+          reporting_month: string | null
+          reporting_week_start: string | null
+          subject_key: string
+          subject_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id: string
+          reporting_month?: string | null
+          reporting_week_start?: string | null
+          subject_key: string
+          subject_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id?: string
+          reporting_month?: string | null
+          reporting_week_start?: string | null
+          subject_key?: string
+          subject_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_notes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_occupancy_budgets: {
+        Row: {
+          budget_occupancy_pct: number | null
+          budget_occupied_units: number | null
+          community_id: string
+          created_at: string
+          created_by: string | null
+          effective_end: string | null
+          effective_start: string
+          id: string
+          notes: string | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          budget_occupancy_pct?: number | null
+          budget_occupied_units?: number | null
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_end?: string | null
+          effective_start: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          budget_occupancy_pct?: number | null
+          budget_occupied_units?: number | null
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_end?: string | null
+          effective_start?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_occupancy_budgets_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_occupancy_budgets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gsc_country_facts: {
         Row: {
           clicks: number
@@ -3193,6 +3417,11 @@ export type Database = {
         Args: { _org_id: string; _user_id?: string }
         Returns: boolean
       }
+      flash_budget_units: {
+        Args: { _as_of: string; _org_id: string; _scope: string[] }
+        Returns: Json
+      }
+      flash_week_start: { Args: { _d: string }; Returns: string }
       gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
       gsc_classify_query: {
         Args: { _org_id: string; _query: string }
@@ -3343,6 +3572,139 @@ export type Database = {
           total_count: number
           transaction_type: string
         }[]
+      }
+      wh_flash_deposits: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          amount: number
+          care_type: string
+          community_id: string
+          deposit_date: string
+          depositor_key: string
+          expected_move_in_date: string
+          prospect_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_hot_leads: {
+        Args: {
+          _community_ids?: string[]
+          _limit?: number
+          _offset?: number
+          _org_id: string
+        }
+        Returns: {
+          community_id: string
+          counselor: string
+          last_contact_at: string
+          lead_source: string
+          next_activity_scheduled_at: string
+          source_id: string
+          stage: string
+          status: string
+          total_count: number
+        }[]
+      }
+      wh_flash_move_ins: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          is_transfer: boolean
+          monthly_rate: number
+          move_in_date: string
+          prospect_source_id: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_move_outs: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          move_out_date: string
+          notice_date: string
+          prospect_source_id: string
+          reason: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_notices: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _limit?: number
+          _offset?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          care_type: string
+          community_id: string
+          expected_move_out_date: string
+          notice_date: string
+          reason: string
+          resident_source_id: string
+          source_id: string
+          total_count: number
+          unit_label: string
+        }[]
+      }
+      wh_flash_occupancy: {
+        Args: { _org_id: string; _scope: string[] }
+        Returns: Json
+      }
+      wh_flash_period_metrics: {
+        Args: {
+          _end: string
+          _org_id: string
+          _scope: string[]
+          _start: string
+        }
+        Returns: Json
+      }
+      wh_flash_report: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _month: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
+      wh_flash_scope: {
+        Args: { _community_ids: string[]; _org_id: string }
+        Returns: string[]
       }
       wh_move_in_page: {
         Args: {
