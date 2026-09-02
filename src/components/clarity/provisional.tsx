@@ -59,10 +59,12 @@ export function CandidateMetricCard({
 
 export function WithheldPanel({
   title,
+  titleBadge,
   description,
   children,
 }: {
   title: string;
+  titleBadge?: ReactNode;
   description: string;
   children?: ReactNode;
 }) {
@@ -71,6 +73,7 @@ export function WithheldPanel({
       <div className="flex items-center gap-2">
         <Info className="size-4 text-warning" />
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {titleBadge}
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
       {children}
