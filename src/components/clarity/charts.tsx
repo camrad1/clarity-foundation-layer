@@ -4,6 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Legend,
   Line,
   LineChart,
@@ -166,12 +167,12 @@ export function GroupedBarChart({
 }: {
   data: Record<string, any>[];
   bars: TrendSeries[];
-  line?: TrendSeries;
+  line?: TrendSeries | undefined;
   xKey?: string;
 }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -18 }}>
+      <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -18 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis allowDecimals={false} {...axisProps} width={44} />
@@ -194,7 +195,7 @@ export function GroupedBarChart({
             dot={false}
           />
         ) : null}
-      </BarChart>
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
