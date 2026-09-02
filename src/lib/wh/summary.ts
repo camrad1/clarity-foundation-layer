@@ -29,8 +29,19 @@ export type WhSalesSummary = {
   mappings: { tour: boolean; re_tour: boolean; hot: boolean };
   exclusions: { total: number; merged: number; discarded: number; countable: number };
   inquiries: number;
+  /** V-002 primary KPI: successful tour activities completed in the period. */
   tours: number;
+  /** Successful repeat tours (not the prospect's first completed tour). */
   reTours: number;
+  tourRecon: {
+    totalTourActivities: number;
+    successfulTours: number;
+    initialTours: number;
+    repeatTours: number;
+    unsuccessfulTours: number;
+    successfulResultLabels: string[];
+    byResult: { result: string; successful: boolean; n: number }[];
+  };
   deposits: number;
   depositRecon: {
     fromTransactions: number;
@@ -184,6 +195,53 @@ export function useWhDepositPage(
   });
 }
 
+
+export type WhTourRow = {
+  id: string;
+  source_id: string;
+  community_id: string | null;
+  prospect_source_id: string | null;
+  activity_type_label: string | null;
+  result_label: string | null;
+  successful: boolean;
+  first_completed_of_type: boolean | null;
+  completed_local_date: string | null;
+  total_count: number;
+};
+
+/**
+ * Paginated drill-through for the Tour KPI (V-002). `mode = "successful"`
+ * returns exactly the activities the KPI counts; `mode = "all"` returns every
+ * tour activity in the period as a diagnostic. Filtering happens server-side.
+ */
+export function useWhTourPage(
+  organizationId: string | null,
+  communityIds: string[],
+  start: string,
+  end: string,
+  mode: "successful" | "all",
+  page: number,
+  pageSize = 50,
+) {
+  return useQuery({
+    queryKey: ["wh_tour_page", organizationId, communityIds.join(","), start, end, mode, page, pageSize],
+    enabled: !!organizationId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("wh_tour_page", {
+        _org_id: organizationId,
+        _start: start,
+        _end: end,
+        _community_ids: communityIds.length ? communityIds : null,
+        _mode: mode,
+        _limit: pageSize,
+        _offset: page * pageSize,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as WhTourRow[];
+      return { rows, total: rows.length ? Number(rows[0]!.total_count) : 0 };
+    },
+  });
+}
 
 /** Stored volume per source table vs the most recent sync's persisted rows. */
 export function useWhCompleteness(organizationId: string | null, communityIds: string[]) {
