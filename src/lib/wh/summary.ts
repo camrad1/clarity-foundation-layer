@@ -280,3 +280,36 @@ export function candidate(value: number, note: string): CandidateValue {
 export function withheld(reason: string): CandidateValue {
   return { resolved: false, reason };
 }
+
+export type WhExcludedUnitRow = {
+  source_id: string;
+  unit_number: string | null;
+  unit_name: string | null;
+  floor_plan_label: string | null;
+  exclusion_reason: string;
+};
+
+/**
+ * Unit reconciliation diagnostic: every Unit record excluded from the census
+ * denominator, with the deterministic reason. No resident data is returned.
+ */
+export function useWhUnitCensusReport(organizationId: string | null, communityIds: string[]) {
+  return useQuery({
+    queryKey: ["wh_unit_census_report", organizationId, communityIds.join(",")],
+    enabled: !!organizationId,
+    queryFn: async (): Promise<WhExcludedUnitRow[]> => {
+      const { data, error } = await (supabase as any).rpc("wh_unit_census_report", {
+        _org_id: organizationId,
+        _community_ids: communityIds.length ? communityIds : null,
+      });
+      if (error) throw error;
+      return (data ?? []) as WhExcludedUnitRow[];
+    },
+  });
+}
+
+export const UNIT_EXCLUSION_LABELS: Record<string, string> = {
+  off_census: "Explicitly flagged off-census by the source",
+  inactive: "Discarded or inactive unit record",
+  pseudo_unit: "Non-residential pseudo-unit",
+};
