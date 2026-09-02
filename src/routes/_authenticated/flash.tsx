@@ -323,143 +323,80 @@ function FlashReportPage() {
         />
       ) : null}
 
-      {/* 1. CURRENT WEEKLY SUMMARY */}
+      {/* 1. COMPACT CURRENT SUMMARY — deliberately dense so the week-by-week
+          grid below stays the centerpiece of the page. */}
       <Section
-        title="Current weekly summary"
+        title="Current summary"
         badge={<CurrentStateBadge />}
-        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-Thursday occupancy requires the nightly snapshot system, which is not built yet."
+        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-Thursday occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Total units" value={num(occ?.totalUnits)} hint="All WelcomeHome unit records" />
-          <Stat
-            label="Census units"
-            value={num(census)}
-            hint={`${num(occ?.excludedUnits)} excluded (off-census, inactive, pseudo)`}
+        <div className="panel divide-y divide-border/60">
+          <CompactRow
+            heading="Current weekly summary"
+            items={[
+              { label: "Total units", value: num(occ?.totalUnits) },
+              { label: "Census", value: num(census) },
+              { label: "Unit occ", value: num(occupied) },
+              { label: "Unit budget", value: budgetUnits == null ? "Not set" : num(budgetUnits) },
+              {
+                label: "Variance",
+                value: variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance),
+                tone: variance == null ? "neutral" : variance >= 0 ? "up" : "down",
+              },
+              { label: "OCC %", value: pct1(occPct) },
+              { label: "Budget %", value: pct1(budgetPct) },
+              { label: "On notice", value: num(occ?.noticeCount) },
+              ...(occ && occ.byCareType.length > 1
+                ? occ.byCareType.map((c) => ({
+                    label: c.careType,
+                    value: `${c.occupied}/${c.units}`,
+                  }))
+                : []),
+            ]}
           />
-          <Stat label="Unit occupancy" value={num(occupied)} hint={`As of ${formatDay(occ?.asOf)}`} />
-          <Stat
-            label="Unit budget"
-            value={budgetUnits == null ? "Not set" : num(budgetUnits)}
-            hint={budgetUnits == null ? "Set a budget in Community settings" : "Date-effective target"}
+          <CompactRow
+            heading="Current MIMO"
+            items={[
+              { label: "MIs", value: num(data?.week.moveIns) },
+              { label: "MOs", value: num(data?.week.moveOuts) },
+              {
+                label: "Net",
+                value: data ? (data.week.net > 0 ? `+${data.week.net}` : String(data.week.net)) : "—",
+                tone: !data ? "neutral" : data.week.net > 0 ? "up" : data.week.net < 0 ? "down" : "neutral",
+              },
+            ]}
           />
-          <Stat
-            label="Variance"
-            value={variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
-            tone={variance == null ? "neutral" : variance >= 0 ? "up" : "down"}
-            hint="Unit occupancy − unit budget"
+          <CompactRow
+            heading={`This month — pending MIMO (${formatMonth(month)})`}
+            items={[
+              { label: "Pending Move Ins", value: num(data?.month.pendingIn) },
+              { label: "Pending Outs", value: num(data?.month.pendingOut) },
+              { label: "Net", value: data ? String(data.month.pendingNet) : "—" },
+            ]}
           />
-          <Stat label="OCC %" value={pct1(occPct)} hint="Occupied ÷ census units" />
-          <Stat label="Budget %" value={pct1(budgetPct)} hint="Occupied ÷ budget units" />
-          <Stat label="On notice" value={num(occ?.noticeCount)} hint="Current notices outstanding" />
+          <CompactRow
+            heading="Weekly sales update"
+            items={[
+              { label: "Inquiries", value: num(data?.week.inquiries) },
+              {
+                label: "Outreach Contacts",
+                value: data?.week.outreachMapped === false ? "Not mapped" : num(data?.week.outreach),
+              },
+              { label: "Tours", value: num(data?.week.tours) },
+              { label: "Re-Tours", value: num(data?.week.reTours) },
+            ]}
+          />
         </div>
-
-        {occ && occ.byCareType.length > 1 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {occ.byCareType.map((c) => (
-              <Stat
-                key={c.careType}
-                label={`${c.careType} units`}
-                value={`${c.occupied} / ${c.units}`}
-                hint="Occupied / census units"
-              />
-            ))}
-          </div>
-        ) : null}
       </Section>
 
-      {/* 2. CURRENT MIMO */}
+      {/* 2. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
       <Section
-        title="Current MIMO"
-        description="Completed period events for the selected Flash week, using the validated move-in/move-out definitions (counted contracts, financial dates, canceled leases excluded)."
+        title={`${formatMonth(month)} — Week by Week`}
+        description="Friday–Thursday weeks ending inside the month, plus month end. Occupancy columns are only populated for the current week: the Starting # row and prior-week occupancy need immutable daily snapshots, which are not built yet."
       >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Move-ins" value={num(data?.week.moveIns)} />
-          <Stat label="Move-outs" value={num(data?.week.moveOuts)} />
-          <Stat
-            label="Net"
-            value={data ? (data.week.net > 0 ? `+${data.week.net}` : String(data.week.net)) : "—"}
-            tone={!data ? "neutral" : data.week.net > 0 ? "up" : data.week.net < 0 ? "down" : "neutral"}
-          />
-        </div>
+        <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
       </Section>
 
-      {/* 3. THIS MONTH — PENDING MIMO */}
-      <Section
-        title={`This month — pending MIMO (${formatMonth(month)})`}
-        badge={<CurrentStateBadge />}
-        description="Future-dated contract state for the remainder of the month. These are not completed period events."
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Pending move-ins" value={num(data?.month.pendingIn)} />
-          <Stat label="Pending outs" value={num(data?.month.pendingOut)} />
-          <Stat
-            label="Net"
-            value={data ? String(data.month.pendingNet) : "—"}
-            tone={
-              !data ? "neutral" : data.month.pendingNet > 0 ? "up" : data.month.pendingNet < 0 ? "down" : "neutral"
-            }
-          />
-        </div>
-      </Section>
-
-      {/* 4. WEEKLY SALES UPDATE */}
-      <Section
-        title="Weekly sales update"
-        description="Inquiries, tours and re-tours use the validated WelcomeHome KPIs. Outreach contacts count only completed activities whose activity type is mapped to the Outreach semantic category."
-      >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Inquiries" value={num(data?.week.inquiries)} />
-          <Stat
-            label="Outreach contacts"
-            value={data?.week.outreachMapped === false ? "Not mapped" : num(data?.week.outreach)}
-            hint={
-              data?.week.outreachMapped === false
-                ? "No activity types are mapped to Outreach"
-                : "Activity type → Outreach"
-            }
-          />
-          <Stat label="Tours" value={num(data?.week.tours)} />
-          <Stat label="Re-tours" value={num(data?.week.reTours)} />
-        </div>
-      </Section>
-
-      {/* 5. MONTHLY WEEK-BY-WEEK GRID */}
-      <Section
-        title={`${formatMonth(month)} — week by week`}
-        description="Friday–Thursday weeks ending inside the month, plus month end. Occupancy columns are only populated for the current week: prior-week occupancy needs an immutable daily snapshot, which is not built yet."
-      >
-        <div className="panel overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                {[
-                  "Week", "Date range", "Total units", "Unit occ", "Budget", "Variance", "OCC %",
-                  "Budget %", "MI", "MO", "Net", "Pend MI", "Pend MO", "Inq", "Outreach", "Tours", "Re-tours",
-                ].map((h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(data?.weeks ?? []).map((w) => (
-                <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} />
-              ))}
-              {data ? (
-                <GridRow w={data.month} totalUnits={occ?.totalUnits ?? null} emphasis />
-              ) : null}
-              {!data && !report.isLoading ? (
-                <tr>
-                  <td className="px-3 py-6 text-muted-foreground" colSpan={17}>
-                    No Flash data for this month.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </Section>
 
       {/* 6. NEXT MONTH PENDING MIMO */}
       <Section
