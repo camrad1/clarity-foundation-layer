@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDataHealthRouteImport } from './routes/_authenticated/data-health'
+import { Route as AuthenticatedFlashRouteImport } from './routes/_authenticated/flash'
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
@@ -54,6 +55,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedDataHealthRoute = AuthenticatedDataHealthRouteImport.update({
   id: '/data-health',
   path: '/data-health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFlashRoute = AuthenticatedFlashRouteImport.update({
+  id: '/flash',
+  path: '/flash',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedJourneyRoute = AuthenticatedJourneyRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
+  '/flash': typeof AuthenticatedFlashRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/occupancy': typeof AuthenticatedOccupancyRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
+  '/flash': typeof AuthenticatedFlashRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
+  '/_authenticated/flash': typeof AuthenticatedFlashRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/data-health'
+    | '/flash'
     | '/journey'
     | '/marketing'
     | '/occupancy'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/data-health'
+    | '/flash'
     | '/journey'
     | '/occupancy'
     | '/overview'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/data-health'
+    | '/_authenticated/flash'
     | '/_authenticated/journey'
     | '/_authenticated/marketing'
     | '/_authenticated/occupancy'
@@ -395,6 +407,13 @@ declare module '@tanstack/react-router' {
       path: '/data-health'
       fullPath: '/data-health'
       preLoaderRoute: typeof AuthenticatedDataHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/flash': {
+      id: '/_authenticated/flash'
+      path: '/flash'
+      fullPath: '/flash'
+      preLoaderRoute: typeof AuthenticatedFlashRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/journey': {
@@ -586,6 +605,7 @@ const AuthenticatedMarketingRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDataHealthRoute: typeof AuthenticatedDataHealthRoute
+  AuthenticatedFlashRoute: typeof AuthenticatedFlashRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRouteWithChildren
   AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
@@ -608,6 +628,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDataHealthRoute: AuthenticatedDataHealthRoute,
+  AuthenticatedFlashRoute: AuthenticatedFlashRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRouteWithChildren,
   AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,

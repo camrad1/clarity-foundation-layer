@@ -40,6 +40,8 @@ type NavItem = { to: string; label: string; icon: typeof Compass };
 
 const INTELLIGENCE: NavItem[] = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
+  { to: "/flash", label: "Flash Report", icon: Zap },
+
   { to: "/marketing", label: "Marketing Intelligence", icon: Globe },
   { to: "/sales", label: "Sales Intelligence", icon: TrendingUp },
   { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
