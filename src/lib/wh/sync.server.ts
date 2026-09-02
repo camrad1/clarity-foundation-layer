@@ -282,35 +282,37 @@ async function syncCoreTable(
 
   try {
     for (const scope of args.targets) {
-      let page = 1;
+      // Exports ignore page/per_page; the Link cursor is the only way forward.
+      let cursorUrl: string | null = null;
+      let pages = 0;
       for (;;) {
-        const { records } = await whExportPage(auth, {
+        const { records, nextUrl } = await whExportPage(auth, {
           table: args.table,
           communitySourceId: scope.sourceCommunityId,
-          page,
-          perPage: WH_MAX_PAGE_SIZE,
+          cursorUrl,
           updatedAfter: args.updatedAfter,
         });
+        pages += 1;
         result.pagesFetched += 1;
         result.rowsReceived += records.length;
 
         const good: Record<string, unknown>[] = [];
         const bad: Rec[] = [];
         for (const rec of records) {
-          if (!sourceId(rec)) {
-            bad.push(rec);
-            result.rowsFailed += 1;
-            continue;
-          }
           try {
-            good.push(
-              normalize(rec, {
-                organizationId: args.organizationId,
-                connectionId: args.connectionId,
-                communityId: scope.communityId,
-                timezone: scope.timezone,
-              }) as Record<string, unknown>,
-            );
+            const row = normalize(rec, {
+              organizationId: args.organizationId,
+              connectionId: args.connectionId,
+              communityId: scope.communityId,
+              timezone: scope.timezone,
+            }) as Record<string, unknown>;
+            if (!row["source_id"]) {
+              bad.push(rec);
+              result.rowsFailed += 1;
+            } else {
+              good.push(row);
+              if (!row["community_id"]) result.rowsUnmapped += 1;
+            }
           } catch {
             bad.push(rec);
             result.rowsFailed += 1;
@@ -348,15 +350,24 @@ async function syncCoreTable(
           result.rowsUpdated += updated;
         }
 
-        if (records.length < WH_MAX_PAGE_SIZE || page >= MAX_PAGES) break;
-        page += 1;
+        if (!nextUrl || records.length === 0) break;
+        if (pages >= WH_MAX_PAGES) {
+          result.warnings.push(
+            `${args.table}: stopped after ${WH_MAX_PAGES} pages for ${scope.sourceCommunityId}; more rows remain`,
+          );
+          result.rowsFailed += 1;
+          break;
+        }
+        cursorUrl = nextUrl;
       }
     }
-    if (result.rowsFailed > 0) result.status = "partial";
   } catch (err) {
-    result.status = "failed";
-    result.error = safeError(err);
+    const message = safeError(err);
+    result.status = /\(404\)|not exposed/.test(message) ? "unsupported" : "failed";
+    result.error = message;
   }
+  result.status = classify(result);
+
 
   result.durationMs = Date.now() - started;
   return result;
