@@ -740,7 +740,7 @@ function GridRow({
         {occupied != null && o?.censusUnits ? `${((occupied / o.censusUnits) * 100).toFixed(1)}%` : na}
       </td>
       <td className="px-3 py-2">
-        {occupied != null && b ? `${((occupied / b) * 100).toFixed(1)}%` : na}
+        {occupied == null ? na : b ? `${((occupied / b) * 100).toFixed(1)}%` : "—"}
       </td>
       <td className="px-3 py-2">{w.moveIns}</td>
       <td className="px-3 py-2">{w.moveOuts}</td>
