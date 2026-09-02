@@ -2,17 +2,11 @@ import { useMemo } from "react";
 import { useCommunities } from "@/lib/clarity-queries";
 import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
 import {
-  useWhActivities,
   useWhActivityMappings,
   useWhConnection,
-  useWhContracts,
-  useWhDeposits,
   useWhLookups,
-  useWhProspects,
   useWhScoreMappings,
   useWhSettings,
-  useWhTouchpoints,
-  useWhUnits,
 } from "./queries";
 import {
   buildActivityCategoryMap,
@@ -26,6 +20,9 @@ import {
  * Shared WelcomeHome dashboard context: global filters resolved against the
  * communities the signed-in user is authorized to see, plus the semantic
  * mappings every provisional metric depends on.
+ *
+ * Fact rows are never loaded here. Aggregates come from the database through
+ * ./summary.ts so KPI accuracy does not depend on a browser row limit.
  */
 export function useWhContext() {
   const { organizationId, dateRange, communityScope } = useAppState();
@@ -89,36 +86,6 @@ export function useWhContext() {
       settings.isLoading ||
       activityMappings.isLoading ||
       scoreMappings.isLoading,
-  };
-}
-
-/** Loads every fact set a sales dashboard needs, scoped by RLS. */
-export function useWhFacts(organizationId: string | null, communityIds: string[]) {
-  const prospects = useWhProspects(organizationId, communityIds);
-  const activities = useWhActivities(organizationId, communityIds);
-  const contracts = useWhContracts(organizationId, communityIds);
-  const deposits = useWhDeposits(organizationId, communityIds);
-  const units = useWhUnits(organizationId, communityIds);
-  const touchpoints = useWhTouchpoints(organizationId, communityIds);
-  return {
-    prospects: prospects.data ?? [],
-    activities: activities.data ?? [],
-    contracts: contracts.data ?? [],
-    deposits: deposits.data ?? [],
-    units: units.data ?? [],
-    touchpoints: touchpoints.data ?? [],
-    loading:
-      prospects.isLoading ||
-      activities.isLoading ||
-      contracts.isLoading ||
-      deposits.isLoading ||
-      units.isLoading ||
-      touchpoints.isLoading,
-    empty:
-      !prospects.isLoading &&
-      !contracts.isLoading &&
-      (prospects.data ?? []).length === 0 &&
-      (contracts.data ?? []).length === 0,
   };
 }
 
