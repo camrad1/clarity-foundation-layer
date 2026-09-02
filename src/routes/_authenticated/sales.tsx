@@ -354,22 +354,7 @@ function SalesIntelligence() {
               />
             </ChartCard>
 
-            <ChartCard
-              title="Move-in / move-out trend"
-              description="Monthly census momentum for the last 12 months, using the validated financial move-in and move-out definitions. Net move-ins is drawn from the same aggregate."
-              loading={trend.isLoading}
-              empty={!trend.isLoading && trendData.length === 0 ? "No monthly data available." : undefined}
-              height={300}
-            >
-              <GroupedBarChart
-                data={trendData}
-                bars={[
-                  { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.primary },
-                  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative },
-                ]}
-                line={{ key: "net_move_ins", label: "Net move-ins", color: CHART_TOKENS.tertiary }}
-              />
-            </ChartCard>
+            <MoveTrendCard data={trendData} loading={trend.isLoading} />
           </div>
 
           <SalesTrendCard data={trendData} loading={trend.isLoading} />
