@@ -3302,6 +3302,18 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      wh_activity_mix: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          activities: number
+          category: string
+        }[]
+      }
       wh_data_completeness: {
         Args: { _community_ids?: string[]; _org_id: string }
         Returns: {
@@ -3383,6 +3395,24 @@ export type Database = {
           _start: string
         }
         Returns: Json
+      }
+      wh_sales_trend: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          deposits: number
+          inquiries: number
+          month: string
+          move_ins: number
+          move_outs: number
+          net_move_ins: number
+          re_tours: number
+          tours: number
+        }[]
       }
       wh_successful_result_ids: { Args: { _org_id: string }; Returns: string[] }
       wh_successful_result_labels: {
