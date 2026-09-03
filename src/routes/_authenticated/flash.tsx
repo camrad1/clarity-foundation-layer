@@ -427,8 +427,9 @@ function FlashReportPage() {
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
         <p className="pt-2 text-[11px] text-muted-foreground">
-          Historical occupancy values will populate once nightly snapshots are enabled. Missing values are
-          shown as “—” and are never filled with current-state data.
+          Completed weeks show occupancy from that week's immutable daily snapshot; the in-progress week shows
+          current state. Dates before nightly snapshots began are shown as “—” and are never filled with
+          current-state data.
         </p>
       </Section>
 
