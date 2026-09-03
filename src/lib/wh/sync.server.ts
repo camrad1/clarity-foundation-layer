@@ -295,6 +295,8 @@ async function syncCoreTable(
     table: WhCoreTable;
     targets: CommunityTarget[];
     updatedAfter: string | null;
+    beat?: Heartbeat | undefined;
+
   },
 ): Promise<TableResult> {
   const started = Date.now();
