@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Info, Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowRight, Download, Info, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
