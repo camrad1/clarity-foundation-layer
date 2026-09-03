@@ -694,6 +694,32 @@ function CompactRow({
   );
 }
 
+/** Compact tracker card used by the three-column monthly tracker row. */
+function TrackerCard({
+  title,
+  badge,
+  loading,
+  children,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  loading?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="panel flex min-w-0 flex-col overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-brand-border/70 bg-brand-soft px-3 py-2">
+        <h3 className="truncate text-[11px] font-semibold uppercase tracking-wider text-brand">{title}</h3>
+        {badge}
+      </div>
+      <div className="max-h-[420px] min-w-0 overflow-auto">
+        {loading ? <p className="px-3 py-4 text-xs text-muted-foreground">Loading…</p> : children}
+      </div>
+    </div>
+  );
+}
+
+
 /* -------------------------------------------------------------- */
 /* Week-by-week grid                                                */
 /* -------------------------------------------------------------- */
