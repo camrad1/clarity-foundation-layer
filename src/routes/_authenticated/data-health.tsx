@@ -10,6 +10,7 @@ import { GRAIN_LABELS, type GrainKey } from "@/lib/gsc/parse";
 import { useActiveGrainCoverage } from "@/lib/gsc/queries";
 import { WhCompletenessPanel } from "@/components/clarity/wh-completeness";
 import { WhHealthSection } from "@/components/clarity/wh-health";
+import { SnapshotHealthSection } from "@/components/clarity/snapshot-health";
 import { WhLookupCoveragePanel } from "@/components/clarity/wh-lookup-coverage";
 import { OccupancyReconciliationPanel } from "@/components/clarity/occupancy-reconciliation";
 import { useAppState } from "@/state/app-state";
