@@ -237,6 +237,10 @@ export function OccupancyHistoryTab({ organizationId, communityIds, end, months 
         <MetricTrendChart data={chartData} series={unitSeries.filter((s) => unitVis.visible.includes(s.key))} />
       </ChartCard>
 
+      <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} end={end} months={months} />
+
+
+
       <MonthGrid
         firstHeader="Metric"
         columns={columns}
