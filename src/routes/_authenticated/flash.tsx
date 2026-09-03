@@ -351,8 +351,21 @@ function FlashReportPage() {
         />
       ) : null}
 
-      {/* 1. COMPACT CURRENT SUMMARY — deliberately dense so the week-by-week
-          grid below stays the centerpiece of the page. */}
+      {/* 1. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
+      <Section
+        title={`${formatMonth(month)} — Week by Week`}
+        description="Sunday–Saturday weeks ending inside the month, plus month end."
+      >
+        <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
+        <p className="pt-2 text-[11px] text-muted-foreground">
+          Completed weeks show occupancy from that week's immutable daily snapshot; the in-progress week shows
+          current state. Dates before nightly snapshots began are shown as “—” and are never filled with
+          current-state data.
+        </p>
+      </Section>
+
+      {/* 2. COMPACT CURRENT SUMMARY — deliberately dense so the week-by-week
+           grid above stays the centerpiece of the page. */}
       <Section
         title="Current summary"
         badge={<CurrentStateBadge />}
@@ -433,19 +446,6 @@ function FlashReportPage() {
             ]}
           />
         </div>
-      </Section>
-
-      {/* 2. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
-      <Section
-        title={`${formatMonth(month)} — Week by Week`}
-        description="Sunday–Saturday weeks ending inside the month, plus month end."
-      >
-        <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
-        <p className="pt-2 text-[11px] text-muted-foreground">
-          Completed weeks show occupancy from that week's immutable daily snapshot; the in-progress week shows
-          current state. Dates before nightly snapshots began are shown as “—” and are never filled with
-          current-state data.
-        </p>
       </Section>
 
 
