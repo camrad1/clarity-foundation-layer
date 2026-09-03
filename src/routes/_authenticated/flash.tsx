@@ -491,7 +491,8 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading="Current MIMO"
+            heading="Current MIMO — selected week (actual)"
+            hint="Completed move-ins and move-outs only. Future-dated contracts are never counted here."
             items={[
               { label: "MIs", value: num(data?.week.moveIns) },
               { label: "MOs", value: num(data?.week.moveOuts) },
@@ -504,17 +505,42 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading={`This month — pending MIMO (${formatMonth(month)})`}
-            hint="Projected month-end occupancy — based on currently known pending move-ins and move-outs."
+            heading={`Month-to-date actual MIMO (${formatMonth(month)})`}
+            hint="Completed events from the first of the month through today."
             items={[
-              { label: "Pending Move-Ins", value: num(data?.month.pendingIn) },
-              { label: "Pending Move-Outs", value: num(data?.month.pendingOut) },
+              { label: "MTD MIs", value: num(data?.month.moveIns) },
+              { label: "MTD MOs", value: num(data?.month.moveOuts) },
+              {
+                label: "Net",
+                value: signed(data?.month.net ?? null),
+                tone: tone(data?.month.net ?? null),
+              },
+            ]}
+          />
+          <CompactRow
+            heading={`This month — scheduled MIMO remaining (${formatMonth(month)})`}
+            hint="WelcomeHome-confirmed future-dated contracts for the remainder of the month. Not a forecast."
+            items={[
+              { label: "Scheduled Move-Ins", value: num(data?.month.pendingIn) },
+              { label: "Scheduled Move-Outs", value: num(data?.month.pendingOut) },
               {
                 label: "Net",
                 value: signed(data?.month.pendingNet ?? null),
                 tone: tone(data?.month.pendingNet ?? null),
               },
-
+            ]}
+          />
+          <CompactRow
+            heading={`Projected EOM MIMO (${formatMonth(month)})`}
+            hint="Month-to-date actual + scheduled remaining. Projected occupancy applies the same scheduled contracts to current canonical occupancy."
+            items={[
+              { label: "Projected MIs", value: num(projectedEomMi(data?.month)) },
+              { label: "Projected MOs", value: num(projectedEomMo(data?.month)) },
+              {
+                label: "Projected Net",
+                value: signed(projectedEomNet(data?.month)),
+                tone: tone(projectedEomNet(data?.month)),
+              },
               {
                 label: "Projected Occupied Units",
                 value: num(data?.month.projectedOccupiedUnits ?? null),
@@ -530,6 +556,7 @@ function FlashReportPage() {
               },
             ]}
           />
+
           <CompactRow
             heading="Weekly sales update"
             items={[
