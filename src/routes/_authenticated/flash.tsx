@@ -1155,11 +1155,13 @@ function GridRow({
   totalUnits,
   careTypes,
   emphasis,
+  index = 0,
 }: {
   w: FlashPeriod;
   totalUnits: number | null;
   careTypes: string[];
   emphasis?: boolean;
+  index?: number;
 }) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
@@ -1167,17 +1169,26 @@ function GridRow({
   const variance = occupied != null && b != null ? occupied - b : null;
   const na = <span className="text-muted-foreground/70">—</span>;
   const cell = "px-3 py-2 text-center tabular-nums";
+  // Explicit solid background for the sticky first-column cell so scrolling
+  // content never bleeds through. Matches the row tint (incl. hover/current).
+  const stickyBg = emphasis
+    ? "bg-brand-light"
+    : w.isCurrent
+      ? "bg-brand-light"
+      : index % 2 === 1
+        ? "bg-brand-soft hover:bg-brand-light"
+        : "bg-surface hover:bg-brand-light";
   return (
     <tr
       className={cn(
-        // Opaque row tints so the sticky first column (bg-inherit) does not
-        // bleed through while horizontally scrolling.
+        // Opaque row tints so the sticky first column does not bleed through
+        // while horizontally scrolling.
         "border-b border-brand-border/60 last:border-0 odd:bg-brand-soft hover:bg-brand-light",
         emphasis && "border-t-2 border-t-brand bg-brand-light font-semibold text-foreground",
         w.isCurrent && !emphasis && "bg-brand-light",
       )}
     >
-      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2">
+      <td className={cn("sticky left-0 z-[3] whitespace-nowrap border-r border-brand-border px-3 py-2", stickyBg)}>
         <span className="font-medium">{w.label}</span>
         <span className="ml-2 text-[11px] text-muted-foreground">
           {formatDay(w.start)} – {formatDay(w.end)}
