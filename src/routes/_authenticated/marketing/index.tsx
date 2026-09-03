@@ -67,11 +67,11 @@ function SearchOverview() {
   const previous = prior.data as typeof current;
 
   const hasData = !!current && current.impressions + current.clicks > 0;
-  const comparable = !!previous && previous.impressions + previous.clicks > 0;
+  const comparable = !!comparison && !!previous && previous.impressions + previous.clicks > 0;
 
   const clickDelta = comparable ? change(current!.clicks, previous!.clicks).percent : null;
   const imprDelta = comparable ? change(current!.impressions, previous!.impressions).percent : null;
-  const ctrDelta = comparable ? change(current!.ctr, previous!.ctr).percent : null;
+  const ctrPts = comparable ? change(current!.ctr, previous!.ctr).absolute : null;
   const posDelta = comparable ? change(current!.avg_position, previous!.avg_position).percent : null;
 
   const rows = (series.data ?? []) as {
@@ -135,7 +135,18 @@ function SearchOverview() {
               value={fmtInt(current!.impressions)}
               delta={comparable ? fmtDelta(imprDelta) : null}
             />
-            <MetricCard label="CTR" value={fmtPercent(current!.ctr)} delta={comparable ? fmtDelta(ctrDelta) : null} />
+            <MetricCard
+              label="CTR"
+              value={fmtPercent(current!.ctr)}
+              delta={
+                comparable && ctrPts != null
+                  ? {
+                      label: `${ctrPts >= 0 ? "+" : ""}${(ctrPts * 100).toFixed(1)} pts`,
+                      tone: ctrPts > 0 ? "up" : ctrPts < 0 ? "down" : "neutral",
+                    }
+                  : null
+              }
+            />
             <MetricCard
               label="Average position"
               value={fmtPosition(current!.avg_position)}
