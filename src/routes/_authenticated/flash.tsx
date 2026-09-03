@@ -150,6 +150,10 @@ function CurrentStateBadge() {
 }
 
 const num = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString());
+const signed = (n: number | null | undefined) => (n == null ? "—" : n > 0 ? `+${n}` : String(n));
+const tone = (n: number | null | undefined): "up" | "down" | "neutral" =>
+  n == null ? "neutral" : n > 0 ? "up" : n < 0 ? "down" : "neutral";
+
 const pct1 = (n: number | null) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
 const money = (n: number | null | undefined) =>
   n == null ? "—" : `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
