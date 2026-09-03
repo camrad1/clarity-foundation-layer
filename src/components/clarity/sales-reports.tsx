@@ -20,6 +20,7 @@ import {
   useNewInquiriesTrend,
   useOccupancyHistory,
 } from "@/lib/wh/reports";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 
 /**
  * WelcomeHome standard operational reports rebuilt on ClarityIQ's canonical
