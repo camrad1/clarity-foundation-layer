@@ -1022,12 +1022,12 @@ function WeekByWeekGrid({
     { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
     { label: "Current MIMO (actual)", cols: ["MIs", "MOs", "NET"] },
     {
-      label: "This month – scheduled MIMO / projected month-end",
-      cols: [
-        "Scheduled Move Ins", "Scheduled Outs", "NET",
-        "Proj EOM MIs", "Proj EOM MOs", "Proj EOM NET",
-        "Projected Occ #", "Projected Occ %",
-      ],
+      label: "This month — scheduled MIMO",
+      cols: ["Scheduled Move-Ins", "Scheduled Move-Outs", "Net"],
+    },
+    {
+      label: "This month — projected month-end",
+      cols: ["Proj EOM MIs", "Proj EOM MOs", "Proj EOM Net", "Projected OCC #", "Projected OCC %"],
     },
     { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
   ];
@@ -1142,7 +1142,15 @@ function StartingRow({
         </td>
       ))}
       {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
-        <td key={`s-rest-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+        <td
+          key={`s-rest-${i}`}
+          className={cn(
+            "px-3 py-2 text-center tabular-nums",
+            // Group-start dividers mirror the grouped header: Current MIMO (0),
+            // Scheduled MIMO (3), Projected Month-End (6), Weekly Sales (11).
+            (i === 0 || i === 3 || i === 6 || i === 11) && GROUP_BORDER,
+          )}
+        >
           —
         </td>
       ))}
@@ -1218,7 +1226,7 @@ function GridRow({
       <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn ?? na}</td>
       <td className={cell}>{w.pendingOut ?? na}</td>
       <td className={cell}>{w.pendingNet == null ? na : signed(w.pendingNet)}</td>
-      <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMi(w) ?? na}</td>
+      <td className={cn(cell, GROUP_BORDER, "bg-brand-soft/25")}>{projectedEomMi(w) ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMo(w) ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/25")}>
         {projectedEomNet(w) == null ? na : signed(projectedEomNet(w)!)}
