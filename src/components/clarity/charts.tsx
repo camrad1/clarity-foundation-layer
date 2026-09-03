@@ -224,9 +224,9 @@ export function MetricTrendChart({
                   if (v == null || !Number.isFinite(Number(v))) return null;
                   return (
                     <text
-                      x={Number(props.x)}
+                      x={Number(props.x) - 2}
                       y={Number(props.y) - 8}
-                      textAnchor="middle"
+                      textAnchor="end"
                       style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
                     >
                       {fmtCount(Number(v))}
