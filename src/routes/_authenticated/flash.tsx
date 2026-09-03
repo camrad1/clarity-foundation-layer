@@ -269,7 +269,8 @@ function FlashReportPage() {
     const header = [
       "Week / Date", "Date range", "Total Units", "Unit Occ", "Unit Budget", "Variance",
       "OCC %", "Budget %", ...careTypes,
-      "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "Pending NET",
+      "MIs", "MOs", "NET", "Scheduled Move Ins", "Scheduled Outs", "Scheduled NET",
+      "Projected EOM MIs", "Projected EOM MOs", "Projected EOM NET",
       "Projected Occ #", "Projected Occ %",
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
