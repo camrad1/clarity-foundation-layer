@@ -182,8 +182,17 @@ export function localDate(instantIso: string | null, timezone: string | null): s
   }
   const d = new Date(instantIso);
   if (Number.isNaN(d.getTime())) return null;
-  return fmt.format(d);
+  // Intl emits an unpadded year, so a corrupt source instant in year 24 would
+  // yield "24-08-08" and be rejected by Postgres. Pad, then discard implausible
+  // years outright so a garbage record can never distort reporting windows.
+  const parts = fmt.formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const year = get("year").padStart(4, "0");
+  const yearNum = Number(year);
+  if (!Number.isFinite(yearNum) || yearNum < 1900 || yearNum > 2100) return null;
+  return `${year}-${get("month")}-${get("day")}`;
 }
+
 
 /** Own-table prefix for each core export, used for alias resolution. */
 export const WH_TABLE_PREFIX = {
