@@ -294,7 +294,7 @@ function FlashReportPage() {
             }),
           ]
         : Array(6 + careTypes.length).fill("—")),
-      ...Array(12).fill(""),
+      ...Array(15).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
       gridRow(w, occ?.totalUnits ?? null, careTypes),
