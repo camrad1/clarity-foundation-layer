@@ -570,19 +570,35 @@ export async function runWelcomeHomeSyncUnit(
   const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(args.table);
 
   let updatedAfter: string | null = null;
+  const { data: state } = await admin
+    .from("wh_sync_state")
+    .select(
+      "watermark, source_max_updated_at, resume_cursor_url, resume_pages, resume_rows, resume_updated_after",
+    )
+    .eq("connection_id", args.connectionId)
+    .eq("source_table", args.table)
+    .eq("community_scope", scopeKey)
+    .maybeSingle();
+
   if (args.mode === "incremental" && supportsIncremental) {
-    const { data: state } = await admin
-      .from("wh_sync_state")
-      .select("watermark, source_max_updated_at")
-      .eq("connection_id", args.connectionId)
-      .eq("source_table", args.table)
-      .eq("community_scope", scopeKey)
-      .maybeSingle();
     const base = state?.source_max_updated_at ?? state?.watermark ?? null;
     if (base) {
       updatedAfter = new Date(new Date(base).getTime() - args.overlapMinutes * 60_000).toISOString();
     }
   }
+
+  // A checkpoint is only reusable when the retry reads the SAME window as the
+  // attempt that wrote it; otherwise the cursor would skip unread rows.
+  const sameWindow = (state?.resume_updated_after ?? null) === updatedAfter;
+  const resume =
+    state?.resume_cursor_url && sameWindow && args.target
+      ? {
+          cursorUrl: state.resume_cursor_url as string,
+          pages: (state.resume_pages as number | null) ?? 0,
+          rows: (state.resume_rows as number | null) ?? 0,
+        }
+      : null;
+
 
   await admin.from("wh_sync_state").upsert(
     {
