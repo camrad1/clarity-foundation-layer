@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
-import { ProgressGauge } from "@/components/clarity/charts";
+import { CHART_TOKENS, ChartCard, MetricTrendChart, ProgressGauge } from "@/components/clarity/charts";
 import { useWhContext } from "@/lib/wh/use-wh";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 import {
   effectiveBudget,
   resolveBudget,
