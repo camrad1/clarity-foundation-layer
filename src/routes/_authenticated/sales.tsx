@@ -34,6 +34,7 @@ import {
   withheld,
   UNIT_EXCLUSION_LABELS,
   type WhProspectBucket,
+  type WhSalesSummary,
 } from "@/lib/wh/summary";
 
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
@@ -275,7 +276,6 @@ function SalesIntelligence() {
       b?.budget_occupied_units != null ? Number(b.budget_occupied_units) : null;
     return units == null ? acc : (acc ?? 0) + units;
   }, null);
-  const occVariance = budgetUnits == null ? null : s.occupancy.occupiedUnitsCandidate - budgetUnits;
 
   return (
     <div className="space-y-8">
@@ -345,16 +345,7 @@ function SalesIntelligence() {
               note="Move-ins minus move-outs for the selected period."
               compare={p ? cmp(s.moveIns - s.moveOuts, p.moveIns - p.moveOuts) : undefined}
             />
-            <KpiCard
-              label="Current occupancy"
-              value={s.occupancy.occupiedUnitsCandidate}
-              display={occDisplay}
-              note={`${s.occupancy.occupiedUnitsCandidate} of ${s.occupancy.censusUnits} census-eligible units. ${
-                budgetUnits == null
-                  ? "No budgeted occupancy configured for this scope."
-                  : `Budget ${budgetUnits} units · variance ${occVariance! >= 0 ? "+" : ""}${occVariance}.`
-              } Current state, not affected by the date filter.`}
-            />
+            <OccupancyKpiCard occupancy={s.occupancy} budgetUnits={budgetUnits} />
             <KpiCard
               label="Pending move-ins / outs"
               display={`${s.pending.pendingIn} / ${s.pending.pendingOut}`}
@@ -823,6 +814,112 @@ function KpiCard({
           Prior equal-length period {compare.label}: {compare.previous.toLocaleString()}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Executive occupancy snapshot for the Funnel tab. Uses the exact same
+ * canonical current-occupancy values as the Current Occupancy tab, Occupancy
+ * Intelligence and Flash (`s.occupancy` / `wh_current_occupancy` semantics),
+ * so the percentage can never disagree across ClarityIQ.
+ *
+ * Snapshot readiness: the card is purely prop-driven. Once daily snapshots
+ * accumulate, `vsLastWeek` / `vsLastMonth` / trend data can be threaded in as
+ * additional optional props without restructuring — they are intentionally
+ * not rendered until real snapshot history exists.
+ */
+function OccupancyKpiCard({
+  occupancy,
+  budgetUnits,
+}: {
+  occupancy: WhSalesSummary["occupancy"];
+  budgetUnits: number | null;
+}) {
+  const { censusUnits, occupiedUnitsCandidate, noticeCount, pendingMoveIns } = occupancy;
+  const actualPct = censusUnits ? (occupiedUnitsCandidate / censusUnits) * 100 : null;
+  const display = actualPct == null ? "—" : `${Math.round(actualPct)}%`;
+
+  // Canonical budget model (matches resolveBudget): budgeted occupied units
+  // are the stored input; the budget % is derived against the census
+  // denominator. No budget is ever fabricated.
+  const budgetPct = budgetUnits != null && censusUnits ? (budgetUnits / censusUnits) * 100 : null;
+  const variancePts = actualPct != null && budgetPct != null ? actualPct - budgetPct : null;
+  const varianceUnits =
+    budgetUnits != null ? occupiedUnitsCandidate - budgetUnits : null;
+
+  const varianceTone =
+    variancePts == null || variancePts === 0
+      ? "text-muted-foreground"
+      : variancePts > 0
+        ? "text-success"
+        : "text-destructive";
+  const VarianceIcon =
+    variancePts == null || variancePts === 0 ? ArrowRight : variancePts > 0 ? ArrowUpRight : ArrowDownRight;
+
+  return (
+    <div className="kpi-card space-y-3 border-t-4 bg-(--clarity-primary-soft) p-5 sm:col-span-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="eyebrow">Current occupancy</p>
+        <span className="rounded-full border border-(--clarity-border) bg-(--color-surface) px-2 py-0.5 text-[11px] font-medium text-(--clarity-primary)">
+          Current state
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="font-display text-3xl font-semibold tracking-tight text-brand">{display}</p>
+        <p className="text-sm text-muted-foreground">
+          {occupiedUnitsCandidate.toLocaleString()} of {censusUnits.toLocaleString()} occupied
+        </p>
+      </div>
+
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-(--clarity-border) pt-3 text-sm sm:grid-cols-4">
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Budget</dt>
+          <dd className="font-medium">
+            {budgetPct != null ? `${budgetPct.toFixed(1)}%` : "Budget not set"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Variance to budget
+          </dt>
+          <dd className={cn("inline-flex flex-wrap items-center gap-1 font-medium", varianceTone)}>
+            {variancePts == null ? (
+              "—"
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <VarianceIcon className="size-3.5" aria-hidden />
+                  {variancePts > 0 ? "+" : ""}
+                  {variancePts.toFixed(1)} pts
+                </span>
+                {varianceUnits != null ? (
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    ({varianceUnits > 0 ? "+" : ""}
+                    {varianceUnits.toLocaleString()} units)
+                  </span>
+                ) : null}
+              </>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">On notice</dt>
+          <dd className="font-medium">{noticeCount.toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Pending move-ins
+          </dt>
+          <dd className="font-medium">{pendingMoveIns.toLocaleString()}</dd>
+        </div>
+      </dl>
+
+      <p className="text-[11px] text-muted-foreground">
+        Current state — not affected by the selected date range. Full unit diagnostics live on the
+        Current occupancy tab.
+      </p>
     </div>
   );
 }
