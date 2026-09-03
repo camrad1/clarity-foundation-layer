@@ -359,7 +359,7 @@ function FlashReportPage() {
       <Section
         title="Current summary"
         badge={<CurrentStateBadge />}
-        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-week-end occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
+        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Completed weeks read their occupancy from that week's immutable daily snapshot. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
         <div className="panel-brand divide-y divide-brand-border/70">
           <CompactRow
