@@ -263,6 +263,11 @@ function SalesIntelligence() {
     `Open prospects with no contact for ${s.settings.stalled_threshold_days}+ days.`,
   );
 
+  const occRaw = ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits);
+  const occDisplay = s.occupancy.censusUnits
+    ? `${Math.round((s.occupancy.occupiedUnitsCandidate / s.occupancy.censusUnits) * 100)}%`
+    : "—";
+
   // Budgeted occupied units in force today, summed over the communities in scope.
   const budgetUnits = ctx.communityIds.reduce<number | null>((acc, id) => {
     const b = effectiveBudget(budgetRows, id);
