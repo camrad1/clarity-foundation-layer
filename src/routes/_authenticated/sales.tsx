@@ -884,16 +884,18 @@ function OccupancyKpiCard({
           <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Variance to budget
           </dt>
-          <dd className={cn("inline-flex items-center gap-1 font-medium", varianceTone)}>
+          <dd className={cn("inline-flex flex-wrap items-center gap-1 font-medium", varianceTone)}>
             {variancePts == null ? (
               "—"
             ) : (
               <>
-                <VarianceIcon className="size-3.5" aria-hidden />
-                {variancePts > 0 ? "+" : ""}
-                {variancePts.toFixed(1)} pts
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <VarianceIcon className="size-3.5" aria-hidden />
+                  {variancePts > 0 ? "+" : ""}
+                  {variancePts.toFixed(1)} pts
+                </span>
                 {varianceUnits != null ? (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
                     ({varianceUnits > 0 ? "+" : ""}
                     {varianceUnits.toLocaleString()} units)
                   </span>
