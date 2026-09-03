@@ -852,7 +852,12 @@ function MimoStage({
       )}
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-lg font-semibold leading-tight tabular-nums">
+      <p
+        className={cn(
+          "mt-1 font-display font-semibold leading-tight tabular-nums",
+          prominent ? "text-2xl" : "text-xl",
+        )}
+      >
         <span className="text-brand">{mi}</span>
         <span className="text-muted-foreground/50"> / </span>
         <span className="text-brand">{mo}</span>
