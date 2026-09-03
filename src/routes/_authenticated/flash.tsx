@@ -241,7 +241,7 @@ function FlashReportPage() {
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
     const starting = [
-      "Starting #", "", ...Array(6 + careTypes.length).fill("snapshot required"),
+      "Starting #", "", ...Array(6 + careTypes.length).fill("—"),
       ...Array(10).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
@@ -405,9 +405,13 @@ function FlashReportPage() {
       {/* 2. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
       <Section
         title={`${formatMonth(month)} — Week by Week`}
-        description="Friday–Thursday weeks ending inside the month, plus month end. Occupancy columns are only populated for the current week: the Starting # row and prior-week occupancy need immutable daily snapshots, which are not built yet."
+        description="Friday–Thursday weeks ending inside the month, plus month end."
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
+        <p className="pt-2 text-[11px] text-muted-foreground">
+          Historical occupancy values will populate once nightly snapshots are enabled. Missing values are
+          shown as “—” and are never filled with current-state data.
+        </p>
       </Section>
 
 
@@ -424,91 +428,121 @@ function FlashReportPage() {
         </div>
       </Section>
 
+      {/* Monthly trackers — three-column compact layout on desktop */}
+      <Section
+        title="Monthly trackers"
+        description="Compact operational view. Full detail remains available through Sales Intelligence drill-through."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <TrackerCard title={`Move-In Monthly Tracker (${moveIns.data?.total ?? 0})`} loading={moveIns.isLoading}>
+            {(moveIns.data?.rows ?? []).length === 0 && !moveIns.isLoading ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">No counted move-ins in this month.</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="thead-brand text-[10px] uppercase tracking-wide">
+                    <th className="px-3 py-1.5 text-left font-medium">Resident</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Move-In</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Care / Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(moveIns.data?.rows ?? []).map((r: any) => (
+                    <tr key={r.source_id} className="border-t border-brand-border/50">
+                      <td className="max-w-[120px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.move_in_date)}</td>
+                      <td className="max-w-[110px] truncate px-3 py-1.5 text-muted-foreground">
+                        {r.care_type ?? "—"} · {r.unit_label ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </TrackerCard>
+
+          <TrackerCard
+            title={`Deposit Monthly Tracker (${deposits.data?.total ?? 0})`}
+            badge={<ProvisionalBadge />}
+            loading={deposits.isLoading}
+          >
+            {(deposits.data?.rows ?? []).length === 0 && !deposits.isLoading ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">No standard deposits recorded in this month.</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="thead-brand text-[10px] uppercase tracking-wide">
+                    <th className="px-3 py-1.5 text-left font-medium">Depositor</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Date</th>
+                    <th className="px-3 py-1.5 text-right font-medium">Amount</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Expected MI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(deposits.data?.rows ?? []).map((r: any) => (
+                    <tr key={r.source_id} className="border-t border-brand-border/50">
+                      <td className="max-w-[110px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.deposit_date)}</td>
+                      <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums">{money(r.amount)}</td>
+                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{formatDay(r.expected_move_in_date)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </TrackerCard>
+
+          <TrackerCard title={`Hot Lead Monthly Tracker (${hotLeads.data?.total ?? 0})`} loading={hotLeads.isLoading}>
+            {(hotLeads.data?.rows ?? []).length === 0 && !hotLeads.isLoading ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">No open prospects mapped to the Hot score.</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="thead-brand text-[10px] uppercase tracking-wide">
+                    <th className="px-3 py-1.5 text-left font-medium">Resident/Prospect</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Stage</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Next activity / Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(hotLeads.data?.rows ?? []).map((r: any) => (
+                    <tr key={r.source_id} className="border-t border-brand-border/50">
+                      <td className="max-w-[110px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="max-w-[90px] truncate px-3 py-1.5 text-muted-foreground">
+                        {resolveLabel(labels.stage, r.stage_id, "Unknown stage")}
+                      </td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="whitespace-nowrap">
+                            {r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toLocaleDateString() : "—"}
+                          </span>
+                          <NoteCell
+                            organizationId={organizationId}
+                            communityId={r.community_id}
+                            subjectType="hot_lead"
+                            subjectKey={r.source_id}
+                            month={mStart}
+                            weekStart={week.start}
+                            notes={notes.data ?? {}}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </TrackerCard>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Names come from the WelcomeHome record — “Name unavailable” appears only where the source has no
+          usable name. Deposit remains provisional: only source-backed transactions are shown, nothing is
+          inferred. See Validation Center.
+        </p>
+      </Section>
+
       {/* Trackers */}
-      <Accordion type="multiple" defaultValue={["move-in", "deposit", "hot", "move-out", "notices", "events"]}>
-        <AccordionItem value="move-in">
-          <AccordionTrigger>Move-in monthly tracker ({moveIns.data?.total ?? 0})</AccordionTrigger>
-          <AccordionContent>
-            <DataTable
-              loading={moveIns.isLoading}
-              rows={moveIns.data?.rows ?? []}
-              empty={<EmptyState title="No move-ins" description="No counted move-ins in this month." />}
-              columns={[
-                { key: "name", header: "Resident", render: (r) => personName(r.person_name) },
-                { key: "date", header: "Move-in date", render: (r) => formatDay(r.move_in_date) },
-                { key: "care", header: "Care type", render: (r) => r.care_type ?? "—" },
-                { key: "unit", header: "Unit", render: (r) => r.unit_label ?? "—" },
-                { key: "rate", header: "Monthly rate", align: "right", render: (r) => money(r.monthly_rate) },
-              ] as Column<any>[]}
-            />
-            <p className="pt-2 text-[11px] text-muted-foreground">
-              Names come from the WelcomeHome record. Contact details, addresses and notes remain excluded;
-              records without a name in the source show “Name unavailable”.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="deposit">
-          <AccordionTrigger>
-            <span className="flex items-center gap-2">
-              Deposit monthly tracker ({deposits.data?.total ?? 0}) <ProvisionalBadge />
-            </span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <DataTable
-              loading={deposits.isLoading}
-              rows={deposits.data?.rows ?? []}
-              empty={<EmptyState title="No deposits" description="No standard deposits recorded in this month." />}
-              columns={[
-                { key: "name", header: "Depositor", render: (r) => personName(r.person_name) },
-                { key: "date", header: "Deposit date", render: (r) => formatDay(r.deposit_date) },
-                { key: "amt", header: "Amount", align: "right", render: (r) => money(r.amount) },
-                { key: "mi", header: "Expected MI", render: (r) => formatDay(r.expected_move_in_date) },
-                { key: "care", header: "Care type", render: (r) => r.care_type ?? "—" },
-                { key: "unit", header: "Unit", render: (r) => r.unit_label ?? "—" },
-              ] as Column<any>[]}
-            />
-            <p className="pt-2 text-[11px] text-muted-foreground">
-              Provisional source — the WelcomeHome API does not reproduce every official Depositor List
-              event. Only source-backed transactions are shown; nothing is inferred. See Validation Center.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="hot">
-          <AccordionTrigger>Hot lead monthly tracker ({hotLeads.data?.total ?? 0})</AccordionTrigger>
-          <AccordionContent>
-            <DataTable
-              loading={hotLeads.isLoading}
-              rows={hotLeads.data?.rows ?? []}
-              empty={<EmptyState title="No hot leads" description="No open prospects mapped to the Hot score." />}
-              columns={[
-                { key: "name", header: "Prospect", render: (r) => personName(r.person_name) },
-                { key: "stage", header: "Stage", render: (r) => resolveLabel(labels.stage, r.stage_id, "Unknown stage") },
-                { key: "next", header: "Next activity", render: (r) => (r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toLocaleDateString() : "—") },
-                { key: "last", header: "Last contact", render: (r) => (r.last_contact_at ? new Date(r.last_contact_at).toLocaleDateString() : "—") },
-                { key: "cnsl", header: "Counselor", render: (r) => resolveLabel(labels.user, r.counselor_id, "Unassigned") },
-                { key: "src", header: "Lead source", render: (r) => resolveLabel(labels.leadSource, r.lead_source_id, "Unknown source") },
-                {
-                  key: "notes",
-                  header: "Notes & updates",
-                  render: (r) => (
-                    <NoteCell
-                      organizationId={organizationId}
-                      communityId={r.community_id}
-                      subjectType="hot_lead"
-                      subjectKey={r.source_id}
-                      month={mStart}
-                      weekStart={week.start}
-                      notes={notes.data ?? {}}
-                    />
-                  ),
-                },
-              ] as Column<any>[]}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
+      <Accordion type="multiple" defaultValue={["move-out", "notices", "events"]}>
         <AccordionItem value="move-out">
           <AccordionTrigger>Move-out monthly tracker ({moveOuts.data?.total ?? 0})</AccordionTrigger>
           <AccordionContent>
@@ -642,25 +676,53 @@ function CompactRow({
       <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-brand md:w-48 md:shrink-0">
         {heading}
       </p>
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+      <div className="flex flex-wrap gap-x-7 gap-y-3">
         {items.map((it) => (
-          <div key={it.label} className="flex items-baseline gap-1.5">
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{it.label}</span>
-            <span
+          <div key={it.label} className="min-w-[60px] space-y-0.5">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {it.label}
+            </p>
+            <p
               className={cn(
-                "font-display text-base font-semibold tabular-nums",
+                "font-display text-lg font-semibold leading-tight tabular-nums",
                 it.tone === "up" && "text-success",
                 it.tone === "down" && "text-destructive",
               )}
             >
               {it.value}
-            </span>
+            </p>
           </div>
         ))}
       </div>
     </div>
   );
 }
+
+/** Compact tracker card used by the three-column monthly tracker row. */
+function TrackerCard({
+  title,
+  badge,
+  loading,
+  children,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  loading?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="panel flex min-w-0 flex-col overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-brand-border/70 bg-brand-soft px-3 py-2">
+        <h3 className="truncate text-[11px] font-semibold uppercase tracking-wider text-brand">{title}</h3>
+        {badge}
+      </div>
+      <div className="max-h-[420px] min-w-0 overflow-auto">
+        {loading ? <p className="px-3 py-4 text-xs text-muted-foreground">Loading…</p> : children}
+      </div>
+    </div>
+  );
+}
+
 
 /* -------------------------------------------------------------- */
 /* Week-by-week grid                                                */
@@ -685,14 +747,14 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     w.label,
     `${w.start} → ${w.end}`,
     o ? o.totalUnits : (totalUnits ?? ""),
-    occupied ?? "snapshot required",
+    occupied ?? "—",
     b ?? "",
     variance ?? "",
     occupied != null && o?.censusUnits ? ((occupied / o.censusUnits) * 100).toFixed(1) : "",
     occupied != null && b ? ((occupied / b) * 100).toFixed(1) : "",
     ...careTypes.map((ct) => {
       const row = o?.byCareType.find((c) => c.careType === ct);
-      return row ? `${row.occupied}/${row.units}` : "snapshot required";
+      return row ? `${row.occupied}/${row.units}` : "—";
     }),
     w.moveIns,
     w.moveOuts,
@@ -751,7 +813,7 @@ function WeekByWeekGrid({
               g.cols.map((c, i) => (
                 <th
                   key={`${g.label}-${c}`}
-                  className={cn("whitespace-nowrap px-3 py-1.5 text-right font-medium", i === 0 && GROUP_BORDER)}
+                  className={cn("whitespace-nowrap px-3 py-1.5 text-center font-medium", i === 0 && GROUP_BORDER)}
                 >
                   {c}
                 </th>
@@ -788,12 +850,16 @@ function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols:
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
       <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
-      <td className={cn("px-3 py-2 text-center text-[11px] italic", GROUP_BORDER)} colSpan={occCols}>
-        Snapshot required — month-start occupancy needs the nightly daily snapshot
-      </td>
-      <td className={cn("px-3 py-2 text-right text-[11px]", GROUP_BORDER)} colSpan={totalCols - 1 - occCols}>
-        —
-      </td>
+      {Array.from({ length: occCols }).map((_, i) => (
+        <td key={`s-occ-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+          —
+        </td>
+      ))}
+      {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
+        <td key={`s-rest-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+          —
+        </td>
+      ))}
     </tr>
   );
 }
@@ -813,8 +879,8 @@ function GridRow({
   const b = w.budget?.units ?? null;
   const occupied = o?.occupiedUnits ?? null;
   const variance = occupied != null && b != null ? occupied - b : null;
-  const na = <span className="text-[11px] italic text-muted-foreground/70">snapshot req.</span>;
-  const cell = "px-3 py-2 text-right tabular-nums";
+  const na = <span className="text-muted-foreground/70">—</span>;
+  const cell = "px-3 py-2 text-center tabular-nums";
   return (
     <tr
       className={cn(
