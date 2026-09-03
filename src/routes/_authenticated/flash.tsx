@@ -1022,12 +1022,12 @@ function WeekByWeekGrid({
     { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
     { label: "Current MIMO (actual)", cols: ["MIs", "MOs", "NET"] },
     {
-      label: "This month – scheduled MIMO / projected month-end",
-      cols: [
-        "Scheduled Move Ins", "Scheduled Outs", "NET",
-        "Proj EOM MIs", "Proj EOM MOs", "Proj EOM NET",
-        "Projected Occ #", "Projected Occ %",
-      ],
+      label: "This month — scheduled MIMO",
+      cols: ["Scheduled Move-Ins", "Scheduled Move-Outs", "Net"],
+    },
+    {
+      label: "This month — projected month-end",
+      cols: ["Proj EOM MIs", "Proj EOM MOs", "Proj EOM Net", "Projected OCC #", "Projected OCC %"],
     },
     { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
   ];
