@@ -5,6 +5,7 @@ import {
   CartesianGrid,
   Cell,
   ComposedChart,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -14,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,6 +25,11 @@ import { cn } from "@/lib/utils";
  * derive KPI values in the browser. Colours come from the semantic chart tokens
  * in src/styles.css so light and dark themes stay consistent, and provisional
  * series are always drawn with the warning token rather than a trusted colour.
+ *
+ * Data labels follow one shared standard: raw count first, then the share of
+ * the relevant denominator when that denominator is meaningful. Shares are a
+ * display-only reshape of the already-aggregated values — no KPI is recomputed
+ * in the browser.
  */
 
 export const CHART_TOKENS = {
@@ -42,28 +49,70 @@ const axisProps = {
   axisLine: false,
 } as const;
 
+const LABEL_STYLE = {
+  fill: "var(--muted-foreground)",
+  fontSize: 10,
+  fontVariantNumeric: "tabular-nums",
+} as const;
+
+/** Whole counts; thousands separated. */
+export function fmtCount(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  return Number(v).toLocaleString();
+}
+
+/** Whole-number percent by default; one decimal only when material (<10%). */
+export function fmtPct(value: number, total: number): string | null {
+  if (!total || !Number.isFinite(total) || total <= 0) return null;
+  const pct = (value / total) * 100;
+  if (!Number.isFinite(pct)) return null;
+  if (pct > 0 && pct < 10) return `${pct.toFixed(1).replace(/\.0$/, "")}%`;
+  return `${Math.round(pct)}%`;
+}
+
+function labelWithShare(value: number, total?: number | null): string {
+  const pct = total != null ? fmtPct(value, total) : null;
+  return pct ? `${fmtCount(value)} · ${pct}` : fmtCount(value);
+}
+
 function TooltipBox({
   active,
   payload,
   label,
   formatter,
+  share,
+  showTotal,
 }: any) {
   if (!active || !payload?.length) return null;
+  const rows = payload.filter((p: any) => p?.value != null);
+  const total = rows.reduce((s: number, p: any) => s + Number(p.value ?? 0), 0);
   return (
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
       {label ? <p className="mb-1 font-medium text-foreground">{label}</p> : null}
-      {payload.map((p: any) => (
-        <p key={p.dataKey ?? p.name} className="flex items-center gap-2 text-muted-foreground">
-          <span className="size-2 rounded-full" style={{ background: p.color ?? p.fill }} />
-          <span className="text-foreground">{p.name}</span>
-          <span className="ml-auto tabular-nums text-foreground">
-            {formatter ? formatter(p.value) : Number(p.value).toLocaleString()}
-          </span>
+      {rows.map((p: any) => {
+        const pct = share ? fmtPct(Number(p.value ?? 0), total) : null;
+        return (
+          <p key={p.dataKey ?? p.name} className="flex items-center gap-2 text-muted-foreground">
+            <span className="size-2 rounded-full" style={{ background: p.color ?? p.fill }} />
+            <span className="text-foreground">{p.name}</span>
+            <span className="ml-auto tabular-nums text-foreground">
+              {formatter ? formatter(p.value) : fmtCount(Number(p.value))}
+              {pct ? <span className="ml-1 text-muted-foreground">({pct})</span> : null}
+            </span>
+          </p>
+        );
+      })}
+      {showTotal && rows.length > 1 ? (
+        <p className="mt-1 flex items-center gap-2 border-t border-border pt-1 text-muted-foreground">
+          <span className="size-2" />
+          <span className="text-foreground">Total</span>
+          <span className="ml-auto tabular-nums font-medium text-foreground">{fmtCount(total)}</span>
         </p>
-      ))}
+      ) : null}
     </div>
   );
 }
+
 
 export function ChartCard({
   title,
