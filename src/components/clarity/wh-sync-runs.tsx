@@ -211,7 +211,7 @@ function fmtDuration(ms: number | null) {
   return `${m}m ${s % 60}s`;
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: string | undefined }) {
   return (
     <div className="space-y-0.5">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
@@ -266,8 +266,8 @@ export function SyncRunSummary({
   busy,
 }: {
   summary: RunSummary | null;
-  onRetryFailed?: (summary: RunSummary) => void;
-  busy?: boolean;
+  onRetryFailed?: ((summary: RunSummary) => void) | undefined;
+  busy?: boolean | undefined;
 }) {
   if (!summary) {
     return (
@@ -311,15 +311,11 @@ export function SyncRunSummary({
           value={String(summary.successful)}
           tone="text-emerald-600 dark:text-emerald-400"
         />
-        <Stat
-          label="Failed"
-          value={String(summary.failed)}
-          tone={summary.failed ? "text-destructive" : undefined}
-        />
+        <Stat label="Failed" value={String(summary.failed)} tone={summary.failed ? "text-destructive" : ""} />
         <Stat
           label="Pending / running"
           value={String(summary.pending)}
-          tone={summary.pending ? "text-amber-600 dark:text-amber-400" : undefined}
+          tone={summary.pending ? "text-amber-600 dark:text-amber-400" : ""}
         />
       </div>
 
@@ -360,16 +356,16 @@ export function RecentSyncRuns({
   busy,
 }: {
   summaries: RunSummary[];
-  loading?: boolean;
-  onRetryFailed?: (summary: RunSummary) => void;
-  busy?: boolean;
+  loading?: boolean | undefined;
+  onRetryFailed?: ((summary: RunSummary) => void) | undefined;
+  busy?: boolean | undefined;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   return (
     <section className="space-y-3">
       <h2 className="text-sm font-semibold">Recent sync runs</h2>
       <DataTable
-        loading={loading}
+        loading={!!loading}
         rows={summaries as any[]}
         empty={<p className="p-6 text-sm text-muted-foreground">No sync runs recorded yet.</p>}
         columns={[
@@ -458,7 +454,7 @@ export function CommunitySyncOverview({
   syncState: any[];
   nameOf: (id: string) => string;
   communityIds: string[];
-  loading?: boolean;
+  loading?: boolean | undefined;
 }) {
   const rows = useMemo(() => {
     const required = WH_CORE_TABLES as readonly string[];
@@ -502,7 +498,7 @@ export function CommunitySyncOverview({
         </p>
       </div>
       <DataTable
-        loading={loading}
+        loading={!!loading}
         rows={rows as any[]}
         empty={<p className="p-6 text-sm text-muted-foreground">No mapped communities yet.</p>}
         columns={[
