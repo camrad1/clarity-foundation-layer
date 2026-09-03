@@ -254,6 +254,7 @@ export function normalizeProspect(raw: Rec, ctx: Ctx) {
     close_reason_label: pick(rec, "close_reasons_name"),
     merged_into_prospect_id: pick(rec, "merged_into_prospect_id", "merged_into_id"),
     discarded_at: pickTs(rec, "discarded_at"),
+    display_name: personDisplayName(rec),
     metadata: stripPii(raw),
   };
 }
@@ -299,6 +300,21 @@ export function normalizeActivity(raw: Rec, ctx: Ctx) {
   };
 }
 
+/**
+ * Display name only. Contact details, addresses, birthdates and notes stay
+ * stripped; a readable name is required so operators are not shown raw
+ * WelcomeHome reference ids. Returns null when the source has no name.
+ */
+export function personDisplayName(rec: Rec): string | null {
+  const parts = [pick(rec, "people_first_name", "first_name"), pick(rec, "people_last_name", "last_name")]
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter(Boolean);
+  const full = parts.join(" ").trim();
+  if (full) return full;
+  const alt = pick(rec, "people_full_name", "full_name", "name");
+  return typeof alt === "string" && alt.trim() ? alt.trim() : null;
+}
+
 export function normalizeHousingContract(raw: Rec, ctx: Ctx) {
   const rec = aliasRecord(raw, "housing_contracts");
   const depositAt = pickTs(rec, "deposit_received_at", "deposit_received_on", "deposit_date");
@@ -314,6 +330,7 @@ export function normalizeHousingContract(raw: Rec, ctx: Ctx) {
     resident_count: pickInt(rec, "resident_count", "occupants"),
     unit_source_id: pick(rec, "unit_id", "units_id"),
     unit_number: pick(rec, "units_number", "units_unit_number"),
+    person_name: personDisplayName(rec),
     status: pick(rec, "status", "contract_status"),
     financial_status: pick(rec, "financial_status"),
     risk_level: pick(rec, "risk_level", "risk"),
@@ -465,6 +482,7 @@ export function normalizeResident(raw: Rec, ctx: Ctx) {
     source_community_id: sourceCommunityId(rec),
     prospect_source_id: pick(rec, "prospect_id", "prospects_id"),
     person_source_id: pick(rec, "people_id", "person_id"),
+    display_name: personDisplayName(rec),
     care_type_label: pick(rec, "care_types_name"),
     current_residence: pick(rec, "current_residence"),
     first_resident: pickBool(rec, "first_resident"),

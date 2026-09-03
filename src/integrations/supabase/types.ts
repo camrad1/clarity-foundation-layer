@@ -2381,6 +2381,7 @@ export type Database = {
           occupancy_point_factor: number | null
           one_time_concession: number | null
           organization_id: string
+          person_name: string | null
           privacy_level_id: string | null
           privacy_level_label: string | null
           prospect_source_id: string | null
@@ -2436,6 +2437,7 @@ export type Database = {
           occupancy_point_factor?: number | null
           one_time_concession?: number | null
           organization_id: string
+          person_name?: string | null
           privacy_level_id?: string | null
           privacy_level_label?: string | null
           prospect_source_id?: string | null
@@ -2491,6 +2493,7 @@ export type Database = {
           occupancy_point_factor?: number | null
           one_time_concession?: number | null
           organization_id?: string
+          person_name?: string | null
           privacy_level_id?: string | null
           privacy_level_label?: string | null
           prospect_source_id?: string | null
@@ -2697,6 +2700,7 @@ export type Database = {
           created_at_source: string | null
           current_sales_counselor_id: string | null
           discarded_at: string | null
+          display_name: string | null
           expected_move_timing_id: string | null
           expected_stay_type: string | null
           id: string
@@ -2737,6 +2741,7 @@ export type Database = {
           created_at_source?: string | null
           current_sales_counselor_id?: string | null
           discarded_at?: string | null
+          display_name?: string | null
           expected_move_timing_id?: string | null
           expected_stay_type?: string | null
           id?: string
@@ -2777,6 +2782,7 @@ export type Database = {
           created_at_source?: string | null
           current_sales_counselor_id?: string | null
           discarded_at?: string | null
+          display_name?: string | null
           expected_move_timing_id?: string | null
           expected_stay_type?: string | null
           id?: string
@@ -2839,6 +2845,7 @@ export type Database = {
           created_at_source: string | null
           current_residence: string | null
           discarded_at: string | null
+          display_name: string | null
           first_resident: boolean | null
           id: string
           marital_status: string | null
@@ -2864,6 +2871,7 @@ export type Database = {
           created_at_source?: string | null
           current_residence?: string | null
           discarded_at?: string | null
+          display_name?: string | null
           first_resident?: boolean | null
           id?: string
           marital_status?: string | null
@@ -2889,6 +2897,7 @@ export type Database = {
           created_at_source?: string | null
           current_residence?: string | null
           discarded_at?: string | null
+          display_name?: string | null
           first_resident?: boolean | null
           id?: string
           marital_status?: string | null
@@ -3574,6 +3583,7 @@ export type Database = {
           deposit_type: string
           id: string
           occurred_local_date: string
+          person_name: string
           prospect_source_id: string
           source_id: string
           total_count: number
@@ -3596,6 +3606,7 @@ export type Database = {
           deposit_date: string
           depositor_key: string
           expected_move_in_date: string
+          person_name: string
           prospect_source_id: string
           source_id: string
           total_count: number
@@ -3611,12 +3622,13 @@ export type Database = {
         }
         Returns: {
           community_id: string
-          counselor: string
+          counselor_id: string
           last_contact_at: string
-          lead_source: string
+          lead_source_id: string
           next_activity_scheduled_at: string
+          person_name: string
           source_id: string
-          stage: string
+          stage_id: string
           status: string
           total_count: number
         }[]
@@ -3636,6 +3648,7 @@ export type Database = {
           is_transfer: boolean
           monthly_rate: number
           move_in_date: string
+          person_name: string
           prospect_source_id: string
           resident_source_id: string
           source_id: string
@@ -3657,6 +3670,7 @@ export type Database = {
           community_id: string
           move_out_date: string
           notice_date: string
+          person_name: string
           prospect_source_id: string
           reason: string
           resident_source_id: string
@@ -3679,6 +3693,7 @@ export type Database = {
           community_id: string
           expected_move_out_date: string
           notice_date: string
+          person_name: string
           reason: string
           resident_source_id: string
           source_id: string
@@ -3734,17 +3749,28 @@ export type Database = {
           _start: string
         }
         Returns: {
+          care_type: string
           community_id: string
           financial_move_in_date: string
           id: string
+          person_name: string
           prospect_source_id: string
           source_id: string
           status: string
           total_count: number
+          unit_label: string
           unit_source_id: string
         }[]
       }
       wh_norm_unit_label: { Args: { _v: string }; Returns: string }
+      wh_person_label: {
+        Args: {
+          _org_id: string
+          _prospect_source_id: string
+          _resident_source_id: string
+        }
+        Returns: string
+      }
       wh_prospect_page: {
         Args: {
           _bucket: string
@@ -3759,6 +3785,7 @@ export type Database = {
           id: string
           last_contact_at: string
           next_activity_scheduled_at: string
+          person_name: string
           score_id: string
           source_id: string
           stage_id: string
@@ -3814,6 +3841,7 @@ export type Database = {
           completed_local_date: string
           first_completed_of_type: boolean
           id: string
+          person_name: string
           prospect_source_id: string
           result_label: string
           source_id: string

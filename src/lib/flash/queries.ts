@@ -102,6 +102,7 @@ export type FlashMoveInRow = {
   community_id: string | null;
   prospect_source_id: string | null;
   resident_source_id: string | null;
+  person_name: string | null;
   move_in_date: string | null;
   care_type: string | null;
   unit_label: string | null;
@@ -138,6 +139,7 @@ export type FlashMoveOutRow = {
   community_id: string | null;
   resident_source_id: string | null;
   prospect_source_id: string | null;
+  person_name: string | null;
   move_out_date: string | null;
   notice_date: string | null;
   care_type: string | null;
@@ -173,6 +175,7 @@ export type FlashNoticeRow = {
   source_id: string;
   community_id: string | null;
   resident_source_id: string | null;
+  person_name: string | null;
   notice_date: string | null;
   expected_move_out_date: string | null;
   care_type: string | null;
@@ -209,6 +212,7 @@ export type FlashDepositRow = {
   community_id: string | null;
   depositor_key: string | null;
   prospect_source_id: string | null;
+  person_name: string | null;
   deposit_date: string | null;
   amount: number | null;
   expected_move_in_date: string | null;
@@ -243,12 +247,13 @@ export function useFlashDeposits(
 export type FlashHotLeadRow = {
   source_id: string;
   community_id: string | null;
-  stage: string | null;
+  person_name: string | null;
+  stage_id: string | null;
   status: string | null;
   next_activity_scheduled_at: string | null;
   last_contact_at: string | null;
-  counselor: string | null;
-  lead_source: string | null;
+  counselor_id: string | null;
+  lead_source_id: string | null;
 };
 
 export function useFlashHotLeads(
