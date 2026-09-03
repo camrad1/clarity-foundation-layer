@@ -343,7 +343,7 @@ function FlashReportPage() {
         badge={<CurrentStateBadge />}
         description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-Thursday occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
-        <div className="panel divide-y divide-border/60">
+        <div className="panel-brand divide-y divide-brand-border/70">
           <CompactRow
             heading="Current weekly summary"
             items={[
@@ -639,7 +639,7 @@ function CompactRow({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:w-48 md:shrink-0">
+      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-brand md:w-48 md:shrink-0">
         {heading}
       </p>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
