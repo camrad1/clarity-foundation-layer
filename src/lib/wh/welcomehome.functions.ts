@@ -560,6 +560,50 @@ export const whFinalizeSync = createServerFn({ method: "POST" })
     return { status, totals, unitsCompleted: units.length, expectedUnits: data.expectedUnits };
   });
 
+/**
+ * STALLED-WORK REAPER.
+ *
+ * A work unit heartbeats (`last_progress_at`) every time a page of source rows
+ * is fetched AND persisted. This function marks any non-terminal unit that has
+ * not heartbeat inside the window as `stalled`, then finalizes parent runs
+ * whose entire unit set has stopped advancing — as `partial` when other units
+ * succeeded, `failed` when none did. A slow-but-healthy unit keeps beating and
+ * is never touched, so the cure is progress-based, not timeout-based.
+ */
+export const whReapStalled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        connectionId: z.string().uuid(),
+        stallMinutes: z.number().int().min(1).max(240).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId } = await guard(context.supabase as any, data.connectionId);
+    const admin = await adminClient();
+    const { data: result, error } = await admin.rpc("wh_sync_reap_stalled", {
+      _org_id: organizationId,
+      _stall_minutes: data.stallMinutes ?? WH_STALL_MINUTES,
+    });
+    if (error) throw new Error(error.message);
+    const payload = (result ?? {}) as { stalled_units?: number; finalized_runs?: unknown[] };
+    return {
+      stalledUnits: payload.stalled_units ?? 0,
+      finalizedRuns: (payload.finalized_runs ?? []) as {
+        run_id: string;
+        status: string;
+        successful: number;
+        failed_or_stalled: number;
+        planned: number;
+        never_started: number;
+      }[],
+    };
+  });
+
+
+
 
 /**
  * Replays rows already captured in source_records_raw through the current
