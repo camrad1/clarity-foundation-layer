@@ -3934,12 +3934,16 @@ export type Database = {
         Returns: {
           community_id: string
           counselor_id: string
+          inquiry_date: string
           last_contact_at: string
           lead_source_id: string
+          lead_source_label: string
           next_activity_scheduled_at: string
           person_name: string
+          score_label: string
           source_id: string
           stage_id: string
+          stage_label: string
           status: string
           total_count: number
         }[]
@@ -4038,6 +4042,10 @@ export type Database = {
       wh_flash_scope: {
         Args: { _community_ids: string[]; _org_id: string }
         Returns: string[]
+      }
+      wh_is_hot_score: {
+        Args: { _org_id: string; _score_id: string; _score_label: string }
+        Returns: boolean
       }
       wh_lookup_coverage: {
         Args: { _community_ids?: string[]; _org_id: string }
