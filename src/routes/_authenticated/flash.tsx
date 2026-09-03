@@ -642,19 +642,21 @@ function CompactRow({
       <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-brand md:w-48 md:shrink-0">
         {heading}
       </p>
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+      <div className="flex flex-wrap gap-x-7 gap-y-3">
         {items.map((it) => (
-          <div key={it.label} className="flex items-baseline gap-1.5">
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{it.label}</span>
-            <span
+          <div key={it.label} className="min-w-[60px] space-y-0.5">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {it.label}
+            </p>
+            <p
               className={cn(
-                "font-display text-base font-semibold tabular-nums",
+                "font-display text-lg font-semibold leading-tight tabular-nums",
                 it.tone === "up" && "text-success",
                 it.tone === "down" && "text-destructive",
               )}
             >
               {it.value}
-            </span>
+            </p>
           </div>
         ))}
       </div>
