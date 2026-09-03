@@ -37,6 +37,7 @@ import {
 } from "@/lib/forecast/period";
 import {
   useForecastEntries,
+  useForecastActualsFinalized,
   useForecastEomActuals,
   useSaveForecast,
   type ForecastEntry,
@@ -105,6 +106,7 @@ function ForecastTracker() {
   const dates = useMemo(() => forecastDatesForMonth(month), [month]);
   const entries = useForecastEntries(organizationId, month);
   const actuals = useForecastEomActuals(organizationId, month, selectedIds);
+  const finalized = useForecastActualsFinalized(organizationId, month);
   const save = useSaveForecast(month);
   const [edit, setEdit] = useState<EditTarget | null>(null);
 
@@ -114,11 +116,19 @@ function ForecastTracker() {
     return map;
   }, [entries.data]);
 
+  /**
+   * EOM Actual is a finalized full-month result. While the month is open — or
+   * before the post-close WelcomeHome sync succeeds — the map stays empty so
+   * every row and the TOTAL render “—” instead of month-to-date activity.
+   */
+  const actualsReleased = finalized.data === true;
+
   const actualByCommunity = useMemo(() => {
     const map = new Map<string, { move_ins: number; move_outs: number }>();
+    if (!actualsReleased) return map;
     for (const a of actuals.data ?? []) map.set(a.community_id, a);
     return map;
-  }, [actuals.data]);
+  }, [actuals.data, actualsReleased]);
 
   const totals = useMemo(() => {
     const perDate = dates.map((d) => {
@@ -207,7 +217,20 @@ function ForecastTracker() {
                     );
                   })}
                   <th className="border-l-2 border-brand-dark bg-brand px-3 py-2 text-center font-semibold whitespace-nowrap text-brand-foreground">
-                    EOM Actual
+                    {actualsReleased ? (
+                      "EOM Actual"
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-brand-foreground/50">
+                            EOM Actual
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          Final actuals available after month close and successful WelcomeHome sync.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </th>
                 </tr>
               </thead>
@@ -305,10 +328,16 @@ function ForecastTracker() {
                     );
                   })}
                   <td className="border-l-2 border-brand-dark bg-brand/10 px-3 py-2 text-center text-sm tabular-nums font-bold">
-                    {totals.actual.mi} / {totals.actual.mo}
-                    <span className="ml-1 text-xs font-semibold text-muted-foreground">
-                      ({formatNet(totals.actual.mi - totals.actual.mo)})
-                    </span>
+                    {actualsReleased ? (
+                      <>
+                        {totals.actual.mi} / {totals.actual.mo}
+                        <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                          ({formatNet(totals.actual.mi - totals.actual.mo)})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               </tbody>
@@ -319,8 +348,10 @@ function ForecastTracker() {
 
       <p className="text-xs text-muted-foreground">
         Cells show projected move-ins / move-outs. EOM Actual uses ClarityIQ&rsquo;s validated WelcomeHome
-        move-in and move-out definitions. Past weekly forecasts are preserved as point-in-time records; only an
-        organization admin may correct a week that has already ended.
+        move-in and move-out definitions for the fully completed calendar month, and is released only after the
+        month closes and a WelcomeHome sync completes successfully — an open month always shows &ldquo;—&rdquo;.
+        Past weekly forecasts are preserved as point-in-time records; only an organization admin may correct a
+        week that has already ended.
       </p>
 
       <ForecastEditDialog

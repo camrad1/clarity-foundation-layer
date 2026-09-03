@@ -74,6 +74,32 @@ export function useForecastEomActuals(
   });
 }
 
+/**
+ * EOM Actual release gate.
+ *
+ * Final month-end actuals are only shown once the calendar month has fully
+ * ended AND a WelcomeHome sync has completed successfully after the month
+ * close. Until then the tracker shows “—” rather than month-to-date activity.
+ */
+export function useForecastActualsFinalized(organizationId: string | null, month: string) {
+  const closed = monthEnd(month) < new Date().toISOString().slice(0, 10);
+  return useQuery({
+    queryKey: ["forecast_actuals_finalized", organizationId, month],
+    enabled: !!organizationId && closed,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await db
+        .from("source_sync_runs")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("status", "success")
+        .gt("completed_at", `${monthEnd(month)}T23:59:59Z`)
+        .limit(1);
+      if (error) throw error;
+      return (data ?? []).length > 0;
+    },
+  });
+}
+
 export type ForecastRevision = {
   id: string;
   forecast_date: string;
