@@ -195,6 +195,8 @@ async function storeRaw(
     sourceCommunityId: string | null;
   },
   records: Rec[],
+  /** Why the record could not be normalized or persisted. */
+  reason?: string | ((rec: Rec) => string),
 ) {
   if (!records.length) return 0;
   const rows = records.map((rec) => ({
@@ -207,12 +209,18 @@ async function storeRaw(
     source_community_external_id: ctx.sourceCommunityId,
     community_id: ctx.communityId,
     contains_pii: true,
+    quarantine_reason: typeof reason === "function" ? reason(rec) : (reason ?? null),
     payload: rec,
   }));
-  const { error } = await admin.from("source_records_raw").insert(rows);
+  // Upsert, not insert: a retry re-quarantines the same source id and must
+  // refresh the reason rather than fail on the uniqueness constraint.
+  const { error } = await admin
+    .from("source_records_raw")
+    .upsert(rows, { onConflict: "organization_id,source_type,record_type,source_record_id" });
   if (error) return 0;
   return rows.length;
 }
+
 
 async function syncLookupTable(
   admin: Admin,
