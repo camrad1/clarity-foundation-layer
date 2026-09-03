@@ -187,12 +187,28 @@ function ForecastTracker() {
                   <th className="sticky left-0 z-10 bg-brand-light px-3 py-2 text-left font-medium">
                     Community
                   </th>
-                  {dates.map((d) => (
-                    <th key={d} className="px-3 py-2 text-center font-medium whitespace-nowrap">
-                      {formatShortDate(d)}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 text-center font-medium whitespace-nowrap">EOM Actual</th>
+                  {dates.map((d, i) => {
+                    const isFinal = finalDate === d && i === dates.length - 1;
+                    return (
+                      <th
+                        key={d}
+                        className={cn(
+                          "px-3 py-2 text-center font-medium whitespace-nowrap",
+                          isFinal && "border-l-2 border-brand-border bg-brand-soft/50",
+                        )}
+                      >
+                        {formatShortDate(d)}
+                        {isFinal ? (
+                          <span className="mt-0.5 block text-[0.6rem] font-normal uppercase tracking-wide text-muted-foreground">
+                            Final
+                          </span>
+                        ) : null}
+                      </th>
+                    );
+                  })}
+                  <th className="border-l-2 border-brand-dark bg-brand px-3 py-2 text-center font-semibold whitespace-nowrap text-brand-foreground">
+                    EOM Actual
+                  </th>
                 </tr>
               </thead>
               <tbody>
