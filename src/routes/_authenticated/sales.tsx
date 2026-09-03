@@ -106,7 +106,11 @@ function SalesIntelligence() {
     ctx.dateRange.start,
     ctx.dateRange.end,
   );
-  const prior = priorPeriod(ctx.dateRange.start, ctx.dateRange.end);
+  // Global comparison picker wins; otherwise fall back to the prior equal-length period.
+  const prior = ctx.comparisonRange ?? priorPeriod(ctx.dateRange.start, ctx.dateRange.end);
+  const comparisonLabel = ctx.comparisonRange
+    ? comparisonSuffix(ctx.comparisonMode)
+    : "vs prior equal-length period";
   const priorSummary = useWhSalesSummary(ctx.organizationId, ctx.communityIds, prior.start, prior.end);
   const trend = useWhSalesTrend(ctx.organizationId, ctx.communityIds, ctx.dateRange.end, 12);
   const [tab, setTab] = useState("funnel");
@@ -171,7 +175,9 @@ function SalesIntelligence() {
 
   const p = priorSummary.data;
   const cmp = (current: number, previous: number | undefined) =>
-    p && previous != null ? { previous, label: `${prior.start} – ${prior.end}` } : undefined;
+    p && previous != null
+      ? { previous, label: `${formatPeriodLabel(prior)} · ${comparisonLabel}` }
+      : undefined;
 
   const deposits = candidate(
     s.deposits,
@@ -775,7 +781,7 @@ function KpiCard({
               className={`inline-flex items-center gap-0.5 text-xs font-medium ${
                 good === null ? "text-muted-foreground" : good ? "text-success" : "text-destructive"
               }`}
-              title={`Prior period ${compare!.label}: ${compare!.previous.toLocaleString()}`}
+              title={`${compare!.label}: ${compare!.previous.toLocaleString()}`}
             >
               {delta === 0 ? (
                 <ArrowRight className="size-3" />
@@ -794,7 +800,7 @@ function KpiCard({
       <p className="text-xs leading-relaxed text-muted-foreground">{note}</p>
       {compare ? (
         <p className="text-[11px] text-muted-foreground">
-          Prior equal-length period {compare.label}: {compare.previous.toLocaleString()}
+          {compare.label}: {compare.previous.toLocaleString()}
         </p>
       ) : null}
     </div>
