@@ -221,6 +221,66 @@ export function useWhTableRuns(connectionId: string | null, limit = 60) {
   });
 }
 
+export type WhSyncRunUnit = {
+  source_table: string;
+  community_id: string | null;
+  status: string;
+  error_summary: string | null;
+  completed_at: string | null;
+};
+
+export type WhSyncRunRecord = {
+  id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_summary: string | null;
+  sync_cursor: {
+    mode?: string;
+    tables?: string[];
+    communityIds?: string[];
+    totalUnits?: number;
+  } | null;
+  units: WhSyncRunUnit[];
+};
+
+/**
+ * Parent sync runs with their bounded work units.
+ *
+ * Two small reads (runs, then the units belonging to exactly those runs) keep
+ * this bounded regardless of history size — overall completion is derived in
+ * one place instead of being eyeballed row by row.
+ */
+export function useWhSyncRuns(connectionId: string | null, limit = 8) {
+  return useQuery({
+    queryKey: ["wh_sync_runs", connectionId, limit],
+    enabled: !!connectionId,
+    queryFn: async (): Promise<WhSyncRunRecord[]> => {
+      const { data: runs, error } = await supabase
+        .from("source_sync_runs")
+        .select("id, status, started_at, completed_at, error_summary, sync_cursor")
+        .eq("connection_id", connectionId!)
+        .order("started_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      const ids = (runs ?? []).map((r: any) => r.id as string);
+      if (!ids.length) return [];
+      const { data: units, error: unitError } = await supabase
+        .from("wh_sync_table_runs")
+        .select("sync_run_id, source_table, community_id, status, error_summary, completed_at")
+        .in("sync_run_id", ids)
+        .order("completed_at", { ascending: true });
+      if (unitError) throw unitError;
+      return (runs ?? []).map((r: any) => ({
+        ...r,
+        units: (units ?? []).filter((u: any) => u.sync_run_id === r.id) as WhSyncRunUnit[],
+      })) as WhSyncRunRecord[];
+    },
+    refetchInterval: 0,
+  });
+}
+
+
 export function useWhCommunityMappings(organizationId: string | null) {
   return useQuery({
     queryKey: ["wh_community_mappings", organizationId],
