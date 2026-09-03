@@ -160,6 +160,37 @@ function personName(v: string | null | undefined) {
   return t.length ? t : "Name unavailable";
 }
 
+/** Short absolute date, e.g. "Aug 28" (adds year when outside the current year). */
+function shortDate(v: string | null | undefined) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "—";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
+/** Human-readable relative day for recent/near dates; falls back to a short date. */
+function relativeDay(v: string | null | undefined) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "—";
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(d) - startOf(new Date())) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === -1) return "Yesterday";
+  if (days === 1) return "Tomorrow";
+  if (days < 0 && days >= -13) return `${-days} days ago`;
+  if (days > 0 && days <= 13) return `In ${days} days`;
+  return shortDate(v);
+}
+
+/** Full timestamp preserved for tooltips / audit. */
+const fullStamp = (v: string | null | undefined) => (v ? new Date(v).toLocaleString() : "");
+
 function downloadCsv(filename: string, rows: (string | number | null | undefined)[][]) {
   const body = rows
     .map((r) =>
