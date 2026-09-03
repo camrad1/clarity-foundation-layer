@@ -137,10 +137,19 @@ type TabProps = {
   months?: number;
 };
 
+/** Occupancy tabs are driven by the global date filter, not a fixed window. */
+type RangeTabProps = {
+  organizationId: string | null;
+  communityIds: string[];
+  start: string;
+  end: string;
+};
+
 /* ============================================================ Occupancy */
 
-export function OccupancyHistoryTab({ organizationId, communityIds, end, months = 12 }: TabProps) {
-  const q = useOccupancyHistory(organizationId, communityIds, end, months);
+export function OccupancyHistoryTab({ organizationId, communityIds, start, end }: RangeTabProps) {
+  const q = useOccupancyHistory(organizationId, communityIds, start.slice(0, 10), end.slice(0, 10));
+
   const rows = q.data ?? [];
 
   const chartData = useMemo(
