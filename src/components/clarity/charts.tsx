@@ -224,9 +224,12 @@ export function MetricTrendChart({
                   if (v == null || !Number.isFinite(Number(v))) return null;
                   return (
                     <text
-                      x={Number(props.x) - 6}
+                      x={Number(props.x) - 8}
                       y={Number(props.y) - 10}
                       textAnchor="end"
+                      stroke="var(--card)"
+                      strokeWidth={3}
+                      paintOrder="stroke"
                       style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
                     >
                       {fmtCount(Number(v))}
