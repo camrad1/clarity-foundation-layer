@@ -334,18 +334,18 @@ function WelcomeHomeAdmin() {
 
   function retryFailed(summary: RunSummary) {
     // Resume the same parent run: the planner skips units that already
-    // succeeded, so only failed / never-completed work is re-attempted.
+    // succeeded, so only failed or never-completed work is re-attempted.
+    const only: WhWorkUnit[] = summary.failedUnits.map((u) => ({
+      key: `${u.table}:${u.communityId ?? "*"}`,
+      table: u.table,
+      communityId: u.communityId,
+      communityName: u.communityName,
+      scope: u.communityId ? ("community" as const) : ("account" as const),
+    }));
     void orchestrate({
       mode: "full",
       resumeRunId: summary.id,
-      ...(summary.failedUnits.length ? {} : { onlyUnits: undefined as never }),
-      onlyUnits: summary.failedUnits.map((u) => ({
-        key: `${u.table}:${u.communityId ?? "*"}`,
-        table: u.table,
-        communityId: u.communityId,
-        communityName: u.communityName,
-        scope: u.communityId ? ("community" as const) : ("account" as const),
-      })),
+      ...(only.length ? { onlyUnits: only } : {}),
     });
   }
 
