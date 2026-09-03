@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
-import { ProgressGauge } from "@/components/clarity/charts";
+import { CHART_TOKENS, ChartCard, MetricTrendChart, ProgressGauge } from "@/components/clarity/charts";
 import { useWhContext } from "@/lib/wh/use-wh";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 import {
   effectiveBudget,
   resolveBudget,
@@ -103,9 +104,11 @@ function Occupancy() {
             </div>
             <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
               Current state as of {data?.asOf}. Not affected by the selected date range. Historical
-              as-of-date occupancy requires the nightly snapshot system, which is not built yet.
+              as-of-date occupancy is shown separately below, read from immutable daily snapshots.
             </p>
           </section>
+
+          <OccupancyHistory organizationId={ctx.organizationId} communityIds={ctx.communityIds} />
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">By community</h2>
@@ -220,5 +223,63 @@ function Stat({ label, value }: { label: string; value: number | string }) {
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-brand">{value}</p>
     </div>
+  );
+}
+
+/**
+ * Historical occupancy — read ONLY from immutable daily snapshots. Days with
+ * no snapshot simply do not appear; nothing is interpolated or reconstructed
+ * from current-state rows.
+ */
+function OccupancyHistory({
+  organizationId,
+  communityIds,
+}: {
+  organizationId: string | null;
+  communityIds: string[];
+}) {
+  const end = new Date();
+  const start = new Date(end.getTime() - 180 * 86_400_000);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const trend = useOccupancyTrend(organizationId, communityIds, iso(start), iso(end), "daily");
+  const points = (trend.data ?? []).map((p) => ({
+    label: p.snapshot_date.slice(5),
+    occupied: p.occupied_units,
+    census: p.census_units,
+    budget: p.budget_units ?? null,
+  }));
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">Occupancy over time</h2>
+        <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          Daily snapshots
+        </span>
+      </div>
+      {trend.isLoading ? (
+        <div className="panel h-64 animate-pulse" />
+      ) : points.length === 0 ? (
+        <EmptyState
+          title="No snapshot history yet"
+          description="Historical occupancy appears once nightly snapshots have been captured for these communities. History is never reconstructed from today's data."
+        />
+      ) : (
+        <ChartCard
+          title="Occupied vs census units"
+          description={`${points.length} daily snapshots · last ${trend.data?.[trend.data.length - 1]?.snapshot_date}`}
+          height={280}
+        >
+          <MetricTrendChart
+            data={points}
+            series={[
+              { key: "occupied", label: "Occupied", color: CHART_TOKENS.primary },
+              { key: "census", label: "Census units", color: CHART_TOKENS.muted },
+              { key: "budget", label: "Budget units", color: CHART_TOKENS.secondary, dashed: true },
+            ]}
+          />
+        </ChartCard>
+      )}
+    </section>
   );
 }

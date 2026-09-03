@@ -37,6 +37,7 @@ import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './route
 import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
+import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -194,6 +195,11 @@ const AuthenticatedMarketingSegmentsRoute =
     path: '/segments',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
+  id: '/api/public/hooks/wh-nightly',
+  path: '/api/public/hooks/wh-nightly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
+  '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
+  '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
+  '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/marketing/queries'
     | '/marketing/segments'
     | '/marketing/'
+    | '/api/public/hooks/wh-nightly'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/marketing/queries'
     | '/marketing/segments'
     | '/marketing'
+    | '/api/public/hooks/wh-nightly'
   id:
     | '__root__'
     | '/'
@@ -371,12 +382,14 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/queries'
     | '/_authenticated/marketing/segments'
     | '/_authenticated/marketing/'
+    | '/api/public/hooks/wh-nightly'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -577,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingSegmentsRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/api/public/hooks/wh-nightly': {
+      id: '/api/public/hooks/wh-nightly'
+      path: '/api/public/hooks/wh-nightly'
+      fullPath: '/api/public/hooks/wh-nightly'
+      preLoaderRoute: typeof ApiPublicHooksWhNightlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

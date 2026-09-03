@@ -35,6 +35,8 @@ import {
   useWhTableRuns,
 } from "@/lib/wh/queries";
 import { WH_ALL_TABLES, WH_CORE_TABLES } from "@/lib/wh/tables";
+import { whNightlyCancel, whNightlyRunNow, whNightlyTick } from "@/lib/wh/nightly.functions";
+import { useNightlyRuns } from "@/lib/wh/snapshots";
 import { useAppState } from "@/state/app-state";
 
 
@@ -399,6 +401,13 @@ function WelcomeHomeAdmin() {
             </p>
           </section>
 
+          <NightlyPanel
+            organizationId={organizationId}
+            connectionId={connectionId}
+            canManage={!!canManageImports && !!credential.data?.configured}
+          />
+
+
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -652,5 +661,135 @@ function WelcomeHomeAdmin() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Nightly refresh + immutable daily snapshot.
+ *
+ * The schedule runs this automatically; this panel is the manual equivalent
+ * and uses exactly the same bounded worker. Each click processes a small slice
+ * of communities, so nothing here is a long-running request.
+ */
+function NightlyPanel({
+  organizationId,
+  connectionId,
+  canManage,
+}: {
+  organizationId: string | null;
+  connectionId: string | null;
+  canManage: boolean;
+}) {
+  const qc = useQueryClient();
+  const runNow = useServerFn(whNightlyRunNow);
+  const tick = useServerFn(whNightlyTick);
+  const cancel = useServerFn(whNightlyCancel);
+  const runs = useNightlyRuns(organizationId, 5);
+  const [busy, setBusy] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+
+  const active = (runs.data ?? []).find((r) => r.status === "queued" || r.status === "running") ?? null;
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["wh_nightly_runs"] });
+    qc.invalidateQueries({ queryKey: ["wh_snapshot_health"] });
+  };
+
+  async function drive() {
+    if (!connectionId) return;
+    setBusy(true);
+    setLog([]);
+    try {
+      const first = await runNow({ data: { connectionId, maxCommunities: 2 } });
+      if (!first.ok || !first.runId) {
+        toast.error(first.message ?? "Nothing to run");
+        return;
+      }
+      let runId = first.runId;
+      let result = first.tick;
+      let guard = 0;
+      // Bounded loop: each hop is one small slice, and it stops as soon as the
+      // run reports no remaining communities.
+      while (result && result.remaining > 0 && guard < 200) {
+        guard += 1;
+        setLog((l) => [
+          ...l,
+          ...result!.details.map((d) => `${d.community}: ${d.status}${d.error ? ` — ${d.error}` : ""}`),
+        ]);
+        refresh();
+        result = await tick({ data: { connectionId, runId, maxCommunities: 2 } });
+      }
+      if (result) {
+        setLog((l) => [
+          ...l,
+          ...result!.details.map((d) => `${d.community}: ${d.status}${d.error ? ` — ${d.error}` : ""}`),
+          `Run ${result!.status} · ${result!.snapshots} snapshot(s) written`,
+        ]);
+      }
+      toast.success("Nightly refresh finished");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nightly run failed");
+    } finally {
+      setBusy(false);
+      refresh();
+    }
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Nightly refresh &amp; daily snapshot</h2>
+          <p className="text-xs text-muted-foreground">
+            Refreshes Units and Housing Contracts for every mapped community, then writes one immutable
+            snapshot per community for its local calendar date. A snapshot is skipped — with a recorded
+            reason — when the refresh does not complete cleanly, and existing snapshots are never rewritten.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={drive} disabled={!canManage || busy || !connectionId}>
+            <RefreshCw className={busy ? "size-4 animate-spin" : "size-4"} /> Run now
+          </Button>
+          {active ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!connectionId) return;
+                await cancel({ data: { connectionId, runId: active.id } });
+                refresh();
+              }}
+            >
+              Cancel
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <DataTable
+        rows={runs.data ?? []}
+        empty={<p className="p-6 text-sm text-muted-foreground">No nightly runs yet.</p>}
+        columns={[
+          { key: "d", header: "Run date", render: (r: any) => r.run_date },
+          { key: "s", header: "Status", render: (r: any) => <StatusPill status={r.status} /> },
+          { key: "t", header: "Trigger", render: (r: any) => r.triggered_by },
+          {
+            key: "p",
+            header: "Communities",
+            align: "right",
+            render: (r: any) =>
+              `${r.communities_done}/${r.communities_total}${r.communities_failed ? ` · ${r.communities_failed} failed` : ""}`,
+          },
+          { key: "n", header: "Snapshots", align: "right", render: (r: any) => r.snapshots_written },
+          { key: "f", header: "Finished", render: (r: any) => fmt(r.finished_at) },
+        ]}
+      />
+
+      {log.length ? (
+        <pre className="panel max-h-48 overflow-auto p-3 text-[11px] text-muted-foreground">
+          {log.join("\n")}
+        </pre>
+      ) : null}
+    </section>
   );
 }

@@ -240,8 +240,26 @@ function FlashReportPage() {
       "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "NET",
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
+    const so = data?.starting?.occupancy ?? null;
+    const sb = data?.starting?.budget?.units ?? null;
+    const sVar = so?.occupiedUnits != null && sb != null ? so.occupiedUnits - sb : null;
     const starting = [
-      "Starting #", "", ...Array(6 + careTypes.length).fill("—"),
+      "Starting #",
+      data?.starting?.asOfDate ?? "",
+      ...(so
+        ? [
+            so.totalUnits,
+            so.occupiedUnits,
+            sb ?? "—",
+            sVar ?? "—",
+            so.censusUnits ? ((so.occupiedUnits / so.censusUnits) * 100).toFixed(1) : "—",
+            sb ? ((so.occupiedUnits / sb) * 100).toFixed(1) : "—",
+            ...careTypes.map((ct) => {
+              const row = so.byCareType.find((c) => c.careType === ct);
+              return row ? `${row.occupied}/${row.units}` : "—";
+            }),
+          ]
+        : Array(6 + careTypes.length).fill("—")),
       ...Array(10).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
@@ -341,7 +359,7 @@ function FlashReportPage() {
       <Section
         title="Current summary"
         badge={<CurrentStateBadge />}
-        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-week-end occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
+        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Completed weeks read their occupancy from that week's immutable daily snapshot. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
         <div className="panel-brand divide-y divide-brand-border/70">
           <CompactRow
@@ -409,8 +427,9 @@ function FlashReportPage() {
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
         <p className="pt-2 text-[11px] text-muted-foreground">
-          Historical occupancy values will populate once nightly snapshots are enabled. Missing values are
-          shown as “—” and are never filled with current-state data.
+          Completed weeks show occupancy from that week's immutable daily snapshot; the in-progress week shows
+          current state. Dates before nightly snapshots began are shown as “—” and are never filled with
+          current-state data.
         </p>
       </Section>
 
@@ -825,7 +844,7 @@ function WeekByWeekGrid({
           {/* Legacy "Starting #" row. Structured now; populated once immutable
               daily snapshots exist. Current-state occupancy is deliberately NOT
               backfilled here. */}
-          <StartingRow careTypes={careTypes} totalCols={totalCols} />
+          <StartingRow careTypes={careTypes} totalCols={totalCols} starting={data?.starting ?? null} />
           {(data?.weeks ?? []).map((w) => (
             <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} />
           ))}
@@ -845,14 +864,54 @@ function WeekByWeekGrid({
   );
 }
 
-function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols: number }) {
+/**
+ * Legacy "Starting #" row: the occupancy position going into the month, read
+ * from the last immutable daily snapshot before the first reporting week.
+ * When no snapshot exists for that date the cells stay "—" — the position is
+ * never reconstructed from today's current state.
+ */
+function StartingRow({
+  careTypes,
+  totalCols,
+  starting,
+}: {
+  careTypes: string[];
+  totalCols: number;
+  starting: FlashReport["starting"] | null | undefined;
+}) {
   const occCols = 6 + careTypes.length;
+  const o = starting?.occupancy ?? null;
+  const b = starting?.budget?.units ?? null;
+  const occupied = o?.occupiedUnits ?? null;
+  const variance = occupied != null && b != null ? occupied - b : null;
+  const cells: (string | number)[] = o
+    ? [
+        o.totalUnits,
+        occupied ?? "—",
+        b ?? "—",
+        variance == null ? "—" : variance > 0 ? `+${variance}` : variance,
+        occupied != null && o.censusUnits ? `${((occupied / o.censusUnits) * 100).toFixed(1)}%` : "—",
+        occupied != null && b ? `${((occupied / b) * 100).toFixed(1)}%` : "—",
+        ...careTypes.map((ct) => {
+          const row = o.byCareType.find((c) => c.careType === ct);
+          return row ? `${row.occupied}/${row.units}` : "—";
+        }),
+      ]
+    : Array.from({ length: occCols }, () => "—");
+
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
-      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
-      {Array.from({ length: occCols }).map((_, i) => (
+      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">
+        Starting #
+        {starting?.asOfDate ? (
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            {o ? `snapshot ${formatDay(o.snapshotDate ?? starting.asOfDate)}` : `as of ${formatDay(starting.asOfDate)}`}
+          </span>
+        ) : null}
+      </td>
+      {cells.map((v, i) => (
         <td key={`s-occ-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
-          —
+          {v}
         </td>
       ))}
       {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
