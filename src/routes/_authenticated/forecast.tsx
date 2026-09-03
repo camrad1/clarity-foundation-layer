@@ -328,10 +328,16 @@ function ForecastTracker() {
                     );
                   })}
                   <td className="border-l-2 border-brand-dark bg-brand/10 px-3 py-2 text-center text-sm tabular-nums font-bold">
-                    {totals.actual.mi} / {totals.actual.mo}
-                    <span className="ml-1 text-xs font-semibold text-muted-foreground">
-                      ({formatNet(totals.actual.mi - totals.actual.mo)})
-                    </span>
+                    {actualsReleased ? (
+                      <>
+                        {totals.actual.mi} / {totals.actual.mo}
+                        <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                          ({formatNet(totals.actual.mi - totals.actual.mo)})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               </tbody>
