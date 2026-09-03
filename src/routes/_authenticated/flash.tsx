@@ -933,18 +933,19 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
       const row = o?.byCareType.find((c) => c.careType === ct);
       return row ? `${row.occupied}/${row.units}` : "—";
     }),
-    w.moveIns,
-    w.moveOuts,
-    w.net,
-    w.pendingIn,
-    w.pendingOut,
-    w.pendingNet,
+    w.moveIns ?? "—",
+    w.moveOuts ?? "—",
+    w.net ?? "—",
+    w.pendingIn ?? "—",
+    w.pendingOut ?? "—",
+    w.pendingNet ?? "—",
     w.projectedOccupiedUnits ?? "—",
     w.projectedOccupancyPct == null ? "—" : Number(w.projectedOccupancyPct).toFixed(1),
-    w.inquiries,
-    w.outreach,
-    w.tours,
-    w.reTours,
+    w.inquiries ?? "—",
+    w.outreach ?? "—",
+    w.tours ?? "—",
+    w.reTours ?? "—",
+
   ];
 }
 
