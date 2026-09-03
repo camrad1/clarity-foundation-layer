@@ -105,6 +105,32 @@ export async function ensureNightlyRun(
     return { runId: null, created: false, reason: "no_mapped_communities", communities: 0 };
   }
 
+  if (args.triggeredBy === "schedule") {
+    // The scheduler ticks frequently; a community only enters a run when it is
+    // inside its own local overnight window AND has no snapshot for its local
+    // date yet. That makes repeated ticks cheap and idempotent, and keeps the
+    // snapshot anchored to local time rather than the scheduler's clock.
+    const { data: existing } = await admin
+      .from("community_daily_snapshots")
+      .select("community_id, snapshot_date")
+      .eq("organization_id", args.organizationId)
+      .eq("status", "success")
+      .in("community_id", targets.map((t) => t.communityId));
+    const done = new Set(
+      ((existing ?? []) as { community_id: string; snapshot_date: string }[]).map(
+        (r) => `${r.community_id}:${r.snapshot_date}`,
+      ),
+    );
+    targets = targets.filter((t) => {
+      const hour = localHour(t.timezone);
+      const inWindow = hour >= 1 && hour <= 5;
+      return inWindow && !done.has(`${t.communityId}:${localDate(t.timezone)}`);
+    });
+    if (!targets.length) {
+      return { runId: null, created: false, reason: "nothing_due", communities: 0 };
+    }
+  }
+
   const { data: run, error } = await admin
     .from("wh_nightly_runs")
     .insert({
