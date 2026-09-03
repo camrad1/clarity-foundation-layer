@@ -170,7 +170,9 @@ async function syncLookupTable(
     connectionId: string;
     table: WhLookupTable;
     targets: CommunityTarget[];
+    beat?: Heartbeat | undefined;
   },
+
 ): Promise<TableResult> {
   const started = Date.now();
   const result: TableResult = {
