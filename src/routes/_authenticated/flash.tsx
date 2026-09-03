@@ -1072,8 +1072,8 @@ function WeekByWeekGrid({
               daily snapshots exist. Current-state occupancy is deliberately NOT
               backfilled here. */}
           <StartingRow careTypes={careTypes} totalCols={totalCols} starting={data?.starting ?? null} />
-          {(data?.weeks ?? []).map((w) => (
-            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} />
+          {(data?.weeks ?? []).map((w, i) => (
+            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} index={i} />
           ))}
           {data ? (
             <GridRow w={data.month} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} emphasis />
