@@ -581,6 +581,7 @@ function FlashReportPage() {
                     <th className="px-3 py-1.5 text-left font-medium">Sales Counselor</th>
                     <th className="px-3 py-1.5 text-left font-medium">Last Contact</th>
                     <th className="px-3 py-1.5 text-left font-medium">Next Activity</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Next Activity Date</th>
                     <th className="px-3 py-1.5 text-left font-medium">Weekly Update</th>
                   </tr>
                 </thead>
