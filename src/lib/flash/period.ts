@@ -65,18 +65,18 @@ export function nextMonthStart(d: string): string {
 }
 
 /**
- * The Flash weeks reported inside a month: every Sunday–Saturday period whose
- * Saturday falls within the month. Mirrors the week loop in `wh_flash_report`.
+ * The Flash weeks reported inside a month: Sunday–Saturday periods clipped to
+ * the month boundaries, so every date belongs to exactly one month and the
+ * weekly rows sum to the month total. Mirrors the loop in `wh_flash_report`.
  */
 export function flashWeeksInMonth(d: string): FlashWeek[] {
   const ms = monthStart(d);
   const me = monthEnd(d);
   const out: FlashWeek[] = [];
   let start = flashWeekStart(ms);
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 8 && start <= me; i += 1) {
     const end = addDays(start, 6);
-    if (end > me) break;
-    if (end >= ms) out.push({ start, end });
+    out.push({ start: start < ms ? ms : start, end: end > me ? me : end });
     start = addDays(start, 7);
   }
   return out;
