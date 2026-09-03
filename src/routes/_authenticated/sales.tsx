@@ -214,15 +214,15 @@ function SalesIntelligence() {
         <div className="-mx-1 overflow-x-auto px-1 pb-1">
           <TabsList className="w-max">
             <TabsTrigger value="funnel">Funnel</TabsTrigger>
+            <TabsTrigger value="occupancy-history">Occupancy history</TabsTrigger>
+            <TabsTrigger value="inquiries">New inquiries</TabsTrigger>
+            <TabsTrigger value="mi-sources">Move-ins by lead source</TabsTrigger>
+            <TabsTrigger value="lost-leads">Lost leads</TabsTrigger>
+            <TabsTrigger value="move-out-reasons">Move-out reasons</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline health</TabsTrigger>
             <TabsTrigger value="counselors">Counselors</TabsTrigger>
             <TabsTrigger value="sources">Lead sources</TabsTrigger>
             <TabsTrigger value="occupancy">Current occupancy</TabsTrigger>
-            <TabsTrigger value="occupancy-history">Occupancy history</TabsTrigger>
-            <TabsTrigger value="mi-sources">Move-ins by lead source</TabsTrigger>
-            <TabsTrigger value="move-out-reasons">Move-out reasons</TabsTrigger>
-            <TabsTrigger value="inquiries">New inquiries</TabsTrigger>
-            <TabsTrigger value="lost-leads">Lost leads</TabsTrigger>
           </TabsList>
         </div>
 
@@ -1183,7 +1183,12 @@ function LeadSourceRatioCard({
         ) : null
       }
     >
-      <HorizontalBarChart data={data} valueLabel="Percent" color={CHART_TOKENS.provisional} />
+      <HorizontalBarChart
+        data={data}
+        valueLabel="Percent"
+        color={CHART_TOKENS.provisional}
+        showPercent={false}
+      />
     </ChartCard>
   );
 }
