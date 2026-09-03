@@ -1135,20 +1135,21 @@ function GridRow({
           </td>
         );
       })}
-      <td className={cn(cell, GROUP_BORDER)}>{w.moveIns}</td>
-      <td className={cell}>{w.moveOuts}</td>
-      <td className={cell}>{w.net > 0 ? `+${w.net}` : w.net}</td>
-      <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn}</td>
-      <td className={cell}>{w.pendingOut}</td>
-      <td className={cell}>{w.pendingNet > 0 ? `+${w.pendingNet}` : w.pendingNet}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.moveIns ?? na}</td>
+      <td className={cell}>{w.moveOuts ?? na}</td>
+      <td className={cell}>{w.net == null ? na : signed(w.net)}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn ?? na}</td>
+      <td className={cell}>{w.pendingOut ?? na}</td>
+      <td className={cell}>{w.pendingNet == null ? na : signed(w.pendingNet)}</td>
       <td className={cn(cell, "bg-brand-soft/40")}>{w.projectedOccupiedUnits ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/40")}>
         {w.projectedOccupancyPct == null ? na : `${Number(w.projectedOccupancyPct).toFixed(1)}%`}
       </td>
-      <td className={cn(cell, GROUP_BORDER)}>{w.inquiries}</td>
-      <td className={cell}>{w.outreach}</td>
-      <td className={cell}>{w.tours}</td>
-      <td className={cell}>{w.reTours}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.inquiries ?? na}</td>
+      <td className={cell}>{w.outreach ?? na}</td>
+      <td className={cell}>{w.tours ?? na}</td>
+      <td className={cell}>{w.reTours ?? na}</td>
+
     </tr>
   );
 }
