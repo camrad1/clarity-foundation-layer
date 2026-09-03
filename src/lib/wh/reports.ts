@@ -15,6 +15,8 @@ const db = supabase as any;
 
 export type OccupancyHistoryRow = {
   month: string;
+  period_start: string;
+  period_end: string;
   beginning_occupied: number | null;
   beginning_census: number | null;
   beginning_pct: number | null;
@@ -26,31 +28,36 @@ export type OccupancyHistoryRow = {
   move_outs: number;
   net_move_ins: number;
   communities_in_scope: number;
+  communities_with_history: number;
+  snapshot_communities: number;
+  backfill_communities: number;
 };
 
 /**
- * Month-over-month occupancy history.
+ * Month-over-month occupancy history for the selected date range.
  *
- * Beginning/ending occupancy come only from immutable daily snapshots dated
- * the first and last day of the month, and only when every community in scope
- * has one. Nothing is carried forward or reconstructed from current-state
- * data: a month without snapshots returns null and renders as an em dash.
- * Period-event move-ins/move-outs still populate from validated event logic.
+ * Occupancy comes from the shared server-side historical resolver
+ * (`wh_occupancy_history_daily`): an immutable nightly snapshot when one exists
+ * for that community and date, otherwise the official imported day-over-day
+ * history, otherwise nothing. Beginning occupancy is the first stored day in
+ * the clipped month and ending occupancy is the last stored day — daily values
+ * are never averaged, and nothing is reconstructed from current-state data.
+ * Move-ins and move-outs still use validated period-event logic.
  */
 export function useOccupancyHistory(
   organizationId: string | null,
   communityIds: string[],
+  start: string,
   end: string,
-  months = 12,
 ) {
   return useQuery({
-    queryKey: ["wh_occupancy_monthly_history", organizationId, communityIds.join(","), end, months],
+    queryKey: ["wh_occupancy_monthly_history", organizationId, communityIds.join(","), start, end],
     enabled: !!organizationId,
     queryFn: async (): Promise<OccupancyHistoryRow[]> => {
       const { data, error } = await db.rpc("wh_occupancy_monthly_history", {
         _org_id: organizationId,
+        _start: start,
         _end: end,
-        _months: months,
         _community_ids: communityIds.length ? communityIds : null,
       });
       if (error) throw error;
@@ -58,6 +65,7 @@ export function useOccupancyHistory(
     },
   });
 }
+
 
 export type MoveInSourceRow = { month: string; lead_source_label: string; move_ins: number };
 
