@@ -793,7 +793,7 @@ function KpiCard({
         <p className="font-display text-lg font-medium text-muted-foreground">Not configured</p>
       ) : (
         <div className="flex flex-wrap items-baseline gap-2">
-          <p className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          <p className="font-display text-2xl font-semibold tracking-tight text-brand">
             {display ?? value.toLocaleString()}
           </p>
           {delta != null ? (
