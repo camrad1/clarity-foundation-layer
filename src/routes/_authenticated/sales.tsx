@@ -263,11 +263,6 @@ function SalesIntelligence() {
     `Open prospects with no contact for ${s.settings.stalled_threshold_days}+ days.`,
   );
 
-  const occRaw = ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits);
-  const occDisplay = s.occupancy.censusUnits
-    ? `${Math.round((s.occupancy.occupiedUnitsCandidate / s.occupancy.censusUnits) * 100)}%`
-    : "—";
-
   // Budgeted occupied units in force today, summed over the communities in scope.
   const budgetUnits = ctx.communityIds.reduce<number | null>((acc, id) => {
     const b = effectiveBudget(budgetRows, id);
@@ -275,7 +270,6 @@ function SalesIntelligence() {
       b?.budget_occupied_units != null ? Number(b.budget_occupied_units) : null;
     return units == null ? acc : (acc ?? 0) + units;
   }, null);
-  const occVariance = budgetUnits == null ? null : s.occupancy.occupiedUnitsCandidate - budgetUnits;
 
   return (
     <div className="space-y-8">
