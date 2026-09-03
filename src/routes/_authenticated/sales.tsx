@@ -355,7 +355,7 @@ function SalesIntelligence() {
               note="Move-ins minus move-outs for the selected period."
               compare={p ? cmp(s.moveIns - s.moveOuts, p.moveIns - p.moveOuts) : undefined}
             />
-            <OccupancyKpiCard occupancy={s.occupancy} budgetUnits={budgetUnits} />
+            
             <KpiCard
               label="Pending move-ins / outs"
               display={`${s.pending.pendingIn} / ${s.pending.pendingOut}`}
