@@ -942,6 +942,30 @@ function careTypeColumns(occ: FlashReport["occupancy"] | null | undefined): stri
   return list.length > 1 ? list.map((c) => c.careType) : [];
 }
 
+/**
+ * Projected end-of-month MIMO = actual completed events for the period plus
+ * WelcomeHome-confirmed scheduled (future-dated) contracts for the same
+ * period. No validated MI/MO definition is altered — this is a presentation
+ * rollup over two already-canonical server values, and the same helpers feed
+ * the screen, the CSV export and the print/PDF view.
+ */
+function projectedEomMi(p: FlashPeriod | null | undefined): number | null {
+  if (!p || (p.moveIns == null && p.pendingIn == null)) return null;
+  return (p.moveIns ?? 0) + (p.pendingIn ?? 0);
+}
+
+function projectedEomMo(p: FlashPeriod | null | undefined): number | null {
+  if (!p || (p.moveOuts == null && p.pendingOut == null)) return null;
+  return (p.moveOuts ?? 0) + (p.pendingOut ?? 0);
+}
+
+function projectedEomNet(p: FlashPeriod | null | undefined): number | null {
+  const mi = projectedEomMi(p);
+  const mo = projectedEomMo(p);
+  if (mi == null && mo == null) return null;
+  return (mi ?? 0) - (mo ?? 0);
+}
+
 function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[]) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
