@@ -475,6 +475,57 @@ export async function runWelcomeHomeSyncUnit(
 
   const targets = args.target ? [args.target] : [];
 
+  // CLAIM the work unit BEFORE any network call. Previously a unit only became
+  // visible when it finished, so an in-flight or orphaned unit left no trace at
+  // all and its parent run could stay `running` forever. The row now exists for
+  // the whole lifetime of the unit and carries its own progress heartbeat.
+  const { data: prior } = await admin
+    .from("wh_sync_table_runs")
+    .select("retry_count")
+    .eq("sync_run_id", args.syncRunId)
+    .eq("source_table", args.table)
+    .eq("community_id", args.target?.communityId ?? null)
+    .order("started_at", { ascending: false })
+    .limit(1);
+  const retryCount = ((prior?.[0]?.retry_count as number | undefined) ?? -1) + 1;
+
+  const nowIso = () => new Date().toISOString();
+  const { data: claimed } = await admin
+    .from("wh_sync_table_runs")
+    .insert({
+      organization_id: args.organizationId,
+      connection_id: args.connectionId,
+      sync_run_id: args.syncRunId,
+      community_id: args.target?.communityId ?? null,
+      source_community_id: args.target?.sourceCommunityId ?? null,
+      source_table: args.table,
+      mode: args.mode,
+      status: "running",
+      requested_after: updatedAfter,
+      retry_count: retryCount,
+      started_at: nowIso(),
+      last_progress_at: nowIso(),
+    })
+    .select("id")
+    .single();
+  const unitRunId = (claimed?.id as string | undefined) ?? null;
+
+  const beat: Heartbeat | undefined = unitRunId
+    ? async ({ page, pages, rows }) => {
+        await admin
+          .from("wh_sync_table_runs")
+          .update({
+            last_progress_at: nowIso(),
+            current_page: page,
+            pages_processed: pages,
+            pages_fetched: pages,
+            rows_processed: rows,
+            rows_received: rows,
+          })
+          .eq("id", unitRunId);
+      }
+    : undefined;
+
   const result = isCoreTable(args.table)
     ? await syncCoreTable(admin, auth, {
         organizationId: args.organizationId,
@@ -483,12 +534,14 @@ export async function runWelcomeHomeSyncUnit(
         table: args.table,
         targets,
         updatedAfter,
+        beat,
       })
     : await syncLookupTable(admin, auth, {
         organizationId: args.organizationId,
         connectionId: args.connectionId,
         table: args.table as WhLookupTable,
         targets,
+        beat,
       });
 
   if (args.mode === "incremental" && !supportsIncremental && isCoreTable(args.table)) {
@@ -497,7 +550,7 @@ export async function runWelcomeHomeSyncUnit(
     );
   }
 
-  await admin.from("wh_sync_table_runs").insert({
+  const terminal = {
     organization_id: args.organizationId,
     connection_id: args.connectionId,
     sync_run_id: args.syncRunId,
@@ -514,12 +567,23 @@ export async function runWelcomeHomeSyncUnit(
     rows_unmapped: result.rowsUnmapped,
     raw_rows_stored: result.rawRowsStored,
     pages_fetched: result.pagesFetched,
+    rows_processed: result.rowsReceived,
+    pages_processed: result.pagesFetched,
+    retry_count: retryCount,
     source_max_updated_at: result.sourceMaxUpdatedAt,
     duration_ms: result.durationMs,
     error_summary: result.error,
+    last_error: result.error,
     warnings: result.warnings,
-    completed_at: new Date().toISOString(),
-  });
+    last_progress_at: nowIso(),
+    completed_at: nowIso(),
+  };
+  if (unitRunId) {
+    await admin.from("wh_sync_table_runs").update(terminal).eq("id", unitRunId);
+  } else {
+    await admin.from("wh_sync_table_runs").insert(terminal);
+  }
+
 
   // The watermark only advances on a clean unit. An interrupted, failed or
   // partial unit keeps its previous watermark, so a retry re-reads the same
