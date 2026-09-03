@@ -299,7 +299,7 @@ function FlashReportPage() {
         </div>
         {mode === "custom" ? (
           <div className="space-y-1">
-            <Label className="text-[11px] text-muted-foreground">Week starting (Friday)</Label>
+            <Label className="text-[11px] text-muted-foreground">Week starting (Sunday)</Label>
             <Input
               type="date"
               className="h-9 w-[160px]"
@@ -341,7 +341,7 @@ function FlashReportPage() {
       <Section
         title="Current summary"
         badge={<CurrentStateBadge />}
-        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-Thursday occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
+        description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-week-end occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
         <div className="panel-brand divide-y divide-brand-border/70">
           <CompactRow
