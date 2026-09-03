@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
   Building2,
+  CalendarRange,
   ChevronsUpDown,
   Compass,
   Database,
@@ -59,6 +60,7 @@ const ADMIN: NavItem[] = [
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },
   { to: "/admin/query-rules", label: "Query Classification", icon: Tags },
   { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
+  { to: "/admin/forecast-import", label: "Forecast Import", icon: Upload },
   { to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload },
   { to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap },
   { to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 },
