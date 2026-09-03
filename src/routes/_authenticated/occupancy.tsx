@@ -103,9 +103,11 @@ function Occupancy() {
             </div>
             <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
               Current state as of {data?.asOf}. Not affected by the selected date range. Historical
-              as-of-date occupancy requires the nightly snapshot system, which is not built yet.
+              as-of-date occupancy is shown separately below, read from immutable daily snapshots.
             </p>
           </section>
+
+          <OccupancyHistory organizationId={ctx.organizationId} communityIds={ctx.communityIds} />
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">By community</h2>
