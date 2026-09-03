@@ -267,7 +267,7 @@ function OccupancyHistory({
       ) : (
         <ChartCard
           title="Occupied vs census units"
-          subtitle={`${points.length} daily snapshots · last ${trend.data?.[trend.data.length - 1]?.snapshot_date}`}
+          description={`${points.length} daily snapshots · last ${trend.data?.[trend.data.length - 1]?.snapshot_date}`}
           height={280}
         >
           <MetricTrendChart
