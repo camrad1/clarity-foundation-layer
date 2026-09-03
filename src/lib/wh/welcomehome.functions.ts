@@ -481,18 +481,27 @@ export const whFinalizeSync = createServerFn({ method: "POST" })
       .from("wh_sync_table_runs")
       .select("source_table, community_id, status, rows_received, rows_inserted, rows_updated, rows_failed, source_max_updated_at, error_summary")
       .eq("sync_run_id", data.syncRunId)
-      .eq("organization_id", organizationId);
+      .eq("organization_id", organizationId)
+      .order("started_at", { ascending: true });
 
     const rows = (children ?? []) as any[];
-    // De-duplicate retries: the latest row per unit key wins.
+    // De-duplicate retries: the latest attempt per unit key wins.
     const latest = new Map<string, any>();
     for (const r of rows) latest.set(`${r.source_table}:${r.community_id ?? "*"}`, r);
     const units = [...latest.values()];
 
+    // A unit still claimed (running) or reaped as stalled is NOT a completed
+    // unit: it can never make the parent run Complete.
+    const nonTerminal = units.filter((r) => r.status === "running" || r.status === "pending");
+    const stalled = units.filter((r) => r.status === "stalled");
     const core = units.filter((r) => (WH_CORE_TABLES as readonly string[]).includes(r.source_table));
     const coreOk = core.filter((r) => r.status === "success" || r.status === "partial");
     const allClean = units.every((r) => r.status === "success" || r.status === "unsupported");
-    const complete = units.length >= data.expectedUnits;
+    const complete =
+      units.filter((r) => r.status !== "running" && r.status !== "pending").length >=
+        data.expectedUnits && nonTerminal.length === 0 && stalled.length === 0;
+
+
 
     const status = data.canceled
       ? "canceled"
