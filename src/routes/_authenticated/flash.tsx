@@ -1054,7 +1054,7 @@ function WeekByWeekGrid({
           </tr>
           {/* Subheading row — lighter */}
           <tr className="thead-brand border-b border-brand-border text-[10px] uppercase tracking-wide text-foreground/70">
-            <th className="sticky left-0 z-[4] bg-inherit px-3 py-1.5 text-left font-medium" />
+            <th className="sticky left-0 z-[4] bg-brand-light px-3 py-1.5 text-left font-medium" />
             {groups.map((g) =>
               g.cols.map((c, i) => (
                 <th
