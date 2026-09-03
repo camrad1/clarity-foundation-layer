@@ -484,9 +484,12 @@ export async function runWelcomeHomeSyncUnit(
     .select("retry_count")
     .eq("sync_run_id", args.syncRunId)
     .eq("source_table", args.table)
-    .eq("community_id", args.target?.communityId ?? null)
+    // PostgREST treats eq(null) as a literal, so the account-wide scope
+    // (community_id IS NULL) has to be matched with `is`.
+    [args.target?.communityId ? "eq" : "is"]("community_id", args.target?.communityId ?? null)
     .order("started_at", { ascending: false })
     .limit(1);
+
   const retryCount = ((prior?.[0]?.retry_count as number | undefined) ?? -1) + 1;
 
   const nowIso = () => new Date().toISOString();
