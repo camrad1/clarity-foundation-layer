@@ -405,9 +405,13 @@ function FlashReportPage() {
       {/* 2. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
       <Section
         title={`${formatMonth(month)} — Week by Week`}
-        description="Friday–Thursday weeks ending inside the month, plus month end. Occupancy columns are only populated for the current week: the Starting # row and prior-week occupancy need immutable daily snapshots, which are not built yet."
+        description="Friday–Thursday weeks ending inside the month, plus month end."
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
+        <p className="pt-2 text-[11px] text-muted-foreground">
+          Historical occupancy values will populate once nightly snapshots are enabled. Missing values are
+          shown as “—” and are never filled with current-state data.
+        </p>
       </Section>
 
 
