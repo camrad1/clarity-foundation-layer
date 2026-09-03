@@ -146,6 +146,8 @@ function ForecastTracker() {
   }, [dates, rows, byCell, actualByCommunity]);
 
   const monthOptions = useMemo(() => recentMonths(24), []);
+  const monthClosed = useMemo(() => monthEnd(month) < todayISO(), [month]);
+  const finalDate = monthClosed && dates.length > 0 ? dates[dates.length - 1] : null;
 
   return (
     <div className="space-y-6">
