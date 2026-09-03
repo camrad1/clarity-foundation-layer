@@ -1018,17 +1018,17 @@ function CurrentSummaryPanel({
         </div>
 
         {/* C. Projected month-end occupancy */}
-        <div className="p-4">
+        <div className="bg-brand-dark/[0.06] p-4 ring-1 ring-inset ring-brand-border/60">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
             Projected month-end
           </p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-3xl font-semibold tracking-tight text-brand">
+            <span className="font-display text-3xl font-bold tracking-tight text-brand">
               {num(projOcc)}
             </span>
             <span className="text-sm font-medium text-muted-foreground">occupied</span>
           </div>
-          <p className="mt-1 font-display text-xl font-semibold text-brand-dark">
+          <p className="mt-1 font-display text-xl font-bold text-brand-dark">
             {projPct == null ? "—" : `${projPct.toFixed(1)}%`}
             <span className="ml-1 text-xs font-medium text-muted-foreground">projected OCC</span>
           </p>
