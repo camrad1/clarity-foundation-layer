@@ -934,6 +934,21 @@ function ExecutiveSummaryStrip({
             Occupancy %
           </p>
           <p className="font-display text-4xl font-semibold tracking-tight text-brand">{display}</p>
+          {occPts != null ? (
+            <p
+              className={cn(
+                "text-xs font-medium",
+                occPts > 0 ? "text-success" : occPts < 0 ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {occPts > 0 ? "+" : ""}
+              {occPts.toFixed(1)} pts {occupancyComparison?.label}
+            </p>
+          ) : occupancyComparison ? (
+            <p className="text-xs text-muted-foreground">
+              No stored history for the comparison period
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">Current state</p>
         </div>
         {metrics.map((m) => (
