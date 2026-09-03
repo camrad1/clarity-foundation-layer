@@ -35,6 +35,8 @@ import {
   useWhTableRuns,
 } from "@/lib/wh/queries";
 import { WH_ALL_TABLES, WH_CORE_TABLES } from "@/lib/wh/tables";
+import { whNightlyCancel, whNightlyRunNow, whNightlyTick } from "@/lib/wh/nightly.functions";
+import { useNightlyRuns } from "@/lib/wh/snapshots";
 import { useAppState } from "@/state/app-state";
 
 
