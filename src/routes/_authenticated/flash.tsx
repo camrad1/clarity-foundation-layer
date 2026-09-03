@@ -852,7 +852,12 @@ function MimoStage({
       )}
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-lg font-semibold leading-tight tabular-nums">
+      <p
+        className={cn(
+          "mt-1 font-display font-semibold leading-tight tabular-nums",
+          prominent ? "text-2xl" : "text-xl",
+        )}
+      >
         <span className="text-brand">{mi}</span>
         <span className="text-muted-foreground/50"> / </span>
         <span className="text-brand">{mo}</span>
@@ -949,51 +954,43 @@ function CurrentSummaryPanel({
             <span className="ml-1 text-xs font-medium text-muted-foreground">OCC</span>
           </p>
 
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1.5">
-            <SecondaryStat
-              label="Budget"
-              value={
-                budgetUnits == null ? (
-                  <span className="text-xs font-medium text-muted-foreground">not set</span>
-                ) : (
-                  num(budgetUnits)
-                )
-              }
-            />
-            <SecondaryStat
-              label="Variance"
-              value={variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
-            />
-            <SecondaryStat label="Budget %" value={pct1(budgetPct)} />
-            <SecondaryStat label="On notice" value={num(occ?.noticeCount ?? null)} />
-          </div>
+          <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            <span className="font-medium uppercase tracking-wide">Budget</span>{" "}
+            {budgetUnits == null ? (
+              <span className="text-xs font-medium text-muted-foreground">not set</span>
+            ) : (
+              num(budgetUnits)
+            )}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">Variance</span>{" "}
+            {variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">Budget %</span> {pct1(budgetPct)}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">On notice</span>{" "}
+            {num(occ?.noticeCount ?? null)}
+          </p>
 
           {budgetUnits == null && isOrgAdmin ? (
             <Link
               to="/admin/communities"
-              className="no-print mt-3 inline-block text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
+              className="no-print mt-2 inline-block text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
             >
               Edit community budget
             </Link>
           ) : null}
           {careTypes ? (
             <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-              <span className="font-medium uppercase tracking-wide">By care type</span>{" "}
-              {careTypes}
+              {occ!.byCareType.map((c) => `${c.careType} ${c.occupied}/${c.units}`).join("  ·  ")}
             </p>
           ) : null}
         </div>
 
         {/* B. MIMO progression */}
-        <div className="p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
-              {monthLabel} MIMO
-            </p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Move-Ins / Move-Outs / Net
-            </p>
-          </div>
+        <div className="bg-brand-soft/20 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+            {monthLabel} MIMO
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <MimoStage label="MTD actual" mi={mtdMi} mo={mtdMo} net={mtdNet} netTone={mtdNetTone} />
             <ArrowRight className="size-4 shrink-0 text-muted-foreground/60" />
@@ -1014,20 +1011,24 @@ function CurrentSummaryPanel({
               prominent
             />
           </div>
+          <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            Projected EOM combines month-to-date actuals with confirmed remaining move-ins and
+            move-outs.
+          </p>
         </div>
 
         {/* C. Projected month-end occupancy */}
-        <div className="p-4">
+        <div className="bg-brand-dark/[0.06] p-4 ring-1 ring-inset ring-brand-border/60">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
             Projected month-end
           </p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-3xl font-semibold tracking-tight text-brand">
+            <span className="font-display text-3xl font-bold tracking-tight text-brand">
               {num(projOcc)}
             </span>
             <span className="text-sm font-medium text-muted-foreground">occupied</span>
           </div>
-          <p className="mt-1 font-display text-xl font-semibold text-brand-dark">
+          <p className="mt-1 font-display text-xl font-bold text-brand-dark">
             {projPct == null ? "—" : `${projPct.toFixed(1)}%`}
             <span className="ml-1 text-xs font-medium text-muted-foreground">projected OCC</span>
           </p>
