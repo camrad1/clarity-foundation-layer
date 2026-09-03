@@ -4081,6 +4081,20 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      occ_history_health: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          community_id: string
+          community_name: string
+          first_date: string
+          last_date: string
+          last_import_at: string
+          missing_days: number
+          record_count: number
+          source_type: string
+          warning_count: number
+        }[]
+      }
       verify_cron_token: {
         Args: { _name: string; _token: string }
         Returns: boolean
@@ -4421,6 +4435,8 @@ export type Database = {
           _start?: string
         }
         Returns: {
+          backfill_communities: number
+          beginning_occupied: number
           budget_pct: number
           budget_units: number
           census_units: number
@@ -4430,6 +4446,7 @@ export type Database = {
           occupied_units: number
           period_start: string
           reserved_count: number
+          snapshot_communities: number
           snapshot_date: string
           vacant_units: number
           variance_units: number
