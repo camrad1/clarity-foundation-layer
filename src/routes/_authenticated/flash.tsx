@@ -809,7 +809,7 @@ function WeekByWeekGrid({
               g.cols.map((c, i) => (
                 <th
                   key={`${g.label}-${c}`}
-                  className={cn("whitespace-nowrap px-3 py-1.5 text-right font-medium", i === 0 && GROUP_BORDER)}
+                  className={cn("whitespace-nowrap px-3 py-1.5 text-center font-medium", i === 0 && GROUP_BORDER)}
                 >
                   {c}
                 </th>
