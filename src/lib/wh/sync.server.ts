@@ -429,7 +429,8 @@ async function syncCoreTable(
 
 
         const good: Record<string, unknown>[] = [];
-        const bad: Rec[] = [];
+        const bad: { rec: Rec; reason: string }[] = [];
+        const byId = new Map<string, Rec>();
         for (const rec of records) {
           try {
             const row = normalize(rec, {
@@ -439,14 +440,15 @@ async function syncCoreTable(
               timezone: scope.timezone,
             }) as Record<string, unknown>;
             if (!row["source_id"]) {
-              bad.push(rec);
+              bad.push({ rec, reason: "normalize: source record has no usable source id" });
               result.rowsFailed += 1;
             } else {
               good.push(row);
+              byId.set(String(row["source_id"]), rec);
               if (!row["community_id"]) result.rowsUnmapped += 1;
             }
-          } catch {
-            bad.push(rec);
+          } catch (err) {
+            bad.push({ rec, reason: `normalize: ${safeError(err)}` });
             result.rowsFailed += 1;
           }
           const u = updatedAt(rec);
@@ -455,24 +457,28 @@ async function syncCoreTable(
           }
         }
 
+        const rawCtx = {
+          organizationId: args.organizationId,
+          connectionId: args.connectionId,
+          syncRunId: args.syncRunId,
+          table: args.table,
+          communityId: scope.communityId,
+          sourceCommunityId: scope.sourceCommunityId,
+        };
+
         if (bad.length) {
+          const reasons = new Map(bad.map((b) => [b.rec, b.reason]));
           result.rawRowsStored += await storeRaw(
             admin,
-            {
-              organizationId: args.organizationId,
-              connectionId: args.connectionId,
-              syncRunId: args.syncRunId,
-              table: args.table,
-              communityId: scope.communityId,
-              sourceCommunityId: scope.sourceCommunityId,
-            },
-            bad,
+            rawCtx,
+            bad.map((b) => b.rec),
+            (rec) => reasons.get(rec) ?? "normalize failed",
           );
           result.warnings.push(`${bad.length} row(s) from ${scope.sourceCommunityId} kept as raw`);
         }
 
         for (let i = 0; i < good.length; i += CHUNK) {
-          const { inserted, updated } = await upsertChunk(
+          const { inserted, updated, rejected } = await upsertChunk(
             admin,
             destination,
             args.connectionId,
@@ -480,13 +486,36 @@ async function syncCoreTable(
           );
           result.rowsInserted += inserted;
           result.rowsUpdated += updated;
+          if (rejected.length) {
+            // Persistence-level rejects are quarantined with their source id and
+            // the exact database error — never skipped silently.
+            const recs = rejected
+              .map((r) => byId.get(r.sourceId))
+              .filter((r): r is Rec => Boolean(r));
+            const reasonById = new Map(rejected.map((r) => [r.sourceId, r.reason]));
+            result.rawRowsStored += await storeRaw(
+              admin,
+              rawCtx,
+              recs,
+              (rec) => `persist: ${reasonById.get(String(sourceId(rec) ?? "")) ?? "upsert rejected"}`,
+            );
+            result.rowsFailed += rejected.length;
+            for (const r of rejected) {
+              result.warnings.push(`${args.table} ${r.sourceId} quarantined: ${r.reason}`);
+            }
+          }
         }
 
         // Heartbeat AFTER the page has been persisted: progress means data
         // landed, not merely that a request was issued.
         await args.beat?.({ page: pages, pages: result.pagesFetched, rows: result.rowsReceived });
-
-
+        // Checkpoint the cursor for the NEXT page only once this page is fully
+        // written, so a resume can never skip unpersisted rows.
+        await args.checkpoint?.({
+          cursorUrl: nextUrl,
+          pages: result.pagesFetched,
+          rows: result.rowsReceived,
+        });
 
         if (!nextUrl || records.length === 0) break;
         if (pages >= WH_MAX_PAGES) {
@@ -497,6 +526,7 @@ async function syncCoreTable(
           break;
         }
         cursorUrl = nextUrl;
+
       }
     }
   } catch (err) {
