@@ -990,8 +990,12 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     w.pendingIn ?? "—",
     w.pendingOut ?? "—",
     w.pendingNet ?? "—",
+    projectedEomMi(w) ?? "—",
+    projectedEomMo(w) ?? "—",
+    projectedEomNet(w) ?? "—",
     w.projectedOccupiedUnits ?? "—",
     w.projectedOccupancyPct == null ? "—" : Number(w.projectedOccupancyPct).toFixed(1),
+
     w.inquiries ?? "—",
     w.outreach ?? "—",
     w.tours ?? "—",
