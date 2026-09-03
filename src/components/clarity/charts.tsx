@@ -159,17 +159,23 @@ export function MetricTrendChart({
   );
 }
 
-/** Grouped monthly bars with an optional overlay line (e.g. net move-ins). */
+/**
+ * Grouped (or stacked) monthly bars with an optional overlay line.
+ * Stacking is preferred when the bars are parts of one monthly total, such as
+ * move-ins split by lead source.
+ */
 export function GroupedBarChart({
   data,
   bars,
   line,
   xKey = "label",
+  stacked = false,
 }: {
   data: Record<string, any>[];
   bars: TrendSeries[];
   line?: TrendSeries | undefined;
   xKey?: string;
+  stacked?: boolean;
 }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -184,7 +190,15 @@ export function GroupedBarChart({
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
         />
         {bars.map((b) => (
-          <Bar key={b.key} dataKey={b.key} name={b.label} fill={b.color} radius={[3, 3, 0, 0]} maxBarSize={22} />
+          <Bar
+            key={b.key}
+            dataKey={b.key}
+            name={b.label}
+            fill={b.color}
+            stackId={stacked ? "stack" : undefined}
+            radius={stacked ? undefined : [3, 3, 0, 0]}
+            maxBarSize={stacked ? 34 : 22}
+          />
         ))}
         {line ? (
           <Line
