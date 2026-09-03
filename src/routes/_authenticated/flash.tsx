@@ -1039,7 +1039,7 @@ function WeekByWeekGrid({
         <thead>
           {/* Grouped legacy heading row — visually dominant */}
           <tr className="thead-brand-strong text-[11px] font-semibold uppercase tracking-wider">
-            <th className="sticky left-0 z-[4] bg-inherit whitespace-nowrap border-r border-white/25 px-3 py-2 text-left">
+            <th className="sticky left-0 z-[4] bg-brand-dark whitespace-nowrap border-r border-white/25 px-3 py-2 text-left">
               Week / Date
             </th>
             {groups.map((g) => (
@@ -1054,7 +1054,7 @@ function WeekByWeekGrid({
           </tr>
           {/* Subheading row — lighter */}
           <tr className="thead-brand border-b border-brand-border text-[10px] uppercase tracking-wide text-foreground/70">
-            <th className="sticky left-0 z-[4] bg-inherit px-3 py-1.5 text-left font-medium" />
+            <th className="sticky left-0 z-[4] bg-brand-light px-3 py-1.5 text-left font-medium" />
             {groups.map((g) =>
               g.cols.map((c, i) => (
                 <th
@@ -1072,8 +1072,8 @@ function WeekByWeekGrid({
               daily snapshots exist. Current-state occupancy is deliberately NOT
               backfilled here. */}
           <StartingRow careTypes={careTypes} totalCols={totalCols} starting={data?.starting ?? null} />
-          {(data?.weeks ?? []).map((w) => (
-            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} />
+          {(data?.weeks ?? []).map((w, i) => (
+            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} index={i} />
           ))}
           {data ? (
             <GridRow w={data.month} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} emphasis />
@@ -1128,7 +1128,7 @@ function StartingRow({
 
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
-      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2 font-medium text-foreground">
+      <td className="sticky left-0 z-[2] bg-brand-soft whitespace-nowrap border-r border-brand-border px-3 py-2 font-medium text-foreground">
         Starting #
         {starting?.asOfDate ? (
           <span className="ml-2 text-[11px] text-muted-foreground">
@@ -1155,11 +1155,13 @@ function GridRow({
   totalUnits,
   careTypes,
   emphasis,
+  index = 0,
 }: {
   w: FlashPeriod;
   totalUnits: number | null;
   careTypes: string[];
   emphasis?: boolean;
+  index?: number;
 }) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
@@ -1167,17 +1169,26 @@ function GridRow({
   const variance = occupied != null && b != null ? occupied - b : null;
   const na = <span className="text-muted-foreground/70">—</span>;
   const cell = "px-3 py-2 text-center tabular-nums";
+  // Explicit solid background for the sticky first-column cell so scrolling
+  // content never bleeds through. Matches the row tint (incl. hover/current).
+  const stickyBg = emphasis
+    ? "bg-brand-light"
+    : w.isCurrent
+      ? "bg-brand-light"
+      : index % 2 === 1
+        ? "bg-brand-soft hover:bg-brand-light"
+        : "bg-surface hover:bg-brand-light";
   return (
     <tr
       className={cn(
-        // Opaque row tints so the sticky first column (bg-inherit) does not
-        // bleed through while horizontally scrolling.
+        // Opaque row tints so the sticky first column does not bleed through
+        // while horizontally scrolling.
         "border-b border-brand-border/60 last:border-0 odd:bg-brand-soft hover:bg-brand-light",
         emphasis && "border-t-2 border-t-brand bg-brand-light font-semibold text-foreground",
         w.isCurrent && !emphasis && "bg-brand-light",
       )}
     >
-      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2">
+      <td className={cn("sticky left-0 z-[3] whitespace-nowrap border-r border-brand-border px-3 py-2", stickyBg)}>
         <span className="font-medium">{w.label}</span>
         <span className="ml-2 text-[11px] text-muted-foreground">
           {formatDay(w.start)} – {formatDay(w.end)}
