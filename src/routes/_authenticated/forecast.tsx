@@ -30,6 +30,7 @@ import {
   formatShortDate,
   forecastDatesForMonth,
   isPastForecastWeek,
+  monthEnd,
   monthStart,
   recentMonths,
   todayISO,
@@ -40,7 +41,13 @@ import {
   useSaveForecast,
   type ForecastEntry,
 } from "@/lib/forecast/queries";
+import { cn } from "@/lib/utils";
 import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
+
+/** Net sign formatting, kept consistent with weekly forecast cells: +N, -N, +0. */
+function formatNet(n: number): string {
+  return `${n >= 0 ? "+" : ""}${n}`;
+}
 
 export const Route = createFileRoute("/_authenticated/forecast")({
   head: () => ({
