@@ -224,3 +224,61 @@ function Stat({ label, value }: { label: string; value: number | string }) {
     </div>
   );
 }
+
+/**
+ * Historical occupancy — read ONLY from immutable daily snapshots. Days with
+ * no snapshot simply do not appear; nothing is interpolated or reconstructed
+ * from current-state rows.
+ */
+function OccupancyHistory({
+  organizationId,
+  communityIds,
+}: {
+  organizationId: string | null;
+  communityIds: string[];
+}) {
+  const end = new Date();
+  const start = new Date(end.getTime() - 180 * 86_400_000);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const trend = useOccupancyTrend(organizationId, communityIds, iso(start), iso(end), "daily");
+  const points = (trend.data ?? []).map((p) => ({
+    label: p.snapshot_date.slice(5),
+    occupied: p.occupied_units,
+    census: p.census_units,
+    budget: p.budget_units ?? null,
+  }));
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">Occupancy over time</h2>
+        <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          Daily snapshots
+        </span>
+      </div>
+      {trend.isLoading ? (
+        <div className="panel h-64 animate-pulse" />
+      ) : points.length === 0 ? (
+        <EmptyState
+          title="No snapshot history yet"
+          description="Historical occupancy appears once nightly snapshots have been captured for these communities. History is never reconstructed from today's data."
+        />
+      ) : (
+        <ChartCard
+          title="Occupied vs census units"
+          subtitle={`${points.length} daily snapshots · last ${trend.data?.[trend.data.length - 1]?.snapshot_date}`}
+          height={280}
+        >
+          <MetricTrendChart
+            data={points}
+            series={[
+              { key: "occupied", label: "Occupied", color: CHART_TOKENS.primary },
+              { key: "census", label: "Census units", color: CHART_TOKENS.muted },
+              { key: "budget", label: "Budget units", color: CHART_TOKENS.secondary, dashed: true },
+            ]}
+          />
+        </ChartCard>
+      )}
+    </section>
+  );
+}
