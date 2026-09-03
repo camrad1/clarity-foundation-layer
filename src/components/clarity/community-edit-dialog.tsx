@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimezoneSelect } from "@/components/clarity/timezone-select";
+import { isValidTimezone } from "@/lib/timezones";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
@@ -83,6 +85,10 @@ export function CommunityEditDialog({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidTimezone(v.timezone)) {
+      toast.error("Select a supported reporting timezone");
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await supabase
@@ -167,9 +173,9 @@ export function CommunityEditDialog({
           </Field>
           <Field
             label="Reporting timezone"
-            help="Reporting periods are calculated in this timezone."
+            help={`Reporting periods are calculated in this timezone. Stored as ${v.timezone}.`}
           >
-            <Input value={v.timezone} onChange={(e) => set("timezone", e.target.value)} />
+            <TimezoneSelect value={v.timezone} onChange={(x) => set("timezone", x)} />
           </Field>
           <Field
             label="Operational units"
