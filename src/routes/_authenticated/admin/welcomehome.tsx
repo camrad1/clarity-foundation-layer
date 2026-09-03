@@ -399,6 +399,13 @@ function WelcomeHomeAdmin() {
             </p>
           </section>
 
+          <NightlyPanel
+            organizationId={organizationId}
+            connectionId={connectionId}
+            canManage={!!canManageImports && !!credential.data?.configured}
+          />
+
+
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
