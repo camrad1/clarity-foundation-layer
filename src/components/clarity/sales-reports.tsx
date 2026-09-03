@@ -270,19 +270,14 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
 }
 
 /**
- * Daily / weekly occupancy detail, read from stored history only. Nightly
- * snapshots take precedence; the official imported day-over-day history fills
- * dates before snapshots began. Gaps stay gaps.
+ * Daily / weekly occupancy detail, read from stored history only and bounded by
+ * the global date filter. Nightly snapshots take precedence; the official
+ * imported day-over-day history fills dates before snapshots began. Gaps stay gaps.
  */
-function OccupancyDailyDetail({ organizationId, communityIds, end, months = 12 }: TabProps) {
+function OccupancyDailyDetail({ organizationId, communityIds, start, end }: RangeTabProps) {
   const [grain, setGrain] = useState<"daily" | "weekly">("weekly");
-  const endDate = asDate(end);
-  const start = new Date(
-    Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth() - (months - 1), 1),
-  )
-    .toISOString()
-    .slice(0, 10);
-  const q = useOccupancyTrend(organizationId, communityIds, start, end.slice(0, 10), grain);
+  const q = useOccupancyTrend(organizationId, communityIds, start.slice(0, 10), end.slice(0, 10), grain);
+
   const points = (q.data ?? []).map((p) => ({
     label: grain === "daily" ? DAY_FMT.format(asDate(p.period_start)) : weekLabel(p.period_start),
     occupancy_pct: p.occupancy_pct == null ? null : Number((Number(p.occupancy_pct) * 100).toFixed(1)),
