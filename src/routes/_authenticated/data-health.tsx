@@ -230,6 +230,7 @@ function DataHealth() {
       </section>
 
       <WhHealthSection organizationId={organizationId} />
+      <SnapshotHealthSection organizationId={organizationId} />
       <WhCompletenessPanel />
       <WhLookupCoveragePanel />
       <OccupancyReconciliationPanel />
