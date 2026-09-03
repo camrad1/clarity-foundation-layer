@@ -3934,11 +3934,13 @@ export type Database = {
         Returns: {
           community_id: string
           counselor_id: string
+          counselor_name: string
           inquiry_date: string
           last_contact_at: string
           lead_source_id: string
           lead_source_label: string
           next_activity_scheduled_at: string
+          next_activity_type: string
           person_name: string
           score_label: string
           source_id: string
@@ -4349,6 +4351,10 @@ export type Database = {
           unit_name: string
           unit_number: string
         }[]
+      }
+      wh_user_label: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string
       }
       wh_write_daily_snapshot: {
         Args: {

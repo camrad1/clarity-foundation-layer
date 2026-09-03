@@ -160,6 +160,37 @@ function personName(v: string | null | undefined) {
   return t.length ? t : "Name unavailable";
 }
 
+/** Short absolute date, e.g. "Aug 28" (adds year when outside the current year). */
+function shortDate(v: string | null | undefined) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "—";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
+/** Human-readable relative day for recent/near dates; falls back to a short date. */
+function relativeDay(v: string | null | undefined) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "—";
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(d) - startOf(new Date())) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === -1) return "Yesterday";
+  if (days === 1) return "Tomorrow";
+  if (days < 0 && days >= -13) return `${-days} days ago`;
+  if (days > 0 && days <= 13) return `In ${days} days`;
+  return shortDate(v);
+}
+
+/** Full timestamp preserved for tooltips / audit. */
+const fullStamp = (v: string | null | undefined) => (v ? new Date(v).toLocaleString() : "");
+
 function downloadCsv(filename: string, rows: (string | number | null | undefined)[][]) {
   const body = rows
     .map((r) =>
@@ -262,7 +293,44 @@ function FlashReportPage() {
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
       gridRow(w, occ?.totalUnits ?? null, careTypes),
     );
-    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [header, starting, ...rowsOut]);
+    // Trackers are exported with the same server-resolved labels shown on screen.
+    const trackerRows: (string | number | null | undefined)[][] = [
+      [],
+      ["Move-In Monthly Tracker"],
+      ["Resident", "Move-In Date", "Care Type", "Unit", "Monthly Rate"],
+      ...(moveIns.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.move_in_date, r.care_type ?? "Unspecified", r.unit_label ?? "", r.monthly_rate ?? "",
+      ]),
+      [],
+      ["Deposit Monthly Tracker (provisional)"],
+      ["Depositor", "Deposit Date", "Amount", "Expected MI", "Care Type", "Unit"],
+      ...(deposits.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.deposit_date, r.amount ?? "", r.expected_move_in_date ?? "",
+        r.care_type ?? "Unspecified", r.unit_label ?? "",
+      ]),
+      [],
+      ["Move-Out Monthly Tracker"],
+      ["Resident", "Move-Out Date", "Care Type", "Unit", "Reason"],
+      ...(moveOuts.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.move_out_date, r.care_type ?? "Unspecified", r.unit_label ?? "", r.reason ?? "",
+      ]),
+      [],
+      ["Hot Lead Tracker (current state)"],
+      ["Prospect", "Stage", "Inquiry Date", "Lead Source", "Sales Counselor", "Last Contact", "Next Activity", "Next Activity Date"],
+      ...(hotLeads.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name),
+        resolveLabel(labels.stage, r.stage_id, r.stage_label ?? ""),
+        r.inquiry_date ?? "",
+        r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, ""),
+        r.counselor_name ?? resolveLabel(labels.user, r.counselor_id, ""),
+        r.last_contact_at ? new Date(r.last_contact_at).toISOString().slice(0, 10) : "",
+        r.next_activity_type ?? "",
+        r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toISOString().slice(0, 10) : "",
+      ]),
+    ];
+    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [
+      header, starting, ...rowsOut, ...trackerRows,
+    ]);
   };
 
 
@@ -511,6 +579,7 @@ function FlashReportPage() {
                     <th className="px-3 py-1.5 text-left font-medium">Date</th>
                     <th className="px-3 py-1.5 text-right font-medium">Amount</th>
                     <th className="px-3 py-1.5 text-left font-medium">Expected MI</th>
+                    <th className="hidden px-3 py-1.5 text-left font-medium lg:table-cell">Care / Unit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -520,6 +589,9 @@ function FlashReportPage() {
                       <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.deposit_date)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums">{money(r.amount)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{formatDay(r.expected_move_in_date)}</td>
+                      <td className="hidden max-w-[150px] truncate px-3 py-1.5 text-muted-foreground lg:table-cell">
+                        {r.care_type ?? "—"} · {r.unit_label ?? "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -550,6 +622,7 @@ function FlashReportPage() {
                     <th className="px-3 py-1.5 text-left font-medium">Sales Counselor</th>
                     <th className="px-3 py-1.5 text-left font-medium">Last Contact</th>
                     <th className="px-3 py-1.5 text-left font-medium">Next Activity</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Next Activity Date</th>
                     <th className="px-3 py-1.5 text-left font-medium">Weekly Update</th>
                   </tr>
                 </thead>
@@ -565,14 +638,23 @@ function FlashReportPage() {
                         {r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, "Source n/a")}
                       </td>
                       <td className="max-w-[140px] truncate px-3 py-1.5 text-muted-foreground">
-                        {resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
+                        {r.counselor_name ?? resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
+                      </td>
+                      <td
+                        className="whitespace-nowrap px-3 py-1.5 text-muted-foreground"
+                        title={fullStamp(r.last_contact_at)}
+                      >
+                        {relativeDay(r.last_contact_at)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
-                        {formatDay(r.last_contact_at)}
+                        {r.next_activity_type ?? "—"}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                      <td
+                        className="whitespace-nowrap px-3 py-1.5 text-muted-foreground"
+                        title={fullStamp(r.next_activity_scheduled_at)}
+                      >
                         {r.next_activity_scheduled_at
-                          ? new Date(r.next_activity_scheduled_at).toLocaleDateString()
+                          ? `${shortDate(r.next_activity_scheduled_at)} · ${relativeDay(r.next_activity_scheduled_at)}`
                           : "—"}
                       </td>
                       <td className="px-3 py-1.5">

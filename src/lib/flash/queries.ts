@@ -277,8 +277,10 @@ export type FlashHotLeadRow = {
   status: string | null;
   inquiry_date: string | null;
   next_activity_scheduled_at: string | null;
+  next_activity_type: string | null;
   last_contact_at: string | null;
   counselor_id: string | null;
+  counselor_name: string | null;
   lead_source_id: string | null;
   lead_source_label: string | null;
 };
