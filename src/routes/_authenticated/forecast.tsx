@@ -277,28 +277,37 @@ function ForecastTracker() {
                     </tr>
                   );
                 })}
-                <tr className="border-t-2 border-brand bg-brand-light/70 font-semibold">
-                  <td className="sticky left-0 z-10 bg-brand-light px-3 py-2">TOTAL</td>
-                  {totals.perDate.map((t) => (
-                    <td key={t.date} className="px-3 py-2 text-center tabular-nums">
-                      {t.any ? (
-                        <>
-                          {t.mi} / {t.mo}
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
-                            ({t.mi - t.mo >= 0 ? "+" : ""}
-                            {t.mi - t.mo})
-                          </span>
-                        </>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2 text-center tabular-nums">
+                <tr className="border-t-[3px] border-brand bg-brand-light/70 font-bold">
+                  <td className="sticky left-0 z-10 bg-brand-light px-3 py-2 text-sm uppercase tracking-wide">
+                    Total
+                  </td>
+                  {totals.perDate.map((t) => {
+                    const isFinal = finalDate === t.date;
+                    return (
+                      <td
+                        key={t.date}
+                        className={cn(
+                          "px-3 py-2 text-center text-sm tabular-nums",
+                          isFinal && "border-l-2 border-brand-border bg-brand-soft/40",
+                        )}
+                      >
+                        {t.any ? (
+                          <>
+                            {t.mi} / {t.mo}
+                            <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                              ({formatNet(t.mi - t.mo)})
+                            </span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="border-l-2 border-brand-dark bg-brand/10 px-3 py-2 text-center text-sm tabular-nums font-bold">
                     {totals.actual.mi} / {totals.actual.mo}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      ({totals.actual.mi - totals.actual.mo >= 0 ? "+" : ""}
-                      {totals.actual.mi - totals.actual.mo})
+                    <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                      ({formatNet(totals.actual.mi - totals.actual.mo)})
                     </span>
                   </td>
                 </tr>
