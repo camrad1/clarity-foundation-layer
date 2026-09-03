@@ -492,25 +492,11 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading="Current MIMO — selected week (actual)"
-            hint="Completed move-ins and move-outs only. Future-dated contracts are never counted here."
-            items={[
-              { label: "MIs", value: num(data?.week.moveIns) },
-              { label: "MOs", value: num(data?.week.moveOuts) },
-              {
-                label: "Net",
-                value: signed(data?.week.net ?? null),
-                tone: tone(data?.week.net ?? null),
-              },
-
-            ]}
-          />
-          <CompactRow
-            heading={`Month-to-date actual MIMO (${formatMonth(month)})`}
+            heading={`Month-to-date actual (${formatMonth(month)})`}
             hint="Completed events from the first of the month through today."
             items={[
-              { label: "MTD MIs", value: num(data?.month.moveIns) },
-              { label: "MTD MOs", value: num(data?.month.moveOuts) },
+              { label: "MTD Move-Ins", value: num(data?.month.moveIns) },
+              { label: "MTD Move-Outs", value: num(data?.month.moveOuts) },
               {
                 label: "Net",
                 value: signed(data?.month.net ?? null),
@@ -519,7 +505,7 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading={`This month — scheduled MIMO remaining (${formatMonth(month)})`}
+            heading={`This month — scheduled remaining (${formatMonth(month)})`}
             hint="WelcomeHome-confirmed future-dated contracts for the remainder of the month. Not a forecast."
             items={[
               { label: "Scheduled Move-Ins", value: num(data?.month.pendingIn) },
@@ -532,13 +518,14 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading={`Projected EOM MIMO (${formatMonth(month)})`}
-            hint="Month-to-date actual + scheduled remaining. Projected occupancy applies the same scheduled contracts to current canonical occupancy."
+            heading={`Projected total end of month (${formatMonth(month)})`}
+            hint="Projected totals = MTD actual + scheduled remaining. Projected occupancy applies the same scheduled contracts to current canonical occupancy."
+            prominent
             items={[
-              { label: "Projected MIs", value: num(projectedEomMi(data?.month)) },
-              { label: "Projected MOs", value: num(projectedEomMo(data?.month)) },
+              { label: "Projected Total Move-Ins", value: num(projectedEomMi(data?.month)) },
+              { label: "Projected Total Move-Outs", value: num(projectedEomMo(data?.month)) },
               {
-                label: "Projected Net",
+                label: "Projected Total Net",
                 value: signed(projectedEomNet(data?.month)),
                 tone: tone(projectedEomNet(data?.month)),
               },
@@ -864,15 +851,29 @@ function CompactRow({
   heading,
   hint,
   items,
+  prominent,
 }: {
   heading: string;
   hint?: string;
   items: { label: string; value: React.ReactNode; tone?: "neutral" | "up" | "down"; group?: boolean }[];
+  prominent?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3",
+        prominent && "bg-brand-soft/80 ring-1 ring-inset ring-brand-border",
+      )}
+    >
       <div className="w-full md:w-48 md:shrink-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">{heading}</p>
+        <p
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wider text-brand",
+            prominent && "text-brand-dark",
+          )}
+        >
+          {heading}
+        </p>
         {hint ? <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{hint}</p> : null}
       </div>
       <div className="flex flex-wrap gap-x-7 gap-y-3">
