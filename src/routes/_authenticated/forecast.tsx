@@ -348,8 +348,10 @@ function ForecastTracker() {
 
       <p className="text-xs text-muted-foreground">
         Cells show projected move-ins / move-outs. EOM Actual uses ClarityIQ&rsquo;s validated WelcomeHome
-        move-in and move-out definitions. Past weekly forecasts are preserved as point-in-time records; only an
-        organization admin may correct a week that has already ended.
+        move-in and move-out definitions for the fully completed calendar month, and is released only after the
+        month closes and a WelcomeHome sync completes successfully — an open month always shows &ldquo;—&rdquo;.
+        Past weekly forecasts are preserved as point-in-time records; only an organization admin may correct a
+        week that has already ended.
       </p>
 
       <ForecastEditDialog
