@@ -37,6 +37,7 @@ import {
 } from "@/lib/forecast/period";
 import {
   useForecastEntries,
+  useForecastActualsFinalized,
   useForecastEomActuals,
   useSaveForecast,
   type ForecastEntry,
