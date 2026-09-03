@@ -4404,19 +4404,41 @@ export type Database = {
         }
         Returns: Json
       }
+      wh_occupancy_history_daily: {
+        Args: {
+          _end: string
+          _org_id: string
+          _scope: string[]
+          _start: string
+        }
+        Returns: {
+          beginning_occupied: number
+          budget: number
+          census: number
+          community_id: string
+          d: string
+          notice: number
+          occupied: number
+          reserved: number
+          src: string
+          vacant: number
+        }[]
+      }
       wh_occupancy_monthly_history: {
         Args: {
           _community_ids?: string[]
           _end: string
-          _months?: number
           _org_id: string
+          _start: string
         }
         Returns: {
+          backfill_communities: number
           beginning_census: number
           beginning_occupied: number
           beginning_pct: number
           budget_pct: number
           communities_in_scope: number
+          communities_with_history: number
           ending_census: number
           ending_occupied: number
           ending_pct: number
@@ -4424,6 +4446,9 @@ export type Database = {
           move_ins: number
           move_outs: number
           net_move_ins: number
+          period_end: string
+          period_start: string
+          snapshot_communities: number
         }[]
       }
       wh_occupancy_trend: {
