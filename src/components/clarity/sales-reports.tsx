@@ -198,15 +198,15 @@ export function OccupancyHistoryTab({ organizationId, communityIds, end, months 
       note={
         hasSnapshotHistory ? (
           <>
-            Beginning and ending occupancy come only from immutable daily snapshots dated the first and last
-            day of each month, and only when every selected community has one. Months before snapshot history
-            began show —; nothing is reconstructed from today&rsquo;s current-state data.
+            Beginning and ending occupancy come from stored history only: immutable nightly snapshots first,
+            and the official imported day-over-day occupancy records for dates before snapshots began. Periods
+            with no stored record show —; nothing is reconstructed from today&rsquo;s current-state data.
           </>
         ) : (
           <>
-            No month yet has the immutable snapshots required for beginning/ending occupancy, so those rows show
-            —. Snapshot history starts accumulating from the first nightly run and builds forward. Move-ins and
-            move-outs below still use validated period-event logic.
+            No month yet has stored occupancy history, so those rows show —. History comes from nightly
+            snapshots and from the official day-over-day workbooks imported in Admin → Occupancy History
+            Import. Move-ins and move-outs below still use validated period-event logic.
           </>
         )
       }
