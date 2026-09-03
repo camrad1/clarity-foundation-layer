@@ -597,14 +597,23 @@ function FlashReportPage() {
                         {r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, "Source n/a")}
                       </td>
                       <td className="max-w-[140px] truncate px-3 py-1.5 text-muted-foreground">
-                        {resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
+                        {r.counselor_name ?? resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
+                      </td>
+                      <td
+                        className="whitespace-nowrap px-3 py-1.5 text-muted-foreground"
+                        title={fullStamp(r.last_contact_at)}
+                      >
+                        {relativeDay(r.last_contact_at)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
-                        {formatDay(r.last_contact_at)}
+                        {r.next_activity_type ?? "—"}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                      <td
+                        className="whitespace-nowrap px-3 py-1.5 text-muted-foreground"
+                        title={fullStamp(r.next_activity_scheduled_at)}
+                      >
                         {r.next_activity_scheduled_at
-                          ? new Date(r.next_activity_scheduled_at).toLocaleDateString()
+                          ? `${shortDate(r.next_activity_scheduled_at)} · ${relativeDay(r.next_activity_scheduled_at)}`
                           : "—"}
                       </td>
                       <td className="px-3 py-1.5">
