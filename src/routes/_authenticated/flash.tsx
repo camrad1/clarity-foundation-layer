@@ -1019,10 +1019,14 @@ function WeekByWeekGrid({
   const careTypes = careTypeColumns(occ);
   const groups: { label: string; cols: string[] }[] = [
     { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
-    { label: "Current MIMO", cols: ["MIs", "MOs", "NET"] },
+    { label: "Current MIMO (actual)", cols: ["MIs", "MOs", "NET"] },
     {
-      label: "This month – pending MIMO / projected month-end occupancy",
-      cols: ["Pending Move Ins", "Pending Outs", "NET", "Projected Occ #", "Projected Occ %"],
+      label: "This month – scheduled MIMO / projected month-end",
+      cols: [
+        "Scheduled Move Ins", "Scheduled Outs", "NET",
+        "Proj EOM MIs", "Proj EOM MOs", "Proj EOM NET",
+        "Projected Occ #", "Projected Occ %",
+      ],
     },
     { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
   ];
