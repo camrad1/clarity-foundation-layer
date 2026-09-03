@@ -186,7 +186,7 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
     ["ending_occupied"],
   );
 
-  const hasSnapshotHistory = rows.some((r) => r.ending_pct != null || r.beginning_pct != null);
+  const hasHistory = rows.some((r) => r.ending_pct != null || r.beginning_pct != null);
   const columns = rows.map((r) => monthLabel(r.month));
 
   const exportCsv = () =>
@@ -206,17 +206,17 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
       title="Occupancy history"
       description="Month-over-month beginning and ending occupancy alongside the validated move-in and move-out counts for the same month."
       note={
-        hasSnapshotHistory ? (
+        hasHistory ? (
           <>
-            Beginning and ending occupancy come from stored history only: immutable nightly snapshots first,
-            and the official imported day-over-day occupancy records for dates before snapshots began. Periods
-            with no stored record show —; nothing is reconstructed from today&rsquo;s current-state data.
+            Historical occupancy before ClarityIQ nightly snapshots is sourced from official imported
+            occupancy history. Beginning is the first stored day of the month and ending is the last —
+            daily values are never averaged, and periods with no stored record show —.
           </>
         ) : (
           <>
-            No month yet has stored occupancy history, so those rows show —. History comes from nightly
-            snapshots and from the official day-over-day workbooks imported in Admin → Occupancy History
-            Import. Move-ins and move-outs below still use validated period-event logic.
+            No month in the selected range has stored occupancy history, so those rows show —. History
+            comes from nightly snapshots and from the official day-over-day workbooks imported in
+            Admin → Occupancy History Import. Move-ins and move-outs still use validated period-event logic.
           </>
         )
       }
@@ -224,9 +224,9 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
     >
       <ChartCard
         title="Occupancy over time"
-        description="Snapshot-sourced occupancy percentage by month, with the configured budget line where one exists."
+        description="Historical occupancy percentage over time using official imported history and ClarityIQ nightly snapshots, with the configured budget line where one exists."
         loading={q.isLoading}
-        empty={!hasSnapshotHistory ? "Snapshot history required — no stored month-end occupancy yet." : undefined}
+        empty={!hasHistory ? "No stored occupancy history for the selected period." : undefined}
         actions={
           <SeriesToggleChips series={pctSeries} visible={pctVis.visible} onToggle={pctVis.toggle} />
         }
@@ -236,9 +236,9 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
 
       <ChartCard
         title="Occupied units over time"
-        description="Occupied unit counts from the same immutable snapshots."
+        description="Occupied unit counts from the same stored historical records."
         loading={q.isLoading}
-        empty={!hasSnapshotHistory ? "Snapshot history required — no stored occupied unit counts yet." : undefined}
+        empty={!hasHistory ? "No stored occupied unit counts for the selected period." : undefined}
         height={240}
         actions={
           <SeriesToggleChips series={unitSeries} visible={unitVis.visible} onToggle={unitVis.toggle} />
@@ -247,7 +247,8 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
         <MetricTrendChart data={chartData} series={unitSeries.filter((s) => unitVis.visible.includes(s.key))} />
       </ChartCard>
 
-      <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} end={end} months={months} />
+      <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} start={start} end={end} />
+
 
 
 
