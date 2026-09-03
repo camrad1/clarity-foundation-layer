@@ -269,7 +269,8 @@ function FlashReportPage() {
     const header = [
       "Week / Date", "Date range", "Total Units", "Unit Occ", "Unit Budget", "Variance",
       "OCC %", "Budget %", ...careTypes,
-      "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "Pending NET",
+      "MIs", "MOs", "NET", "Scheduled Move Ins", "Scheduled Outs", "Scheduled NET",
+      "Projected EOM MIs", "Projected EOM MOs", "Projected EOM NET",
       "Projected Occ #", "Projected Occ %",
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
@@ -293,7 +294,7 @@ function FlashReportPage() {
             }),
           ]
         : Array(6 + careTypes.length).fill("—")),
-      ...Array(12).fill(""),
+      ...Array(15).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
       gridRow(w, occ?.totalUnits ?? null, careTypes),
@@ -491,7 +492,8 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading="Current MIMO"
+            heading="Current MIMO — selected week (actual)"
+            hint="Completed move-ins and move-outs only. Future-dated contracts are never counted here."
             items={[
               { label: "MIs", value: num(data?.week.moveIns) },
               { label: "MOs", value: num(data?.week.moveOuts) },
@@ -504,17 +506,42 @@ function FlashReportPage() {
             ]}
           />
           <CompactRow
-            heading={`This month — pending MIMO (${formatMonth(month)})`}
-            hint="Projected month-end occupancy — based on currently known pending move-ins and move-outs."
+            heading={`Month-to-date actual MIMO (${formatMonth(month)})`}
+            hint="Completed events from the first of the month through today."
             items={[
-              { label: "Pending Move-Ins", value: num(data?.month.pendingIn) },
-              { label: "Pending Move-Outs", value: num(data?.month.pendingOut) },
+              { label: "MTD MIs", value: num(data?.month.moveIns) },
+              { label: "MTD MOs", value: num(data?.month.moveOuts) },
+              {
+                label: "Net",
+                value: signed(data?.month.net ?? null),
+                tone: tone(data?.month.net ?? null),
+              },
+            ]}
+          />
+          <CompactRow
+            heading={`This month — scheduled MIMO remaining (${formatMonth(month)})`}
+            hint="WelcomeHome-confirmed future-dated contracts for the remainder of the month. Not a forecast."
+            items={[
+              { label: "Scheduled Move-Ins", value: num(data?.month.pendingIn) },
+              { label: "Scheduled Move-Outs", value: num(data?.month.pendingOut) },
               {
                 label: "Net",
                 value: signed(data?.month.pendingNet ?? null),
                 tone: tone(data?.month.pendingNet ?? null),
               },
-
+            ]}
+          />
+          <CompactRow
+            heading={`Projected EOM MIMO (${formatMonth(month)})`}
+            hint="Month-to-date actual + scheduled remaining. Projected occupancy applies the same scheduled contracts to current canonical occupancy."
+            items={[
+              { label: "Projected MIs", value: num(projectedEomMi(data?.month)) },
+              { label: "Projected MOs", value: num(projectedEomMo(data?.month)) },
+              {
+                label: "Projected Net",
+                value: signed(projectedEomNet(data?.month)),
+                tone: tone(projectedEomNet(data?.month)),
+              },
               {
                 label: "Projected Occupied Units",
                 value: num(data?.month.projectedOccupiedUnits ?? null),
@@ -530,6 +557,7 @@ function FlashReportPage() {
               },
             ]}
           />
+
           <CompactRow
             heading="Weekly sales update"
             items={[
@@ -554,15 +582,15 @@ function FlashReportPage() {
       </Section>
 
 
-      {/* 6. NEXT MONTH PENDING MIMO */}
+      {/* 6. NEXT MONTH SCHEDULED MIMO */}
       <Section
-        title={`Next month pending MIMO (${formatMonth(nmStart)})`}
+        title={`Next month scheduled MIMO (${formatMonth(nmStart)})`}
         badge={<CurrentStateBadge />}
-        description="Future-dated WelcomeHome contract state for next month."
+        description="WelcomeHome-confirmed future-dated contract state for next month."
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Pending move-ins" value={num(data?.nextMonth.pendingIn)} />
-          <Stat label="Pending move-outs / notices" value={num(data?.nextMonth.pendingOut)} />
+          <Stat label="Scheduled move-ins" value={num(data?.nextMonth.pendingIn)} />
+          <Stat label="Scheduled move-outs / notices" value={num(data?.nextMonth.pendingOut)} />
           <Stat label="Net" value={data ? String(data.nextMonth.pendingNet) : "—"} />
         </div>
       </Section>
@@ -915,6 +943,30 @@ function careTypeColumns(occ: FlashReport["occupancy"] | null | undefined): stri
   return list.length > 1 ? list.map((c) => c.careType) : [];
 }
 
+/**
+ * Projected end-of-month MIMO = actual completed events for the period plus
+ * WelcomeHome-confirmed scheduled (future-dated) contracts for the same
+ * period. No validated MI/MO definition is altered — this is a presentation
+ * rollup over two already-canonical server values, and the same helpers feed
+ * the screen, the CSV export and the print/PDF view.
+ */
+function projectedEomMi(p: FlashPeriod | null | undefined): number | null {
+  if (!p || (p.moveIns == null && p.pendingIn == null)) return null;
+  return (p.moveIns ?? 0) + (p.pendingIn ?? 0);
+}
+
+function projectedEomMo(p: FlashPeriod | null | undefined): number | null {
+  if (!p || (p.moveOuts == null && p.pendingOut == null)) return null;
+  return (p.moveOuts ?? 0) + (p.pendingOut ?? 0);
+}
+
+function projectedEomNet(p: FlashPeriod | null | undefined): number | null {
+  const mi = projectedEomMi(p);
+  const mo = projectedEomMo(p);
+  if (mi == null && mo == null) return null;
+  return (mi ?? 0) - (mo ?? 0);
+}
+
 function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[]) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
@@ -939,8 +991,12 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     w.pendingIn ?? "—",
     w.pendingOut ?? "—",
     w.pendingNet ?? "—",
+    projectedEomMi(w) ?? "—",
+    projectedEomMo(w) ?? "—",
+    projectedEomNet(w) ?? "—",
     w.projectedOccupiedUnits ?? "—",
     w.projectedOccupancyPct == null ? "—" : Number(w.projectedOccupancyPct).toFixed(1),
+
     w.inquiries ?? "—",
     w.outreach ?? "—",
     w.tours ?? "—",
@@ -963,10 +1019,14 @@ function WeekByWeekGrid({
   const careTypes = careTypeColumns(occ);
   const groups: { label: string; cols: string[] }[] = [
     { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
-    { label: "Current MIMO", cols: ["MIs", "MOs", "NET"] },
+    { label: "Current MIMO (actual)", cols: ["MIs", "MOs", "NET"] },
     {
-      label: "This month – pending MIMO / projected month-end occupancy",
-      cols: ["Pending Move Ins", "Pending Outs", "NET", "Projected Occ #", "Projected Occ %"],
+      label: "This month – scheduled MIMO / projected month-end",
+      cols: [
+        "Scheduled Move Ins", "Scheduled Outs", "NET",
+        "Proj EOM MIs", "Proj EOM MOs", "Proj EOM NET",
+        "Projected Occ #", "Projected Occ %",
+      ],
     },
     { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
   ];
@@ -1142,6 +1202,11 @@ function GridRow({
       <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn ?? na}</td>
       <td className={cell}>{w.pendingOut ?? na}</td>
       <td className={cell}>{w.pendingNet == null ? na : signed(w.pendingNet)}</td>
+      <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMi(w) ?? na}</td>
+      <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMo(w) ?? na}</td>
+      <td className={cn(cell, "bg-brand-soft/25")}>
+        {projectedEomNet(w) == null ? na : signed(projectedEomNet(w)!)}
+      </td>
       <td className={cn(cell, "bg-brand-soft/40")}>{w.projectedOccupiedUnits ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/40")}>
         {w.projectedOccupancyPct == null ? na : `${Number(w.projectedOccupancyPct).toFixed(1)}%`}
