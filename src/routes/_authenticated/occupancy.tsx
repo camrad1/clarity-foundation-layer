@@ -216,9 +216,9 @@ function Occupancy() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-lg border border-border/70 p-3">
+    <div className="rounded-lg border border-brand-border bg-brand-soft p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-lg font-semibold tabular-nums text-brand">{value}</p>
     </div>
   );
 }

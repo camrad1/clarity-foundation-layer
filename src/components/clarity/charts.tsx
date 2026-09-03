@@ -29,6 +29,7 @@ export const CHART_TOKENS = {
   primary: "var(--chart-1)",
   secondary: "var(--chart-2)",
   tertiary: "var(--chart-3)",
+  quaternary: "var(--chart-4)",
   provisional: "var(--warning)",
   negative: "var(--chart-5)",
   muted: "var(--muted-foreground)",

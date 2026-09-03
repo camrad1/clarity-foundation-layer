@@ -127,14 +127,14 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="panel space-y-1 p-4">
+    <div className="kpi-card space-y-1 p-4">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p
         className={cn(
           "font-display text-xl font-semibold tracking-tight",
           tone === "up" && "text-success",
           tone === "down" && "text-destructive",
-          tone === "neutral" && "text-foreground",
+          tone === "neutral" && "text-brand",
         )}
       >
         {value}
@@ -343,7 +343,7 @@ function FlashReportPage() {
         badge={<CurrentStateBadge />}
         description="Occupancy reflects current WelcomeHome contract and unit state as of today. Historical as-of-Thursday occupancy requires the nightly snapshot system, which is not built yet. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
-        <div className="panel divide-y divide-border/60">
+        <div className="panel-brand divide-y divide-brand-border/70">
           <CompactRow
             heading="Current weekly summary"
             items={[
@@ -639,7 +639,7 @@ function CompactRow({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:w-48 md:shrink-0">
+      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-brand md:w-48 md:shrink-0">
         {heading}
       </p>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
@@ -707,7 +707,7 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
   ];
 }
 
-const GROUP_BORDER = "border-l border-border";
+const GROUP_BORDER = "border-l border-brand-border";
 
 function WeekByWeekGrid({
   data,
@@ -732,20 +732,20 @@ function WeekByWeekGrid({
       <table className="w-full min-w-[1100px] text-sm">
         <thead>
           {/* Grouped legacy heading row — visually dominant */}
-          <tr className="bg-muted text-[11px] font-semibold uppercase tracking-wider text-foreground">
+          <tr className="thead-brand-strong text-[11px] font-semibold uppercase tracking-wider">
             <th className="whitespace-nowrap px-3 py-2 text-left">Week / Date</th>
             {groups.map((g) => (
               <th
                 key={g.label}
                 colSpan={g.cols.length}
-                className={cn("whitespace-nowrap px-3 py-2 text-center", GROUP_BORDER)}
+                className={cn("whitespace-nowrap px-3 py-2 text-center", "border-l border-white/25")}
               >
                 {g.label}
               </th>
             ))}
           </tr>
           {/* Subheading row — lighter */}
-          <tr className="border-b border-border bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <tr className="thead-brand border-b border-brand-border text-[10px] uppercase tracking-wide text-foreground/70">
             <th className="px-3 py-1.5 text-left font-medium" />
             {groups.map((g) =>
               g.cols.map((c, i) => (
@@ -786,7 +786,7 @@ function WeekByWeekGrid({
 function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols: number }) {
   const occCols = 6 + careTypes.length;
   return (
-    <tr className="border-b border-border/60 bg-muted/20 text-muted-foreground">
+    <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
       <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
       <td className={cn("px-3 py-2 text-center text-[11px] italic", GROUP_BORDER)} colSpan={occCols}>
         Snapshot required — month-start occupancy needs the nightly daily snapshot
@@ -818,9 +818,9 @@ function GridRow({
   return (
     <tr
       className={cn(
-        "border-b border-border/60 last:border-0",
-        emphasis && "border-t-2 border-t-border bg-muted/50 font-semibold",
-        w.isCurrent && !emphasis && "bg-primary/5",
+        "border-b border-brand-border/60 last:border-0 odd:bg-brand-soft/50 hover:bg-brand-light/60",
+        emphasis && "border-t-2 border-t-brand bg-brand-light font-semibold text-foreground",
+        w.isCurrent && !emphasis && "bg-brand-light/70",
       )}
     >
       <td className="whitespace-nowrap px-3 py-2">
