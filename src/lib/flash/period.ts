@@ -1,10 +1,9 @@
 /**
  * Flash reporting calendar.
  *
- * ONELIFE's operational Flash period is Friday through Thursday, due EOD
- * Thursday. This is deliberately independent of the generic analytics date
- * presets in `@/lib/date-ranges` — the Flash never uses Sunday–Saturday or
- * calendar-week logic.
+ * ONELIFE's operational Flash period is Sunday through Saturday. This is
+ * deliberately independent of the generic analytics date presets in
+ * `@/lib/date-ranges`.
  *
  * All helpers work on plain `YYYY-MM-DD` strings interpreted as calendar
  * dates (no timezone shifting).
@@ -32,10 +31,10 @@ export function todayISO(): string {
   return fmt(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
 }
 
-/** The Friday on or before `d`. Mirrors the database `flash_week_start()`. */
+/** The Sunday on or before `d`. Mirrors the database `flash_week_start()`. */
 export function flashWeekStart(d: string): string {
-  const dow = toUTC(d).getUTCDay(); // 0=Sun … 5=Fri
-  return addDays(d, -((dow + 2) % 7));
+  const dow = toUTC(d).getUTCDay(); // 0=Sun … 6=Sat
+  return addDays(d, -dow);
 }
 
 export function flashWeekOf(d: string): FlashWeek {
@@ -66,8 +65,8 @@ export function nextMonthStart(d: string): string {
 }
 
 /**
- * The Flash weeks reported inside a month: every Friday–Thursday period whose
- * Thursday falls within the month. Mirrors the week loop in `wh_flash_report`.
+ * The Flash weeks reported inside a month: every Sunday–Saturday period whose
+ * Saturday falls within the month. Mirrors the week loop in `wh_flash_report`.
  */
 export function flashWeeksInMonth(d: string): FlashWeek[] {
   const ms = monthStart(d);
@@ -94,11 +93,11 @@ export function formatDay(d: string | null | undefined): string {
   return `${MONTHS[dt.getUTCMonth()]} ${dt.getUTCDate()}`;
 }
 
-/** e.g. "Fri Aug 1 – Thu Aug 7, 2026" */
+/** e.g. "Sun Aug 2 – Sat Aug 8, 2026" */
 export function formatFlashRange(w: FlashWeek): string {
   const s = toUTC(w.start);
   const e = toUTC(w.end);
-  return `Fri ${MONTHS[s.getUTCMonth()]} ${s.getUTCDate()} – Thu ${MONTHS[e.getUTCMonth()]} ${e.getUTCDate()}, ${e.getUTCFullYear()}`;
+  return `Sun ${MONTHS[s.getUTCMonth()]} ${s.getUTCDate()} – Sat ${MONTHS[e.getUTCMonth()]} ${e.getUTCDate()}, ${e.getUTCFullYear()}`;
 }
 
 export function formatMonth(d: string): string {
