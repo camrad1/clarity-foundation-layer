@@ -36,6 +36,16 @@ export type FlashBudgetValue = { units: number | null; pct: number | null; commu
 
 export type FlashOccupancy = {
   asOf: string;
+  /**
+   * `current` = live WelcomeHome contract/unit state as of today.
+   * `snapshot` = the immutable daily snapshot taken at that historical date.
+   * Historical rows with no snapshot return null occupancy and render as “—”.
+   */
+  source?: "current" | "snapshot";
+  snapshotDate?: string;
+  communitiesCovered?: number;
+  communitiesRequested?: number;
+  complete?: boolean;
   totalUnits: number;
   excludedUnits: number;
   pseudoUnits: number;
@@ -47,11 +57,19 @@ export type FlashOccupancy = {
   byCareType: { careType: string; units: number; occupied: number }[];
 };
 
+export type FlashStarting = {
+  label: string;
+  asOfDate: string;
+  occupancy: FlashOccupancy | null;
+  budget: FlashBudgetValue | null;
+};
+
 export type FlashReport = {
   week: FlashPeriod;
   month: FlashPeriod;
   nextMonth: FlashPeriod;
   weeks: FlashPeriod[];
+  starting: FlashStarting;
   occupancy: FlashOccupancy;
   budget: FlashBudgetValue;
   monthStart: string;
