@@ -150,6 +150,10 @@ function CurrentStateBadge() {
 }
 
 const num = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString());
+const signed = (n: number | null | undefined) => (n == null ? "—" : n > 0 ? `+${n}` : String(n));
+const tone = (n: number | null | undefined): "up" | "down" | "neutral" =>
+  n == null ? "neutral" : n > 0 ? "up" : n < 0 ? "down" : "neutral";
+
 const pct1 = (n: number | null) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
 const money = (n: number | null | undefined) =>
   n == null ? "—" : `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -493,9 +497,10 @@ function FlashReportPage() {
               { label: "MOs", value: num(data?.week.moveOuts) },
               {
                 label: "Net",
-                value: data ? (data.week.net > 0 ? `+${data.week.net}` : String(data.week.net)) : "—",
-                tone: !data ? "neutral" : data.week.net > 0 ? "up" : data.week.net < 0 ? "down" : "neutral",
+                value: signed(data?.week.net ?? null),
+                tone: tone(data?.week.net ?? null),
               },
+
             ]}
           />
           <CompactRow
@@ -506,9 +511,10 @@ function FlashReportPage() {
               { label: "Pending Move-Outs", value: num(data?.month.pendingOut) },
               {
                 label: "Net",
-                value: data ? (data.month.pendingNet > 0 ? `+${data.month.pendingNet}` : String(data.month.pendingNet)) : "—",
-                tone: !data ? "neutral" : data.month.pendingNet > 0 ? "up" : data.month.pendingNet < 0 ? "down" : "neutral",
+                value: signed(data?.month.pendingNet ?? null),
+                tone: tone(data?.month.pendingNet ?? null),
               },
+
               {
                 label: "Projected Occupied Units",
                 value: num(data?.month.projectedOccupiedUnits ?? null),
@@ -927,18 +933,19 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
       const row = o?.byCareType.find((c) => c.careType === ct);
       return row ? `${row.occupied}/${row.units}` : "—";
     }),
-    w.moveIns,
-    w.moveOuts,
-    w.net,
-    w.pendingIn,
-    w.pendingOut,
-    w.pendingNet,
+    w.moveIns ?? "—",
+    w.moveOuts ?? "—",
+    w.net ?? "—",
+    w.pendingIn ?? "—",
+    w.pendingOut ?? "—",
+    w.pendingNet ?? "—",
     w.projectedOccupiedUnits ?? "—",
     w.projectedOccupancyPct == null ? "—" : Number(w.projectedOccupancyPct).toFixed(1),
-    w.inquiries,
-    w.outreach,
-    w.tours,
-    w.reTours,
+    w.inquiries ?? "—",
+    w.outreach ?? "—",
+    w.tours ?? "—",
+    w.reTours ?? "—",
+
   ];
 }
 
@@ -1129,20 +1136,21 @@ function GridRow({
           </td>
         );
       })}
-      <td className={cn(cell, GROUP_BORDER)}>{w.moveIns}</td>
-      <td className={cell}>{w.moveOuts}</td>
-      <td className={cell}>{w.net > 0 ? `+${w.net}` : w.net}</td>
-      <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn}</td>
-      <td className={cell}>{w.pendingOut}</td>
-      <td className={cell}>{w.pendingNet > 0 ? `+${w.pendingNet}` : w.pendingNet}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.moveIns ?? na}</td>
+      <td className={cell}>{w.moveOuts ?? na}</td>
+      <td className={cell}>{w.net == null ? na : signed(w.net)}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn ?? na}</td>
+      <td className={cell}>{w.pendingOut ?? na}</td>
+      <td className={cell}>{w.pendingNet == null ? na : signed(w.pendingNet)}</td>
       <td className={cn(cell, "bg-brand-soft/40")}>{w.projectedOccupiedUnits ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/40")}>
         {w.projectedOccupancyPct == null ? na : `${Number(w.projectedOccupancyPct).toFixed(1)}%`}
       </td>
-      <td className={cn(cell, GROUP_BORDER)}>{w.inquiries}</td>
-      <td className={cell}>{w.outreach}</td>
-      <td className={cell}>{w.tours}</td>
-      <td className={cell}>{w.reTours}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{w.inquiries ?? na}</td>
+      <td className={cell}>{w.outreach ?? na}</td>
+      <td className={cell}>{w.tours ?? na}</td>
+      <td className={cell}>{w.reTours ?? na}</td>
+
     </tr>
   );
 }

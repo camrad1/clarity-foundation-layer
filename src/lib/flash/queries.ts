@@ -24,17 +24,27 @@ export type FlashPeriod = {
    * resolver).
    */
   isMonthClosed?: boolean;
-  inquiries: number;
-  outreach: number;
+  /**
+   * Actual completed-event metrics for the period. NULL for a period that has
+   * not started yet — future weeks never show activity.
+   */
+  inquiries: number | null;
+  outreach: number | null;
   outreachMapped: boolean;
-  tours: number;
-  reTours: number;
-  moveIns: number;
-  moveOuts: number;
-  net: number;
-  pendingIn: number;
-  pendingOut: number;
-  pendingNet: number;
+  tours: number | null;
+  reTours: number | null;
+  moveIns: number | null;
+  moveOuts: number | null;
+  net: number | null;
+  /**
+   * Point-in-time pending state for the REMAINDER OF THE SELECTED MONTH as of
+   * now — not the moves scheduled inside this particular week. Only the
+   * in-progress period carries it; past/future periods are null.
+   */
+  pendingIn: number | null;
+  pendingOut: number | null;
+  pendingNet: number | null;
+
   /**
    * Forward-looking month-end projection: CURRENT canonical occupied units
    * + pending move-ins − pending move-outs, over the SAME canonical census
