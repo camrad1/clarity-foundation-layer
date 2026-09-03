@@ -227,6 +227,14 @@ export type WhSyncRunUnit = {
   status: string;
   error_summary: string | null;
   completed_at: string | null;
+  started_at: string | null;
+  /** Heartbeat: last time this unit persisted a page of source rows. */
+  last_progress_at: string | null;
+  rows_processed: number | null;
+  pages_processed: number | null;
+  current_page: number | null;
+  retry_count: number | null;
+  last_error: string | null;
 };
 
 export type WhSyncRunRecord = {
@@ -267,9 +275,11 @@ export function useWhSyncRuns(connectionId: string | null, limit = 8) {
       if (!ids.length) return [];
       const { data: units, error: unitError } = await supabase
         .from("wh_sync_table_runs")
-        .select("sync_run_id, source_table, community_id, status, error_summary, completed_at")
+        .select(
+          "sync_run_id, source_table, community_id, status, error_summary, completed_at, started_at, last_progress_at, rows_processed, pages_processed, current_page, retry_count, last_error",
+        )
         .in("sync_run_id", ids)
-        .order("completed_at", { ascending: true });
+        .order("started_at", { ascending: true });
       if (unitError) throw unitError;
       return (runs ?? []).map((r: any) => ({
         ...r,
