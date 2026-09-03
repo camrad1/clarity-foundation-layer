@@ -579,6 +579,7 @@ function FlashReportPage() {
                     <th className="px-3 py-1.5 text-left font-medium">Date</th>
                     <th className="px-3 py-1.5 text-right font-medium">Amount</th>
                     <th className="px-3 py-1.5 text-left font-medium">Expected MI</th>
+                    <th className="hidden px-3 py-1.5 text-left font-medium lg:table-cell">Care / Unit</th>
                   </tr>
                 </thead>
                 <tbody>
