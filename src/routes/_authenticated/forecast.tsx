@@ -330,17 +330,17 @@ function ForecastEditDialog({
   const [mo, setMo] = useState("");
   const [goal, setGoal] = useState("");
   const [notes, setNotes] = useState("");
-  const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
 
   const currentKey = target ? `${target.communityId}|${target.forecastDate}` : "";
-  if (target && currentKey !== key) {
-    setKey(currentKey);
+  useEffect(() => {
+    if (!target) return;
     setMi(target.entry?.projected_move_ins?.toString() ?? "");
     setMo(target.entry?.projected_move_outs?.toString() ?? "");
     setGoal(target.entry?.stretch_goal?.toString() ?? "");
     setNotes(target.entry?.notes ?? "");
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentKey]);
 
   const locked = target ? isPastForecastWeek(target.forecastDate) : false;
 
