@@ -2444,6 +2444,7 @@ export type Database = {
           merged_into_source_id: string | null
           organization_id: string
           payload: Json
+          quarantine_reason: string | null
           record_type: string
           source_community_external_id: string | null
           source_record_id: string
@@ -2463,6 +2464,7 @@ export type Database = {
           merged_into_source_id?: string | null
           organization_id: string
           payload?: Json
+          quarantine_reason?: string | null
           record_type: string
           source_community_external_id?: string | null
           source_record_id: string
@@ -2482,6 +2484,7 @@ export type Database = {
           merged_into_source_id?: string | null
           organization_id?: string
           payload?: Json
+          quarantine_reason?: string | null
           record_type?: string
           source_community_external_id?: string | null
           source_record_id?: string
@@ -3953,6 +3956,11 @@ export type Database = {
           last_mode: Database["public"]["Enums"]["wh_sync_mode"] | null
           last_successful_at: string | null
           organization_id: string
+          resume_cursor_url: string | null
+          resume_pages: number
+          resume_rows: number
+          resume_saved_at: string | null
+          resume_updated_after: string | null
           rows_failed: number
           rows_inserted: number
           rows_received: number
@@ -3976,6 +3984,11 @@ export type Database = {
           last_mode?: Database["public"]["Enums"]["wh_sync_mode"] | null
           last_successful_at?: string | null
           organization_id: string
+          resume_cursor_url?: string | null
+          resume_pages?: number
+          resume_rows?: number
+          resume_saved_at?: string | null
+          resume_updated_after?: string | null
           rows_failed?: number
           rows_inserted?: number
           rows_received?: number
@@ -3999,6 +4012,11 @@ export type Database = {
           last_mode?: Database["public"]["Enums"]["wh_sync_mode"] | null
           last_successful_at?: string | null
           organization_id?: string
+          resume_cursor_url?: string | null
+          resume_pages?: number
+          resume_rows?: number
+          resume_saved_at?: string | null
+          resume_updated_after?: string | null
           rows_failed?: number
           rows_inserted?: number
           rows_received?: number
