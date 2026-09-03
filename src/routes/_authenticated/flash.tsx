@@ -1218,7 +1218,7 @@ function GridRow({
       <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn ?? na}</td>
       <td className={cell}>{w.pendingOut ?? na}</td>
       <td className={cell}>{w.pendingNet == null ? na : signed(w.pendingNet)}</td>
-      <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMi(w) ?? na}</td>
+      <td className={cn(cell, GROUP_BORDER, "bg-brand-soft/25")}>{projectedEomMi(w) ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/25")}>{projectedEomMo(w) ?? na}</td>
       <td className={cn(cell, "bg-brand-soft/25")}>
         {projectedEomNet(w) == null ? na : signed(projectedEomNet(w)!)}
