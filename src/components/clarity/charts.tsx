@@ -404,18 +404,48 @@ export function GroupedBarChart({
                   const v = Number(props.value ?? 0);
                   if (!v) return null;
                   const cx = Number(props.x) + Number(props.width) / 2;
-                  const cy = stacked
-                    ? Number(props.y) + Number(props.height) / 2 + 3
-                    : Number(props.y) - 4;
+                  const h = Number(props.height) || 0;
+                  // Inside the segment when it is tall enough to stay legible,
+                  // otherwise just above the segment so focused months always
+                  // show their count.
+                  const inside = !stacked ? false : h >= 14;
+                  const cy = stacked ? (inside ? Number(props.y) + h / 2 + 3 : Number(props.y) - 3) : Number(props.y) - 4;
                   return (
                     <text
                       x={cx}
                       y={cy}
                       textAnchor="middle"
-                      stroke="var(--card)"
-                      strokeWidth={3}
-                      paintOrder="stroke"
-                      style={{ ...LABEL_STYLE, fill: b.color, fontWeight: 700 }}
+                      style={{
+                        ...LABEL_STYLE,
+                        fill: inside ? "var(--card)" : b.color,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {fmtCount(v)}
+                    </text>
+                  );
+                }}
+              />
+            ) : null}
+            {/* Default stacked view stays clean: a segment is only labelled when
+                it is comfortably large; monthly totals sit above the stack. */}
+            {!isActive && !dimmed && showLabels && stacked ? (
+              <LabelList
+                dataKey={b.key}
+                position="center"
+                content={(props: any) => {
+                  const v = Number(props.value ?? 0);
+                  const h = Number(props.height) || 0;
+                  const w = Number(props.width) || 0;
+                  const total = totals[props.index] ?? 0;
+                  const share = total > 0 ? v / total : 0;
+                  if (!v || h < 22 || w < 26 || share < 0.18) return null;
+                  return (
+                    <text
+                      x={Number(props.x) + w / 2}
+                      y={Number(props.y) + h / 2 + 3}
+                      textAnchor="middle"
+                      style={{ ...LABEL_STYLE, fill: "var(--card)", fontWeight: 600 }}
                     >
                       {fmtCount(v)}
                     </text>
