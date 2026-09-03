@@ -875,8 +875,8 @@ function GridRow({
   const b = w.budget?.units ?? null;
   const occupied = o?.occupiedUnits ?? null;
   const variance = occupied != null && b != null ? occupied - b : null;
-  const na = <span className="text-[11px] italic text-muted-foreground/70">snapshot req.</span>;
-  const cell = "px-3 py-2 text-right tabular-nums";
+  const na = <span className="text-muted-foreground/70">—</span>;
+  const cell = "px-3 py-2 text-center tabular-nums";
   return (
     <tr
       className={cn(
