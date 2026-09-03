@@ -53,6 +53,22 @@ type Admin = SupabaseClient<any, "public", any>;
  */
 export type TableStatus = "success" | "partial" | "failed" | "skipped" | "unsupported";
 
+/**
+ * HEARTBEAT — persisted proof of forward progress.
+ *
+ * A work unit writes one of these every time a page of source rows has been
+ * fetched AND persisted. Stall detection is defined purely in terms of this
+ * timestamp: a unit that is genuinely slow keeps advancing pages and is never
+ * reaped, while a unit whose HTTP request died, whose pagination stopped, or
+ * whose driving client vanished stops heartbeating and becomes `stalled` after
+ * the configured window. This is why the fix is not "raise the timeout".
+ */
+export type Heartbeat = (p: { page: number; pages: number; rows: number }) => Promise<void>;
+
+/** How long a non-terminal unit may go without a heartbeat before it is stalled. */
+export const WH_STALL_MINUTES = 10;
+
+
 export type TableResult = {
   table: WhTable;
   status: TableStatus;
