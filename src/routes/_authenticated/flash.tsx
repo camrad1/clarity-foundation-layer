@@ -851,15 +851,29 @@ function CompactRow({
   heading,
   hint,
   items,
+  prominent,
 }: {
   heading: string;
   hint?: string;
   items: { label: string; value: React.ReactNode; tone?: "neutral" | "up" | "down"; group?: boolean }[];
+  prominent?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3",
+        prominent && "bg-brand-soft/80 ring-1 ring-inset ring-brand-border",
+      )}
+    >
       <div className="w-full md:w-48 md:shrink-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">{heading}</p>
+        <p
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wider text-brand",
+            prominent && "text-brand-dark",
+          )}
+        >
+          {heading}
+        </p>
         {hint ? <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{hint}</p> : null}
       </div>
       <div className="flex flex-wrap gap-x-7 gap-y-3">
