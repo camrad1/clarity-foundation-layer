@@ -231,7 +231,11 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           <SeriesToggleChips series={pctSeries} visible={pctVis.visible} onToggle={pctVis.toggle} />
         }
       >
-        <MetricTrendChart data={chartData} series={pctSeries.filter((s) => pctVis.visible.includes(s.key))} />
+        <MetricTrendChart
+          data={chartData}
+          series={pctSeries.filter((s) => pctVis.visible.includes(s.key))}
+          valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
+        />
       </ChartCard>
 
       <ChartCard
@@ -669,7 +673,12 @@ export function LostLeadsTab({ organizationId, communityIds, end, months = 12 }:
         empty={rows.length === 0 ? "No closed prospects in this window." : undefined}
         actions={<SeriesToggleChips series={series} visible={vis.visible} onToggle={vis.toggle} />}
       >
-        <GroupedBarChart data={pivot} bars={series.filter((s) => vis.visible.includes(s.key))} stacked />
+        <GroupedBarChart
+          data={pivot}
+          bars={series.filter((s) => vis.visible.includes(s.key))}
+          stacked
+          totalLabel="Total lost leads"
+        />
       </ChartCard>
 
       <MonthGrid

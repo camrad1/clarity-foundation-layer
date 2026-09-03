@@ -82,6 +82,7 @@ function TooltipBox({
   formatter,
   share,
   showTotal,
+  totalLabel = "Total",
 }: any) {
   if (!active || !payload?.length) return null;
   const rows = payload.filter((p: any) => p?.value != null);
@@ -97,7 +98,7 @@ function TooltipBox({
             <span className="text-foreground">{p.name}</span>
             <span className="ml-auto tabular-nums text-foreground">
               {formatter ? formatter(p.value) : fmtCount(Number(p.value))}
-              {pct ? <span className="ml-1 text-muted-foreground">({pct})</span> : null}
+              {pct ? <span className="ml-1 text-muted-foreground">· {pct}</span> : null}
             </span>
           </p>
         );
@@ -105,7 +106,7 @@ function TooltipBox({
       {showTotal && rows.length > 1 ? (
         <p className="mt-1 flex items-center gap-2 border-t border-border pt-1 text-muted-foreground">
           <span className="size-2" />
-          <span className="text-foreground">Total</span>
+          <span className="text-foreground">{totalLabel}</span>
           <span className="ml-auto tabular-nums font-medium text-foreground">{fmtCount(total)}</span>
         </p>
       ) : null}
@@ -252,11 +253,14 @@ export function MetricTrendChart({
   series,
   xKey = "label",
   labelLatest = true,
+  valueFormatter,
 }: {
   data: Record<string, any>[];
   series: TrendSeries[];
   xKey?: string;
   labelLatest?: boolean;
+  /** Tooltip-only value formatting (e.g. percent series); plotted values are unchanged. */
+  valueFormatter?: (value: number) => string;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();
@@ -269,7 +273,7 @@ export function MetricTrendChart({
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis allowDecimals={false} {...axisProps} width={44} />
-        <Tooltip content={<TooltipBox />} cursor={{ stroke: "var(--border)" }} />
+        <Tooltip content={<TooltipBox formatter={valueFormatter} />} cursor={{ stroke: "var(--border)" }} />
         <Legend
           verticalAlign="bottom"
           height={28}
@@ -349,12 +353,15 @@ export function GroupedBarChart({
   line,
   xKey = "label",
   stacked = false,
+  totalLabel,
 }: {
   data: Record<string, any>[];
   bars: TrendSeries[];
   line?: TrendSeries | undefined;
   xKey?: string;
   stacked?: boolean;
+  /** Label for the stacked tooltip total row (defaults to "Total"). */
+  totalLabel?: string;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();
@@ -372,7 +379,7 @@ export function GroupedBarChart({
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis allowDecimals={false} {...axisProps} width={44} />
         <Tooltip
-          content={<TooltipBox share={stacked} showTotal={stacked} />}
+          content={<TooltipBox share={stacked} showTotal={stacked} totalLabel={totalLabel} />}
           cursor={{ fill: "var(--muted)", opacity: 0.4 }}
         />
         <Legend
