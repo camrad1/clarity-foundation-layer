@@ -389,6 +389,12 @@ async function syncCoreTable(
           result.rowsUpdated += updated;
         }
 
+        // Heartbeat AFTER the page has been persisted: progress means data
+        // landed, not merely that a request was issued.
+        await args.beat?.({ page: pages, pages: result.pagesFetched, rows: result.rowsReceived });
+
+
+
         if (!nextUrl || records.length === 0) break;
         if (pages >= WH_MAX_PAGES) {
           result.warnings.push(
