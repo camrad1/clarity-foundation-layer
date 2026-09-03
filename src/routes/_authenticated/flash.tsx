@@ -589,6 +589,9 @@ function FlashReportPage() {
                       <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.deposit_date)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums">{money(r.amount)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{formatDay(r.expected_move_in_date)}</td>
+                      <td className="hidden max-w-[150px] truncate px-3 py-1.5 text-muted-foreground lg:table-cell">
+                        {r.care_type ?? "—"} · {r.unit_label ?? "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
