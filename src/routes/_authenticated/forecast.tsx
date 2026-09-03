@@ -30,6 +30,7 @@ import {
   formatShortDate,
   forecastDatesForMonth,
   isPastForecastWeek,
+  monthEnd,
   monthStart,
   recentMonths,
   todayISO,
@@ -40,7 +41,13 @@ import {
   useSaveForecast,
   type ForecastEntry,
 } from "@/lib/forecast/queries";
+import { cn } from "@/lib/utils";
 import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
+
+/** Net sign formatting, kept consistent with weekly forecast cells: +N, -N, +0. */
+function formatNet(n: number): string {
+  return `${n >= 0 ? "+" : ""}${n}`;
+}
 
 export const Route = createFileRoute("/_authenticated/forecast")({
   head: () => ({
@@ -139,6 +146,8 @@ function ForecastTracker() {
   }, [dates, rows, byCell, actualByCommunity]);
 
   const monthOptions = useMemo(() => recentMonths(24), []);
+  const monthClosed = useMemo(() => monthEnd(month) < todayISO(), [month]);
+  const finalDate = monthClosed && dates.length > 0 ? dates[dates.length - 1] : null;
 
   return (
     <div className="space-y-6">
@@ -178,12 +187,28 @@ function ForecastTracker() {
                   <th className="sticky left-0 z-10 bg-brand-light px-3 py-2 text-left font-medium">
                     Community
                   </th>
-                  {dates.map((d) => (
-                    <th key={d} className="px-3 py-2 text-center font-medium whitespace-nowrap">
-                      {formatShortDate(d)}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 text-center font-medium whitespace-nowrap">EOM Actual</th>
+                  {dates.map((d, i) => {
+                    const isFinal = finalDate === d && i === dates.length - 1;
+                    return (
+                      <th
+                        key={d}
+                        className={cn(
+                          "px-3 py-2 text-center font-medium whitespace-nowrap",
+                          isFinal && "border-l-2 border-brand-border bg-brand-soft/50",
+                        )}
+                      >
+                        {formatShortDate(d)}
+                        {isFinal ? (
+                          <span className="mt-0.5 block text-[0.6rem] font-normal uppercase tracking-wide text-muted-foreground">
+                            Final
+                          </span>
+                        ) : null}
+                      </th>
+                    );
+                  })}
+                  <th className="border-l-2 border-brand-dark bg-brand px-3 py-2 text-center font-semibold whitespace-nowrap text-brand-foreground">
+                    EOM Actual
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -198,8 +223,15 @@ function ForecastTracker() {
                         const e = byCell.get(`${r.id}|${d}`) ?? null;
                         const has = e && (e.projected_move_ins !== null || e.projected_move_outs !== null);
                         const net = (e?.projected_move_ins ?? 0) - (e?.projected_move_outs ?? 0);
+                        const isFinal = finalDate === d;
                         return (
-                          <td key={d} className="px-1 py-1 text-center">
+                          <td
+                            key={d}
+                            className={cn(
+                              "px-1 py-1 text-center",
+                              isFinal && "border-l-2 border-brand-border bg-brand-soft/40",
+                            )}
+                          >
                             <button
                               type="button"
                               onClick={() =>
@@ -216,8 +248,7 @@ function ForecastTracker() {
                                 <span className="font-medium">
                                   {e!.projected_move_ins ?? 0} / {e!.projected_move_outs ?? 0}
                                   <span className="ml-1 text-xs text-muted-foreground">
-                                    ({net >= 0 ? "+" : ""}
-                                    {net})
+                                    ({formatNet(net)})
                                   </span>
                                 </span>
                               ) : (
@@ -238,34 +269,45 @@ function ForecastTracker() {
                           </td>
                         );
                       })}
-                      <td className="px-3 py-1.5 text-center tabular-nums font-medium">
-                        {actual ? `${actual.move_ins} / ${actual.move_outs}` : "—"}
+                      <td className="border-l-2 border-brand-border px-3 py-1.5 text-center tabular-nums font-semibold">
+                        {actual
+                          ? `${actual.move_ins} / ${actual.move_outs} (${formatNet(actual.move_ins - actual.move_outs)})`
+                          : "—"}
                       </td>
                     </tr>
                   );
                 })}
-                <tr className="border-t-2 border-brand bg-brand-light/70 font-semibold">
-                  <td className="sticky left-0 z-10 bg-brand-light px-3 py-2">TOTAL</td>
-                  {totals.perDate.map((t) => (
-                    <td key={t.date} className="px-3 py-2 text-center tabular-nums">
-                      {t.any ? (
-                        <>
-                          {t.mi} / {t.mo}
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
-                            ({t.mi - t.mo >= 0 ? "+" : ""}
-                            {t.mi - t.mo})
-                          </span>
-                        </>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2 text-center tabular-nums">
+                <tr className="border-t-[3px] border-brand bg-brand-light/70 font-bold">
+                  <td className="sticky left-0 z-10 bg-brand-light px-3 py-2 text-sm uppercase tracking-wide">
+                    Total
+                  </td>
+                  {totals.perDate.map((t) => {
+                    const isFinal = finalDate === t.date;
+                    return (
+                      <td
+                        key={t.date}
+                        className={cn(
+                          "px-3 py-2 text-center text-sm tabular-nums",
+                          isFinal && "border-l-2 border-brand-border bg-brand-soft/40",
+                        )}
+                      >
+                        {t.any ? (
+                          <>
+                            {t.mi} / {t.mo}
+                            <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                              ({formatNet(t.mi - t.mo)})
+                            </span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="border-l-2 border-brand-dark bg-brand/10 px-3 py-2 text-center text-sm tabular-nums font-bold">
                     {totals.actual.mi} / {totals.actual.mo}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      ({totals.actual.mi - totals.actual.mo >= 0 ? "+" : ""}
-                      {totals.actual.mi - totals.actual.mo})
+                    <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                      ({formatNet(totals.actual.mi - totals.actual.mo)})
                     </span>
                   </td>
                 </tr>
