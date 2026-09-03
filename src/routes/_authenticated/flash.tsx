@@ -293,7 +293,44 @@ function FlashReportPage() {
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
       gridRow(w, occ?.totalUnits ?? null, careTypes),
     );
-    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [header, starting, ...rowsOut]);
+    // Trackers are exported with the same server-resolved labels shown on screen.
+    const trackerRows: (string | number | null | undefined)[][] = [
+      [],
+      ["Move-In Monthly Tracker"],
+      ["Resident", "Move-In Date", "Care Type", "Unit", "Monthly Rate"],
+      ...(moveIns.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.move_in_date, r.care_type ?? "Unspecified", r.unit_label ?? "", r.monthly_rate ?? "",
+      ]),
+      [],
+      ["Deposit Monthly Tracker (provisional)"],
+      ["Depositor", "Deposit Date", "Amount", "Expected MI", "Care Type", "Unit"],
+      ...(deposits.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.deposit_date, r.amount ?? "", r.expected_move_in_date ?? "",
+        r.care_type ?? "Unspecified", r.unit_label ?? "",
+      ]),
+      [],
+      ["Move-Out Monthly Tracker"],
+      ["Resident", "Move-Out Date", "Care Type", "Unit", "Reason"],
+      ...(moveOuts.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name), r.move_out_date, r.care_type ?? "Unspecified", r.unit_label ?? "", r.reason ?? "",
+      ]),
+      [],
+      ["Hot Lead Tracker (current state)"],
+      ["Prospect", "Stage", "Inquiry Date", "Lead Source", "Sales Counselor", "Last Contact", "Next Activity", "Next Activity Date"],
+      ...(hotLeads.data?.rows ?? []).map((r: any) => [
+        personName(r.person_name),
+        resolveLabel(labels.stage, r.stage_id, r.stage_label ?? ""),
+        r.inquiry_date ?? "",
+        r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, ""),
+        r.counselor_name ?? resolveLabel(labels.user, r.counselor_id, ""),
+        r.last_contact_at ? new Date(r.last_contact_at).toISOString().slice(0, 10) : "",
+        r.next_activity_type ?? "",
+        r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toISOString().slice(0, 10) : "",
+      ]),
+    ];
+    downloadCsv(`flash-${formatMonth(month).replace(" ", "-").toLowerCase()}.csv`, [
+      header, starting, ...rowsOut, ...trackerRows,
+    ]);
   };
 
 
