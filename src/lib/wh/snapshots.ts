@@ -24,6 +24,12 @@ export type OccupancyTrendPoint = {
   budget_units: number | null;
   budget_pct: number | null;
   variance_units: number | null;
+  /** Communities in this period whose value came from a nightly snapshot. */
+  snapshot_communities: number;
+  /** Communities in this period served by the official imported daily history. */
+  backfill_communities: number;
+  /** Occupied units at the start of the period, from the earliest record. */
+  beginning_occupied: number | null;
 };
 
 export function useOccupancyTrend(
