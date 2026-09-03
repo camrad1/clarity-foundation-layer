@@ -1142,7 +1142,15 @@ function StartingRow({
         </td>
       ))}
       {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
-        <td key={`s-rest-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+        <td
+          key={`s-rest-${i}`}
+          className={cn(
+            "px-3 py-2 text-center tabular-nums",
+            // Group-start dividers mirror the grouped header: Current MIMO (0),
+            // Scheduled MIMO (3), Projected Month-End (6), Weekly Sales (11).
+            (i === 0 || i === 3 || i === 6 || i === 11) && GROUP_BORDER,
+          )}
+        >
           —
         </td>
       ))}
