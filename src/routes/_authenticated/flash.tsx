@@ -241,7 +241,7 @@ function FlashReportPage() {
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
     const starting = [
-      "Starting #", "", ...Array(6 + careTypes.length).fill("snapshot required"),
+      "Starting #", "", ...Array(6 + careTypes.length).fill("—"),
       ...Array(10).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
