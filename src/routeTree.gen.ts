@@ -23,6 +23,7 @@ import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
 import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
+import { Route as AuthenticatedAdminForecastImportRouteImport } from './routes/_authenticated/admin/forecast-import'
 import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
 import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_authenticated/admin/gsc-imports'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
@@ -111,6 +112,12 @@ const AuthenticatedAdminDataSourcesRoute =
   AuthenticatedAdminDataSourcesRouteImport.update({
     id: '/admin/data-sources',
     path: '/admin/data-sources',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminForecastImportRoute =
+  AuthenticatedAdminForecastImportRouteImport.update({
+    id: '/admin/forecast-import',
+    path: '/admin/forecast-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminGoalsRoute = AuthenticatedAdminGoalsRouteImport.update({
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -293,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
+  '/_authenticated/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/_authenticated/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/communities'
     | '/admin/data-sources'
+    | '/admin/forecast-import'
     | '/admin/goals'
     | '/admin/gsc-imports'
     | '/admin/mappings'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/communities'
     | '/admin/data-sources'
+    | '/admin/forecast-import'
     | '/admin/goals'
     | '/admin/gsc-imports'
     | '/admin/mappings'
@@ -391,6 +403,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/communities'
     | '/_authenticated/admin/data-sources'
+    | '/_authenticated/admin/forecast-import'
     | '/_authenticated/admin/goals'
     | '/_authenticated/admin/gsc-imports'
     | '/_authenticated/admin/mappings'
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/data-sources'
       fullPath: '/admin/data-sources'
       preLoaderRoute: typeof AuthenticatedAdminDataSourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/forecast-import': {
+      id: '/_authenticated/admin/forecast-import'
+      path: '/admin/forecast-import'
+      fullPath: '/admin/forecast-import'
+      preLoaderRoute: typeof AuthenticatedAdminForecastImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/goals': {
@@ -674,6 +694,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
   AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
+  AuthenticatedAdminForecastImportRoute: typeof AuthenticatedAdminForecastImportRoute
   AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
   AuthenticatedAdminGscImportsRoute: typeof AuthenticatedAdminGscImportsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
@@ -699,6 +720,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
   AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
   AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
+  AuthenticatedAdminForecastImportRoute: AuthenticatedAdminForecastImportRoute,
   AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
   AuthenticatedAdminGscImportsRoute: AuthenticatedAdminGscImportsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
