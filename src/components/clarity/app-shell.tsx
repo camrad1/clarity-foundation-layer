@@ -187,6 +187,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 item={{ to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 }}
                 active={pathname === "/admin/wh-mappings"}
               />
+              <NavLink
+                item={{ to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload }}
+                active={pathname === "/admin/occupancy-history"}
+              />
+
             </div>
           ) : null}
         </nav>
