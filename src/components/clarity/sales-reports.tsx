@@ -20,6 +20,7 @@ import {
   useNewInquiriesTrend,
   useOccupancyHistory,
 } from "@/lib/wh/reports";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 
 /**
  * WelcomeHome standard operational reports rebuilt on ClarityIQ's canonical
@@ -198,15 +199,15 @@ export function OccupancyHistoryTab({ organizationId, communityIds, end, months 
       note={
         hasSnapshotHistory ? (
           <>
-            Beginning and ending occupancy come only from immutable daily snapshots dated the first and last
-            day of each month, and only when every selected community has one. Months before snapshot history
-            began show —; nothing is reconstructed from today&rsquo;s current-state data.
+            Beginning and ending occupancy come from stored history only: immutable nightly snapshots first,
+            and the official imported day-over-day occupancy records for dates before snapshots began. Periods
+            with no stored record show —; nothing is reconstructed from today&rsquo;s current-state data.
           </>
         ) : (
           <>
-            No month yet has the immutable snapshots required for beginning/ending occupancy, so those rows show
-            —. Snapshot history starts accumulating from the first nightly run and builds forward. Move-ins and
-            move-outs below still use validated period-event logic.
+            No month yet has stored occupancy history, so those rows show —. History comes from nightly
+            snapshots and from the official day-over-day workbooks imported in Admin → Occupancy History
+            Import. Move-ins and move-outs below still use validated period-event logic.
           </>
         )
       }
@@ -237,6 +238,10 @@ export function OccupancyHistoryTab({ organizationId, communityIds, end, months 
         <MetricTrendChart data={chartData} series={unitSeries.filter((s) => unitVis.visible.includes(s.key))} />
       </ChartCard>
 
+      <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} end={end} months={months} />
+
+
+
       <MonthGrid
         firstHeader="Metric"
         columns={columns}
@@ -253,6 +258,67 @@ export function OccupancyHistoryTab({ organizationId, communityIds, end, months 
     </ReportSection>
   );
 }
+
+/**
+ * Daily / weekly occupancy detail, read from stored history only. Nightly
+ * snapshots take precedence; the official imported day-over-day history fills
+ * dates before snapshots began. Gaps stay gaps.
+ */
+function OccupancyDailyDetail({ organizationId, communityIds, end, months = 12 }: TabProps) {
+  const [grain, setGrain] = useState<"daily" | "weekly">("weekly");
+  const endDate = asDate(end);
+  const start = new Date(
+    Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth() - (months - 1), 1),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const q = useOccupancyTrend(organizationId, communityIds, start, end.slice(0, 10), grain);
+  const points = (q.data ?? []).map((p) => ({
+    label: grain === "daily" ? DAY_FMT.format(asDate(p.period_start)) : weekLabel(p.period_start),
+    occupancy_pct: p.occupancy_pct == null ? null : Number((Number(p.occupancy_pct) * 100).toFixed(1)),
+    occupied: p.occupied_units,
+  }));
+  const backfillPeriods = (q.data ?? []).filter((p) => p.backfill_communities > 0).length;
+  const snapshotPeriods = (q.data ?? []).filter((p) => p.snapshot_communities > 0).length;
+
+  return (
+    <ChartCard
+      title={`Occupancy detail — ${grain === "daily" ? "daily" : "weekly"}`}
+      description={
+        points.length
+          ? `${points.length} stored ${grain === "daily" ? "days" : "weeks"} · ${snapshotPeriods} with nightly snapshots · ${backfillPeriods} from official imported history`
+          : "Stored daily history required — nothing is reconstructed."
+      }
+      loading={q.isLoading}
+      empty={points.length === 0 ? "No stored daily occupancy history for this selection." : undefined}
+      height={240}
+      actions={
+        <div className="flex gap-1">
+          {(["weekly", "daily"] as const).map((g) => (
+            <Button
+              key={g}
+              size="sm"
+              variant={grain === g ? "default" : "outline"}
+              onClick={() => setGrain(g)}
+            >
+              {g === "weekly" ? "Weekly" : "Daily"}
+            </Button>
+          ))}
+        </div>
+      }
+    >
+      <MetricTrendChart
+        data={points}
+        series={[
+          { key: "occupancy_pct", label: "Occupancy %", color: CHART_TOKENS.primary },
+          { key: "occupied", label: "Occupied units", color: CHART_TOKENS.secondary },
+        ]}
+      />
+    </ChartCard>
+  );
+}
+
+
 
 /* ================================================== Move-ins by source */
 

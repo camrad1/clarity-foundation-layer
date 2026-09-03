@@ -57,6 +57,7 @@ const ADMIN: NavItem[] = [
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },
   { to: "/admin/query-rules", label: "Query Classification", icon: Tags },
   { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
+  { to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload },
   { to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap },
   { to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 },
   { to: "/admin/data-sources", label: "Data Sources", icon: Database },
@@ -186,6 +187,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 item={{ to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 }}
                 active={pathname === "/admin/wh-mappings"}
               />
+              <NavLink
+                item={{ to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload }}
+                active={pathname === "/admin/occupancy-history"}
+              />
+
             </div>
           ) : null}
         </nav>

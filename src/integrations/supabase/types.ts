@@ -217,6 +217,106 @@ export type Database = {
           },
         ]
       }
+      community_daily_occupancy_history: {
+        Row: {
+          beginning_occupancy_pct: number | null
+          beginning_occupied_units: number | null
+          community_id: string
+          created_at: string
+          ending_occupancy_pct: number | null
+          ending_occupied_units: number | null
+          id: string
+          import_batch_id: string | null
+          imported_at: string
+          imported_by: string | null
+          move_ins: number | null
+          move_outs: number | null
+          net_move_ins_move_outs: number | null
+          notes: string | null
+          occupancy_date: string
+          organization_id: string
+          raw_source_community_name: string | null
+          raw_source_date_label: string | null
+          source_file_name: string | null
+          source_sheet_name: string | null
+          source_type: string
+          total_units: number | null
+          validation_status: string
+        }
+        Insert: {
+          beginning_occupancy_pct?: number | null
+          beginning_occupied_units?: number | null
+          community_id: string
+          created_at?: string
+          ending_occupancy_pct?: number | null
+          ending_occupied_units?: number | null
+          id?: string
+          import_batch_id?: string | null
+          imported_at?: string
+          imported_by?: string | null
+          move_ins?: number | null
+          move_outs?: number | null
+          net_move_ins_move_outs?: number | null
+          notes?: string | null
+          occupancy_date: string
+          organization_id: string
+          raw_source_community_name?: string | null
+          raw_source_date_label?: string | null
+          source_file_name?: string | null
+          source_sheet_name?: string | null
+          source_type?: string
+          total_units?: number | null
+          validation_status?: string
+        }
+        Update: {
+          beginning_occupancy_pct?: number | null
+          beginning_occupied_units?: number | null
+          community_id?: string
+          created_at?: string
+          ending_occupancy_pct?: number | null
+          ending_occupied_units?: number | null
+          id?: string
+          import_batch_id?: string | null
+          imported_at?: string
+          imported_by?: string | null
+          move_ins?: number | null
+          move_outs?: number | null
+          net_move_ins_move_outs?: number | null
+          notes?: string | null
+          occupancy_date?: string
+          organization_id?: string
+          raw_source_community_name?: string | null
+          raw_source_date_label?: string | null
+          source_file_name?: string | null
+          source_sheet_name?: string | null
+          source_type?: string
+          total_units?: number | null
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_daily_occupancy_history_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_daily_occupancy_history_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "occupancy_history_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_daily_occupancy_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_daily_snapshot_care_types: {
         Row: {
           care_type_label: string
@@ -1752,6 +1852,137 @@ export type Database = {
           },
           {
             foreignKeyName: "metric_validation_checks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occupancy_history_community_mappings: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ignored: boolean
+          normalized_name: string
+          organization_id: string
+          source_community_name: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ignored?: boolean
+          normalized_name: string
+          organization_id: string
+          source_community_name: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ignored?: boolean
+          normalized_name?: string
+          organization_id?: string
+          source_community_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occupancy_history_community_mappings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupancy_history_community_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occupancy_history_import_batches: {
+        Row: {
+          communities_imported: number
+          created_at: string
+          cutoff_date: string
+          future_rows_skipped: number
+          id: string
+          imported_at: string
+          imported_by: string | null
+          mapping_used: Json
+          organization_id: string
+          records_imported: number
+          records_updated: number
+          report: Json
+          rows_skipped: number
+          source_file_name: string
+          source_range_end: string | null
+          source_range_start: string | null
+          source_sheet_name: string | null
+          source_type: string
+          source_year: number | null
+          unmapped_communities: string[]
+          validation_warnings: number
+        }
+        Insert: {
+          communities_imported?: number
+          created_at?: string
+          cutoff_date: string
+          future_rows_skipped?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          mapping_used?: Json
+          organization_id: string
+          records_imported?: number
+          records_updated?: number
+          report?: Json
+          rows_skipped?: number
+          source_file_name: string
+          source_range_end?: string | null
+          source_range_start?: string | null
+          source_sheet_name?: string | null
+          source_type?: string
+          source_year?: number | null
+          unmapped_communities?: string[]
+          validation_warnings?: number
+        }
+        Update: {
+          communities_imported?: number
+          created_at?: string
+          cutoff_date?: string
+          future_rows_skipped?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          mapping_used?: Json
+          organization_id?: string
+          records_imported?: number
+          records_updated?: number
+          report?: Json
+          rows_skipped?: number
+          source_file_name?: string
+          source_range_end?: string | null
+          source_range_start?: string | null
+          source_sheet_name?: string | null
+          source_type?: string
+          source_year?: number | null
+          unmapped_communities?: string[]
+          validation_warnings?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occupancy_history_import_batches_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -3850,6 +4081,20 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      occ_history_health: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          community_id: string
+          community_name: string
+          first_date: string
+          last_date: string
+          last_import_at: string
+          missing_days: number
+          record_count: number
+          source_type: string
+          warning_count: number
+        }[]
+      }
       verify_cron_token: {
         Args: { _name: string; _token: string }
         Returns: boolean
@@ -4190,6 +4435,8 @@ export type Database = {
           _start?: string
         }
         Returns: {
+          backfill_communities: number
+          beginning_occupied: number
           budget_pct: number
           budget_units: number
           census_units: number
@@ -4199,6 +4446,7 @@ export type Database = {
           occupied_units: number
           period_start: string
           reserved_count: number
+          snapshot_communities: number
           snapshot_date: string
           vacant_units: number
           variance_units: number
