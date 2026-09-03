@@ -32,8 +32,16 @@ import {
   useWhConnection,
   useWhSourceCommunities,
   useWhSyncState,
+  useWhSyncRuns,
   useWhTableRuns,
 } from "@/lib/wh/queries";
+import {
+  CommunitySyncOverview,
+  RecentSyncRuns,
+  SyncRunSummary,
+  summarizeRun,
+  type RunSummary,
+} from "@/components/clarity/wh-sync-runs";
 import { WH_ALL_TABLES, WH_CORE_TABLES } from "@/lib/wh/tables";
 import { whNightlyCancel, whNightlyRunNow, whNightlyTick } from "@/lib/wh/nightly.functions";
 import { useNightlyRuns } from "@/lib/wh/snapshots";
@@ -74,6 +82,7 @@ function WelcomeHomeAdmin() {
   const sourceCommunities = useWhSourceCommunities(connectionId);
   const syncState = useWhSyncState(connectionId);
   const runs = useWhTableRuns(connectionId, 40);
+  const syncRuns = useWhSyncRuns(connectionId, 8);
   const [token, setToken] = useState("");
   const mappings = useWhCommunityMappings(organizationId);
   const { communityScope } = useAppState();
@@ -184,6 +193,19 @@ function WelcomeHomeAdmin() {
     [mappings.data],
   );
 
+  const nameOf = useMemo(() => {
+    const map = new Map(mappedList.map((m) => [m.communityId, m.name] as const));
+    return (id: string) => map.get(id) ?? "Community";
+  }, [mappedList]);
+
+  const runSummaries = useMemo(
+    () => (syncRuns.data ?? []).map((r) => summarizeRun(r, nameOf)),
+    [syncRuns.data, nameOf],
+  );
+  const latestSummary = runSummaries[0] ?? null;
+
+  const [banner, setBanner] = useState<{ tone: "ok" | "warn" | "bad"; text: string } | null>(null);
+
   const scopedCommunityIds = useMemo(() => {
     if (scope === "all") return undefined;
     if (communityScope.mode !== "communities") return undefined;
@@ -256,6 +278,7 @@ function WelcomeHomeAdmin() {
           // recorded, retryable, and the run continues.
           failedUnits.push(unit);
         }
+        qc.invalidateQueries({ queryKey: ["wh_sync_runs"] });
         setProgress((p) => ({
           ...p,
           done: p.done + 1,
@@ -274,15 +297,30 @@ function WelcomeHomeAdmin() {
       });
       await seed({ data: { connectionId } });
 
-      if (cancelRef.current) toast.warning("Sync canceled. Completed work is saved and resumable.");
-      else if (summary.status === "success") toast.success("Sync completed");
-      else if (summary.status === "partial")
+      const attempted = units.length;
+      const succeeded = attempted - failedUnits.length;
+      if (cancelRef.current) {
+        toast.warning("Sync canceled. Completed work is saved and resumable.");
+        setBanner({ tone: "warn", text: `Sync canceled — ${succeeded} of ${attempted} work units succeeded.` });
+      } else if (summary.status === "success") {
+        toast.success("Sync completed");
+        setBanner({ tone: "ok", text: `Sync complete — ${succeeded} of ${attempted} work units succeeded.` });
+      } else if (summary.status === "partial") {
         toast.warning(`Sync partially completed — ${failedUnits.length} unit(s) need a retry.`);
-      else toast.error("Sync failed. Review the table runs below.");
+        setBanner({
+          tone: "warn",
+          text: `Sync finished with issues — ${succeeded} of ${attempted} succeeded. ${failedUnits.length} work unit${failedUnits.length === 1 ? "" : "s"} require attention.`,
+        });
+      } else {
+        toast.error("Sync failed. Review the table runs below.");
+        setBanner({ tone: "bad", text: `Sync failed — ${succeeded} of ${attempted} work units succeeded.` });
+      }
+      window.setTimeout(() => setBanner(null), 20000);
 
       setProgress((p) => ({ ...p, running: false, current: null }));
       syncState.refetch();
       runs.refetch();
+      syncRuns.refetch();
       qc.invalidateQueries({ queryKey: ["wh_lookups"] });
       qc.invalidateQueries({ queryKey: ["wh_activity_mappings"] });
       qc.invalidateQueries({ queryKey: ["wh_score_mappings"] });
@@ -293,6 +331,21 @@ function WelcomeHomeAdmin() {
     }
   }
 
+
+  function retryFailed(summary: RunSummary) {
+    if (!summary.failedUnits.length) return;
+    void orchestrate({
+      mode: "full",
+      resumeRunId: summary.id,
+      onlyUnits: summary.failedUnits.map((u) => ({
+        key: `${u.table}:${u.communityId ?? "*"}`,
+        table: u.table,
+        communityId: u.communityId,
+        communityName: u.communityName,
+        scope: u.communityId ? ("community" as const) : ("account" as const),
+      })),
+    });
+  }
 
   if (!canManageImports) {
     return (
@@ -357,6 +410,40 @@ function WelcomeHomeAdmin() {
               </p>
             </div>
           </section>
+
+          {banner ? (
+            <div
+              className={
+                banner.tone === "ok"
+                  ? "rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300"
+                  : banner.tone === "warn"
+                    ? "rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300"
+                    : "rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              }
+            >
+              {banner.text}
+            </div>
+          ) : null}
+
+          <SyncRunSummary
+            summary={latestSummary}
+            onRetryFailed={retryFailed}
+            busy={progress.running}
+          />
+
+          <CommunitySyncOverview
+            syncState={(syncState.data ?? []) as any[]}
+            nameOf={nameOf}
+            communityIds={mappedList.map((m) => m.communityId)}
+            loading={syncState.isLoading}
+          />
+
+          <RecentSyncRuns
+            summaries={runSummaries}
+            loading={syncRuns.isLoading}
+            onRetryFailed={retryFailed}
+            busy={progress.running}
+          />
 
           <section className="panel space-y-4 p-5">
             <div className="flex items-center gap-2">
@@ -633,7 +720,7 @@ function WelcomeHomeAdmin() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold">Recent table runs</h2>
+            <h2 className="text-sm font-semibold">Recent table runs (detail)</h2>
             <DataTable
               columns={[
                 { key: "started", header: "Started", render: (r: any) => <span className="text-xs">{fmt(r.started_at)}</span> },
