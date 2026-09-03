@@ -217,7 +217,20 @@ function ForecastTracker() {
                     );
                   })}
                   <th className="border-l-2 border-brand-dark bg-brand px-3 py-2 text-center font-semibold whitespace-nowrap text-brand-foreground">
-                    EOM Actual
+                    {actualsReleased ? (
+                      "EOM Actual"
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-brand-foreground/50">
+                            EOM Actual
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          Final actuals available after month close and successful WelcomeHome sync.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </th>
                 </tr>
               </thead>
