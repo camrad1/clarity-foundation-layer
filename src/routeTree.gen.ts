@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_authenticated/admin/gsc-imports'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
 import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
+import { Route as AuthenticatedAdminOccupancyHistoryRouteImport } from './routes/_authenticated/admin/occupancy-history'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
 import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
@@ -129,6 +130,12 @@ const AuthenticatedAdminMetricsRoute =
     path: '/admin/metrics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminOccupancyHistoryRoute =
+  AuthenticatedAdminOccupancyHistoryRouteImport.update({
+    id: '/admin/occupancy-history',
+    path: '/admin/occupancy-history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminOrganizationsRoute =
   AuthenticatedAdminOrganizationsRouteImport.update({
     id: '/admin/organizations',
@@ -218,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
@@ -247,6 +255,7 @@ export interface FileRoutesByTo {
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
@@ -279,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
+  '/_authenticated/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
+    | '/admin/occupancy-history'
     | '/admin/organizations'
     | '/admin/query-rules'
     | '/admin/url-rules'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
+    | '/admin/occupancy-history'
     | '/admin/organizations'
     | '/admin/query-rules'
     | '/admin/url-rules'
@@ -371,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/gsc-imports'
     | '/_authenticated/admin/mappings'
     | '/_authenticated/admin/metrics'
+    | '/_authenticated/admin/occupancy-history'
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/query-rules'
     | '/_authenticated/admin/url-rules'
@@ -513,6 +526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/occupancy-history': {
+      id: '/_authenticated/admin/occupancy-history'
+      path: '/admin/occupancy-history'
+      fullPath: '/admin/occupancy-history'
+      preLoaderRoute: typeof AuthenticatedAdminOccupancyHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/organizations': {
       id: '/_authenticated/admin/organizations'
       path: '/admin/organizations'
@@ -638,6 +658,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminGscImportsRoute: typeof AuthenticatedAdminGscImportsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
   AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
+  AuthenticatedAdminOccupancyHistoryRoute: typeof AuthenticatedAdminOccupancyHistoryRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
   AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
@@ -661,6 +682,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminGscImportsRoute: AuthenticatedAdminGscImportsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
   AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
+  AuthenticatedAdminOccupancyHistoryRoute:
+    AuthenticatedAdminOccupancyHistoryRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
   AuthenticatedAdminQueryRulesRoute: AuthenticatedAdminQueryRulesRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,

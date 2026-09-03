@@ -264,7 +264,7 @@ function OccupancyHistoryImport() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={IGNORE}>Do not import</SelectItem>
-                        {preview.availableCommunities.map((ac) => (
+                        {preview.availableCommunities.map((ac: { id: string; name: string }) => (
                           <SelectItem key={ac.id} value={ac.id}>
                             {ac.name}
                           </SelectItem>
