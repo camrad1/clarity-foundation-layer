@@ -1128,7 +1128,7 @@ function StartingRow({
 
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
-      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2 font-medium text-foreground">
+      <td className="sticky left-0 z-[2] bg-brand-soft whitespace-nowrap border-r border-brand-border px-3 py-2 font-medium text-foreground">
         Starting #
         {starting?.asOfDate ? (
           <span className="ml-2 text-[11px] text-muted-foreground">
