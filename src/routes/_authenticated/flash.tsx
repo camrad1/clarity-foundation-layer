@@ -816,6 +816,250 @@ function CompactRow({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Redesigned Current Summary panel                                    */
+/* ------------------------------------------------------------------ */
+/*
+ * One cohesive panel split into three visual groups — Current Occupancy,
+ * the month MIMO progression (MTD Actual → Scheduled Remaining → Projected
+ * EOM), and Projected Month-End Occupancy — with the Weekly Sales Update as a
+ * secondary full-width footer. No calculations change; this is a
+ * presentation reorganisation of the same server-side values.
+ */
+
+function MimoStage({
+  label,
+  mi,
+  mo,
+  net,
+  netTone,
+  prominent,
+}: {
+  label: string;
+  mi: React.ReactNode;
+  mo: React.ReactNode;
+  net: React.ReactNode;
+  netTone: "neutral" | "up" | "down";
+  prominent?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "min-w-[104px] rounded-md px-3 py-2 text-center",
+        prominent
+          ? "bg-brand-light ring-1 ring-inset ring-brand-border"
+          : "bg-surface/70 ring-1 ring-inset ring-border/70",
+      )}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 font-display text-lg font-semibold leading-tight tabular-nums">
+        <span className="text-brand">{mi}</span>
+        <span className="text-muted-foreground/50"> / </span>
+        <span className="text-brand">{mo}</span>
+        <span className="text-muted-foreground/50"> / </span>
+        <span
+          className={cn(
+            netTone === "up" && "text-success",
+            netTone === "down" && "text-destructive",
+            netTone === "neutral" && "text-brand-dark",
+          )}
+        >
+          {net}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function SecondaryStat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
+      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="font-display text-sm font-semibold tabular-nums text-foreground">{value}</span>
+    </span>
+  );
+}
+
+function CurrentSummaryPanel({
+  occ,
+  occupied,
+  census,
+  budgetUnits,
+  variance,
+  occPct,
+  budgetPct,
+  monthLabel,
+  monthPeriod,
+  weekPeriod,
+  isOrgAdmin,
+}: {
+  occ: FlashReport["occupancy"] | null;
+  occupied: number | null;
+  census: number | null;
+  budgetUnits: number | null;
+  variance: number | null;
+  occPct: number | null;
+  budgetPct: number | null;
+  monthLabel: string;
+  monthPeriod: FlashPeriod | null;
+  weekPeriod: FlashPeriod | null;
+  isOrgAdmin: boolean;
+}) {
+  const mtdMi = num(monthPeriod?.moveIns ?? null);
+  const mtdMo = num(monthPeriod?.moveOuts ?? null);
+  const mtdNet = signed(monthPeriod?.net ?? null);
+  const mtdNetTone = tone(monthPeriod?.net ?? null);
+
+  const schMi = num(monthPeriod?.pendingIn ?? null);
+  const schMo = num(monthPeriod?.pendingOut ?? null);
+  const schNet = signed(monthPeriod?.pendingNet ?? null);
+  const schNetTone = tone(monthPeriod?.pendingNet ?? null);
+
+  const eomMi = num(projectedEomMi(monthPeriod));
+  const eomMo = num(projectedEomMo(monthPeriod));
+  const eomNet = signed(projectedEomNet(monthPeriod));
+  const eomNetTone = tone(projectedEomNet(monthPeriod));
+
+  const projOcc = monthPeriod?.projectedOccupiedUnits ?? null;
+  const projPct =
+    monthPeriod?.projectedOccupancyPct == null
+      ? null
+      : Number(monthPeriod.projectedOccupancyPct);
+
+  const careTypes =
+    occ && occ.byCareType.length > 1
+      ? occ.byCareType.map((c) => `${c.occupied}/${c.units}`).join("  ·  ")
+      : null;
+
+  return (
+    <div className="panel-brand overflow-hidden">
+      <div className="grid grid-cols-1 divide-y divide-brand-border/70 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)] lg:divide-y-0 lg:divide-x">
+        {/* A. Current Occupancy */}
+        <div className="p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">Current occupancy</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-3xl font-semibold tracking-tight text-brand">
+              {num(occupied)}
+              <span className="text-muted-foreground/50"> / {num(census)}</span>
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">occupied</span>
+          </div>
+          <p className="mt-1 font-display text-xl font-semibold text-brand-dark">
+            {pct1(occPct)}
+            <span className="ml-1 text-xs font-medium text-muted-foreground">OCC</span>
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1.5">
+            <SecondaryStat
+              label="Budget"
+              value={
+                budgetUnits == null ? (
+                  <span className="text-xs font-medium text-muted-foreground">not set</span>
+                ) : (
+                  num(budgetUnits)
+                )
+              }
+            />
+            <SecondaryStat
+              label="Variance"
+              value={variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
+            />
+            <SecondaryStat label="Budget %" value={pct1(budgetPct)} />
+            <SecondaryStat label="On notice" value={num(occ?.noticeCount ?? null)} />
+          </div>
+
+          {budgetUnits == null && isOrgAdmin ? (
+            <Link
+              to="/admin/communities"
+              className="no-print mt-3 inline-block text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
+            >
+              Edit community budget
+            </Link>
+          ) : null}
+          {careTypes ? (
+            <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+              <span className="font-medium uppercase tracking-wide">By care type</span>{" "}
+              {careTypes}
+            </p>
+          ) : null}
+        </div>
+
+        {/* B. MIMO progression */}
+        <div className="p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+              {monthLabel} MIMO
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Move-Ins / Move-Outs / Net
+            </p>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <MimoStage label="MTD actual" mi={mtdMi} mo={mtdMo} net={mtdNet} netTone={mtdNetTone} />
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground/60" />
+            <MimoStage
+              label="Scheduled remaining"
+              mi={schMi}
+              mo={schMo}
+              net={schNet}
+              netTone={schNetTone}
+            />
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground/60" />
+            <MimoStage
+              label="Projected EOM"
+              mi={eomMi}
+              mo={eomMo}
+              net={eomNet}
+              netTone={eomNetTone}
+              prominent
+            />
+          </div>
+        </div>
+
+        {/* C. Projected month-end occupancy */}
+        <div className="p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+            Projected month-end
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-3xl font-semibold tracking-tight text-brand">
+              {num(projOcc)}
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">occupied</span>
+          </div>
+          <p className="mt-1 font-display text-xl font-semibold text-brand-dark">
+            {projPct == null ? "—" : `${projPct.toFixed(1)}%`}
+            <span className="ml-1 text-xs font-medium text-muted-foreground">projected OCC</span>
+          </p>
+          <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            Based on MTD actuals plus confirmed remaining move-ins and move-outs.
+          </p>
+        </div>
+      </div>
+
+      {/* Weekly sales update — secondary, full-width footer */}
+      <div className="border-t border-brand-border/70 bg-brand-soft/40 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+            Weekly sales update
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5">
+            <SecondaryStat label="Inquiries" value={num(weekPeriod?.inquiries ?? null)} />
+            <SecondaryStat
+              label="Outreach"
+              value={
+                weekPeriod?.outreachMapped === false ? "Not mapped" : num(weekPeriod?.outreach ?? null)
+              }
+            />
+            <SecondaryStat label="Tours" value={num(weekPeriod?.tours ?? null)} />
+            <SecondaryStat label="Re-Tours" value={num(weekPeriod?.reTours ?? null)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Compact tracker card used by the three-column monthly tracker row. */
 function TrackerCard({
   title,
