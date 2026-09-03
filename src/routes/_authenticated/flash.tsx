@@ -1038,7 +1038,9 @@ function WeekByWeekGrid({
         <thead>
           {/* Grouped legacy heading row — visually dominant */}
           <tr className="thead-brand-strong text-[11px] font-semibold uppercase tracking-wider">
-            <th className="whitespace-nowrap px-3 py-2 text-left">Week / Date</th>
+            <th className="sticky left-0 z-[4] bg-inherit whitespace-nowrap border-r border-white/25 px-3 py-2 text-left">
+              Week / Date
+            </th>
             {groups.map((g) => (
               <th
                 key={g.label}
@@ -1051,7 +1053,7 @@ function WeekByWeekGrid({
           </tr>
           {/* Subheading row — lighter */}
           <tr className="thead-brand border-b border-brand-border text-[10px] uppercase tracking-wide text-foreground/70">
-            <th className="px-3 py-1.5 text-left font-medium" />
+            <th className="sticky left-0 z-[4] bg-inherit px-3 py-1.5 text-left font-medium" />
             {groups.map((g) =>
               g.cols.map((c, i) => (
                 <th
@@ -1125,7 +1127,7 @@ function StartingRow({
 
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
-      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">
+      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2 font-medium text-foreground">
         Starting #
         {starting?.asOfDate ? (
           <span className="ml-2 text-[11px] text-muted-foreground">
@@ -1167,12 +1169,14 @@ function GridRow({
   return (
     <tr
       className={cn(
-        "border-b border-brand-border/60 last:border-0 odd:bg-brand-soft/50 hover:bg-brand-light/60",
+        // Opaque row tints so the sticky first column (bg-inherit) does not
+        // bleed through while horizontally scrolling.
+        "border-b border-brand-border/60 last:border-0 odd:bg-brand-soft hover:bg-brand-light",
         emphasis && "border-t-2 border-t-brand bg-brand-light font-semibold text-foreground",
-        w.isCurrent && !emphasis && "bg-brand-light/70",
+        w.isCurrent && !emphasis && "bg-brand-light",
       )}
     >
-      <td className="whitespace-nowrap px-3 py-2">
+      <td className="sticky left-0 z-[2] bg-inherit whitespace-nowrap border-r border-brand-border px-3 py-2">
         <span className="font-medium">{w.label}</span>
         <span className="ml-2 text-[11px] text-muted-foreground">
           {formatDay(w.start)} – {formatDay(w.end)}
