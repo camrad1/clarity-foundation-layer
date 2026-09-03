@@ -423,7 +423,11 @@ function FlashReportPage() {
       {/* 1. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
       <Section
         title={`${formatMonth(month)} — Week by Week`}
-        description="Sunday–Saturday weeks ending inside the month, plus month end."
+        description={
+          data?.month.isMonthClosed === false
+            ? "Sunday–Saturday weeks ending inside the month, plus a month-to-date row. Finalized month-end occupancy appears once the month closes."
+            : "Sunday–Saturday weeks ending inside the month, plus month end."
+        }
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
         <p className="pt-2 text-[11px] text-muted-foreground">
