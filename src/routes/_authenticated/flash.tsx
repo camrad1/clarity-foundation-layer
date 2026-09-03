@@ -845,14 +845,54 @@ function WeekByWeekGrid({
   );
 }
 
-function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols: number }) {
+/**
+ * Legacy "Starting #" row: the occupancy position going into the month, read
+ * from the last immutable daily snapshot before the first reporting week.
+ * When no snapshot exists for that date the cells stay "—" — the position is
+ * never reconstructed from today's current state.
+ */
+function StartingRow({
+  careTypes,
+  totalCols,
+  starting,
+}: {
+  careTypes: string[];
+  totalCols: number;
+  starting: FlashReport["starting"] | null | undefined;
+}) {
   const occCols = 6 + careTypes.length;
+  const o = starting?.occupancy ?? null;
+  const b = starting?.budget?.units ?? null;
+  const occupied = o?.occupiedUnits ?? null;
+  const variance = occupied != null && b != null ? occupied - b : null;
+  const cells: (string | number)[] = o
+    ? [
+        o.totalUnits,
+        occupied ?? "—",
+        b ?? "—",
+        variance == null ? "—" : variance > 0 ? `+${variance}` : variance,
+        occupied != null && o.censusUnits ? `${((occupied / o.censusUnits) * 100).toFixed(1)}%` : "—",
+        occupied != null && b ? `${((occupied / b) * 100).toFixed(1)}%` : "—",
+        ...careTypes.map((ct) => {
+          const row = o.byCareType.find((c) => c.careType === ct);
+          return row ? `${row.occupied}/${row.units}` : "—";
+        }),
+      ]
+    : Array.from({ length: occCols }, () => "—");
+
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
-      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
-      {Array.from({ length: occCols }).map((_, i) => (
+      <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">
+        Starting #
+        {starting?.asOfDate ? (
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            {o ? `snapshot ${formatDay(o.snapshotDate ?? starting.asOfDate)}` : `as of ${formatDay(starting.asOfDate)}`}
+          </span>
+        ) : null}
+      </td>
+      {cells.map((v, i) => (
         <td key={`s-occ-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
-          —
+          {v}
         </td>
       ))}
       {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
