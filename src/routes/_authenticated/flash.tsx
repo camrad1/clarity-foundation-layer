@@ -846,12 +846,16 @@ function StartingRow({ careTypes, totalCols }: { careTypes: string[]; totalCols:
   return (
     <tr className="border-b border-brand-border/70 bg-brand-soft text-muted-foreground">
       <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">Starting #</td>
-      <td className={cn("px-3 py-2 text-center text-[11px] italic", GROUP_BORDER)} colSpan={occCols}>
-        Snapshot required — month-start occupancy needs the nightly daily snapshot
-      </td>
-      <td className={cn("px-3 py-2 text-right text-[11px]", GROUP_BORDER)} colSpan={totalCols - 1 - occCols}>
-        —
-      </td>
+      {Array.from({ length: occCols }).map((_, i) => (
+        <td key={`s-occ-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+          —
+        </td>
+      ))}
+      {Array.from({ length: totalCols - 1 - occCols }).map((_, i) => (
+        <td key={`s-rest-${i}`} className={cn("px-3 py-2 text-center tabular-nums", i === 0 && GROUP_BORDER)}>
+          —
+        </td>
+      ))}
     </tr>
   );
 }
