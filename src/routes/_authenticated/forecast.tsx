@@ -106,6 +106,7 @@ function ForecastTracker() {
   const dates = useMemo(() => forecastDatesForMonth(month), [month]);
   const entries = useForecastEntries(organizationId, month);
   const actuals = useForecastEomActuals(organizationId, month, selectedIds);
+  const finalized = useForecastActualsFinalized(organizationId, month);
   const save = useSaveForecast(month);
   const [edit, setEdit] = useState<EditTarget | null>(null);
 
@@ -115,11 +116,19 @@ function ForecastTracker() {
     return map;
   }, [entries.data]);
 
+  /**
+   * EOM Actual is a finalized full-month result. While the month is open — or
+   * before the post-close WelcomeHome sync succeeds — the map stays empty so
+   * every row and the TOTAL render “—” instead of month-to-date activity.
+   */
+  const actualsReleased = finalized.data === true;
+
   const actualByCommunity = useMemo(() => {
     const map = new Map<string, { move_ins: number; move_outs: number }>();
+    if (!actualsReleased) return map;
     for (const a of actuals.data ?? []) map.set(a.community_id, a);
     return map;
-  }, [actuals.data]);
+  }, [actuals.data, actualsReleased]);
 
   const totals = useMemo(() => {
     const perDate = dates.map((d) => {
