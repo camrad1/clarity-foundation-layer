@@ -582,15 +582,15 @@ function FlashReportPage() {
       </Section>
 
 
-      {/* 6. NEXT MONTH PENDING MIMO */}
+      {/* 6. NEXT MONTH SCHEDULED MIMO */}
       <Section
-        title={`Next month pending MIMO (${formatMonth(nmStart)})`}
+        title={`Next month scheduled MIMO (${formatMonth(nmStart)})`}
         badge={<CurrentStateBadge />}
-        description="Future-dated WelcomeHome contract state for next month."
+        description="WelcomeHome-confirmed future-dated contract state for next month."
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Pending move-ins" value={num(data?.nextMonth.pendingIn)} />
-          <Stat label="Pending move-outs / notices" value={num(data?.nextMonth.pendingOut)} />
+          <Stat label="Scheduled move-ins" value={num(data?.nextMonth.pendingIn)} />
+          <Stat label="Scheduled move-outs / notices" value={num(data?.nextMonth.pendingOut)} />
           <Stat label="Net" value={data ? String(data.nextMonth.pendingNet) : "—"} />
         </div>
       </Section>
