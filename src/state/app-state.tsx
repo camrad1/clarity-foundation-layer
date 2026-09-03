@@ -34,12 +34,16 @@ type PersistedState = {
   organizationId: string | null;
   dateRange: DateRangeValue;
   communityScope: CommunityScope;
+  comparisonMode: ComparisonPeriodMode;
 };
 
 type AppStateContextValue = PersistedState & {
+  /** Resolved comparison window, or null when comparison is off. */
+  comparisonRange: Period | null;
   setOrganizationId: (id: string | null) => void;
   setDatePreset: (preset: DateRangePreset) => void;
   setCustomRange: (start: string, end: string) => void;
+  setComparisonMode: (mode: ComparisonPeriodMode) => void;
   setCommunityScope: (scope: CommunityScope) => void;
   toggleCommunity: (id: string) => void;
   hydrated: boolean;
@@ -49,8 +53,9 @@ const STORAGE_KEY = "clarityiq.filters.v1";
 
 const defaultState: PersistedState = {
   organizationId: null,
-  dateRange: resolvePreset("current_month"),
+  dateRange: resolvePreset("this_month"),
   communityScope: { mode: "all" },
+  comparisonMode: "none",
 };
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
