@@ -357,11 +357,13 @@ export function GroupedBarChart({
   stacked?: boolean;
 }) {
   const isMobile = useIsMobile();
+  const focus = useSeriesFocus();
   // Stacked charts draw one label per period, so only bucket count matters.
   const crowded = isMobile || (stacked ? data.length > 16 : data.length * Math.max(1, bars.length) > 26);
   const showLabels = !crowded;
   const totals = data.map((row) => bars.reduce((s, b) => s + Number(row[b.key] ?? 0), 0));
   const lastBarKey = bars.length ? bars[bars.length - 1]!.key : null;
+  const multi = bars.length > 1;
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -377,17 +379,51 @@ export function GroupedBarChart({
           verticalAlign="bottom"
           height={28}
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
+          {...(multi ? { content: <FocusLegend series={bars} focus={focus} /> } : {})}
         />
-        {bars.map((b) => (
+        {bars.map((b) => {
+          const isActive = focus.active === b.key;
+          const dimmed = focus.active != null && !isActive;
+          return (
           <Bar
             key={b.key}
             dataKey={b.key}
             name={b.label}
             fill={b.color}
+            fillOpacity={dimmed ? 0.15 : 1}
+            isAnimationActive={false}
             {...(stacked ? { stackId: "stack" } : { radius: [3, 3, 0, 0] as [number, number, number, number] })}
             maxBarSize={stacked ? 34 : 22}
           >
-            {showLabels && !stacked ? (
+            {isActive ? (
+              <LabelList
+                dataKey={b.key}
+                position={stacked ? "center" : "top"}
+                offset={stacked ? 0 : 4}
+                content={(props: any) => {
+                  const v = Number(props.value ?? 0);
+                  if (!v) return null;
+                  const cx = Number(props.x) + Number(props.width) / 2;
+                  const cy = stacked
+                    ? Number(props.y) + Number(props.height) / 2 + 3
+                    : Number(props.y) - 4;
+                  return (
+                    <text
+                      x={cx}
+                      y={cy}
+                      textAnchor="middle"
+                      stroke="var(--card)"
+                      strokeWidth={3}
+                      paintOrder="stroke"
+                      style={{ ...LABEL_STYLE, fill: b.color, fontWeight: 700 }}
+                    >
+                      {fmtCount(v)}
+                    </text>
+                  );
+                }}
+              />
+            ) : null}
+            {!isActive && !dimmed && showLabels && !stacked ? (
               <LabelList
                 dataKey={b.key}
                 position="top"
@@ -396,7 +432,7 @@ export function GroupedBarChart({
                 formatter={(v: any) => (Number(v) > 0 ? fmtCount(Number(v)) : "")}
               />
             ) : null}
-            {showLabels && stacked && b.key === lastBarKey ? (
+            {focus.active == null && showLabels && stacked && b.key === lastBarKey ? (
               <LabelList
                 dataKey={b.key}
                 position="top"
@@ -418,7 +454,8 @@ export function GroupedBarChart({
               />
             ) : null}
           </Bar>
-        ))}
+        );})}
+
         {line ? (
           <Line
             type="monotone"
