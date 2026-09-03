@@ -3850,6 +3850,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      verify_cron_token: {
+        Args: { _name: string; _token: string }
+        Returns: boolean
+      }
       wh_activity_mix: {
         Args: {
           _community_ids?: string[]
