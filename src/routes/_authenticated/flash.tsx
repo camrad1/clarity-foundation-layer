@@ -449,115 +449,27 @@ function FlashReportPage() {
         badge={<CurrentStateBadge />}
         description="Occupancy reflects current WelcomeHome contract and unit state as of today. Completed weeks read their occupancy from that week's immutable daily snapshot. Move-ins, move-outs and sales activity are for the selected Flash week."
       >
-        <div className="panel-brand divide-y divide-brand-border/70">
-          <CompactRow
-            heading="Current weekly summary"
-            items={[
-              { label: "Total units", value: num(occ?.totalUnits) },
-              { label: "Census", value: num(census) },
-              { label: "Unit occ", value: num(occupied) },
-              {
-                label: "Unit budget",
-                value:
-                  budgetUnits == null ? (
-                    <span className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-medium text-muted-foreground">Budget not set</span>
-                      {isOrgAdmin ? (
-                        <Link
-                          to="/admin/communities"
-                          className="no-print text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
-                        >
-                          Edit community budget
-                        </Link>
-                      ) : null}
-                    </span>
-                  ) : (
-                    num(budgetUnits)
-                  ),
-              },
-              {
-                label: "Variance",
-                value: variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance),
-                tone: variance == null ? "neutral" : variance >= 0 ? "up" : "down",
-              },
-              { label: "OCC %", value: pct1(occPct) },
-              { label: "Budget %", value: pct1(budgetPct) },
-              { label: "On notice", value: num(occ?.noticeCount) },
-              ...(occ && occ.byCareType.length > 1
-                ? occ.byCareType.map((c) => ({
-                    label: c.careType,
-                    value: `${c.occupied}/${c.units}`,
-                  }))
-                : []),
-            ]}
-          />
-          <CompactRow
-            heading={`Month-to-date actual (${formatMonth(month)})`}
-            hint="Completed events from the first of the month through today."
-            items={[
-              { label: "MTD Move-Ins", value: num(data?.month.moveIns) },
-              { label: "MTD Move-Outs", value: num(data?.month.moveOuts) },
-              {
-                label: "Net",
-                value: signed(data?.month.net ?? null),
-                tone: tone(data?.month.net ?? null),
-              },
-            ]}
-          />
-          <CompactRow
-            heading={`This month — scheduled remaining (${formatMonth(month)})`}
-            hint="WelcomeHome-confirmed future-dated contracts for the remainder of the month. Not a forecast."
-            items={[
-              { label: "Scheduled Move-Ins", value: num(data?.month.pendingIn) },
-              { label: "Scheduled Move-Outs", value: num(data?.month.pendingOut) },
-              {
-                label: "Net",
-                value: signed(data?.month.pendingNet ?? null),
-                tone: tone(data?.month.pendingNet ?? null),
-              },
-            ]}
-          />
-          <CompactRow
-            heading={`Projected total end of month (${formatMonth(month)})`}
-            hint="Projected totals = MTD actual + scheduled remaining. Projected occupancy applies the same scheduled contracts to current canonical occupancy."
-            prominent
-            items={[
-              { label: "Projected Total Move-Ins", value: num(projectedEomMi(data?.month)) },
-              { label: "Projected Total Move-Outs", value: num(projectedEomMo(data?.month)) },
-              {
-                label: "Projected Total Net",
-                value: signed(projectedEomNet(data?.month)),
-                tone: tone(projectedEomNet(data?.month)),
-              },
-              {
-                label: "Projected Occupied Units",
-                value: num(data?.month.projectedOccupiedUnits ?? null),
-                group: true,
-              },
-              {
-                label: "Projected OCC %",
-                value:
-                  data?.month.projectedOccupancyPct == null
-                    ? "—"
-                    : `${Number(data.month.projectedOccupancyPct).toFixed(1)}%`,
-                group: true,
-              },
-            ]}
-          />
-
-          <CompactRow
-            heading="Weekly sales update"
-            items={[
-              { label: "Inquiries", value: num(data?.week.inquiries) },
-              {
-                label: "Outreach Contacts",
-                value: data?.week.outreachMapped === false ? "Not mapped" : num(data?.week.outreach),
-              },
-              { label: "Tours", value: num(data?.week.tours) },
-              { label: "Re-Tours", value: num(data?.week.reTours) },
-            ]}
-          />
-        </div>
+        <CurrentSummaryPanel
+          occ={occ}
+          occupied={occupied}
+          census={census}
+          budgetUnits={budgetUnits}
+          variance={variance}
+          occPct={occPct}
+          budgetPct={budgetPct}
+          monthLabel={formatMonth(month)}
+          monthPeriod={data?.month ?? null}
+          weekPeriod={data?.week ?? null}
+          isOrgAdmin={isOrgAdmin}
+        />
+        {data?.month.projectedOverCapacity ? (
+          <p className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+            Data Health warning — projected month-end occupied units
+            ({data.month.projectedOccupiedUnits}) exceed canonical census capacity
+            ({data.month.projectedCensusUnits}). Pending contract dates or unit census flags need
+            review in WelcomeHome. The calculation has not been adjusted.
+          </p>
+        ) : null}
         {data?.month.projectedOverCapacity ? (
           <p className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
             Data Health warning — projected month-end occupied units
