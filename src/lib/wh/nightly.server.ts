@@ -66,6 +66,22 @@ export function localDate(timezone: string | null): string {
   }
 }
 
+/** Local hour (0–23) for a community, used to keep the job inside its own night. */
+export function localHour(timezone: string | null): number {
+  try {
+    return Number(
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: timezone || "UTC",
+        hour: "2-digit",
+        hour12: false,
+      }).format(new Date()),
+    );
+  } catch {
+    return new Date().getUTCHours();
+  }
+}
+
+
 export type EnsureResult = {
   runId: string | null;
   created: boolean;
