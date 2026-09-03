@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { RecordFormDialog } from "@/components/clarity/record-form-dialog";
 import { StatusPill } from "@/components/clarity/status-pill";
+import { COMMON_TIMEZONES, isValidTimezone, timezoneLabel } from "@/lib/timezones";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsPlatformAdmin, useOrganizations } from "@/lib/clarity-queries";
 
@@ -60,15 +61,24 @@ function Organizations() {
               {
                 name: "default_timezone",
                 label: "Default timezone",
-                placeholder: "America/Chicago",
+                type: "select",
+                required: true,
                 help: "Communities may override this individually.",
+                options: COMMON_TIMEZONES.map((t) => ({
+                  value: t.value,
+                  label: `${t.label} — ${t.value}`,
+                })),
               },
             ]}
             onSubmit={async (v) => {
               const { error } = await supabase.from("organizations").insert({
                 name: v("name"),
                 slug: v("slug"),
-                default_timezone: v("default_timezone") || "America/Chicago",
+                default_timezone: (() => {
+                  const tz = v("default_timezone");
+                  if (!isValidTimezone(tz)) throw new Error("Select a supported default timezone");
+                  return tz;
+                })(),
               });
               if (error) throw error;
               await qc.invalidateQueries({ queryKey: ["organizations"] });
@@ -89,7 +99,7 @@ function Organizations() {
         columns={[
           { key: "name", header: "Organization", render: (r) => <span className="font-medium">{r.name}</span> },
           { key: "slug", header: "Slug", render: (r) => <span className="font-mono text-xs">{r.slug}</span> },
-          { key: "tz", header: "Default timezone", render: (r) => r.default_timezone },
+          { key: "tz", header: "Default timezone", render: (r) => `${timezoneLabel(r.default_timezone)} — ${r.default_timezone}` },
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
           {
             key: "created",
