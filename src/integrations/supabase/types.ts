@@ -2837,6 +2837,164 @@ export type Database = {
           },
         ]
       }
+      wh_nightly_runs: {
+        Row: {
+          communities_done: number
+          communities_failed: number
+          communities_total: number
+          connection_id: string
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          lease_expires_at: string | null
+          lease_token: string | null
+          organization_id: string
+          run_date: string
+          snapshots_written: number
+          started_at: string | null
+          status: string
+          ticks: number
+          triggered_by: string
+          triggered_by_user: string | null
+          updated_at: string
+        }
+        Insert: {
+          communities_done?: number
+          communities_failed?: number
+          communities_total?: number
+          connection_id: string
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          organization_id: string
+          run_date?: string
+          snapshots_written?: number
+          started_at?: string | null
+          status?: string
+          ticks?: number
+          triggered_by?: string
+          triggered_by_user?: string | null
+          updated_at?: string
+        }
+        Update: {
+          communities_done?: number
+          communities_failed?: number
+          communities_total?: number
+          connection_id?: string
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          organization_id?: string
+          run_date?: string
+          snapshots_written?: number
+          started_at?: string | null
+          status?: string
+          ticks?: number
+          triggered_by?: string
+          triggered_by_user?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_nightly_runs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_nightly_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wh_nightly_units: {
+        Row: {
+          attempts: number
+          community_id: string
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          organization_id: string
+          run_id: string
+          snapshot_date: string | null
+          started_at: string | null
+          status: string
+          sync_run_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          community_id: string
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          run_id: string
+          snapshot_date?: string | null
+          started_at?: string | null
+          status?: string
+          sync_run_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          community_id?: string
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          run_id?: string
+          snapshot_date?: string | null
+          started_at?: string | null
+          status?: string
+          sync_run_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_nightly_units_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_nightly_units_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_nightly_units_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "wh_nightly_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wh_nightly_units_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "source_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wh_prospects: {
         Row: {
           account_id: string | null
@@ -3910,6 +4068,18 @@ export type Database = {
           unit_label: string
           unit_source_id: string
         }[]
+      }
+      wh_nightly_claim: {
+        Args: { _lease_seconds?: number; _run_id: string }
+        Returns: string
+      }
+      wh_nightly_claim_unit: {
+        Args: { _lease_token: string; _run_id: string }
+        Returns: string
+      }
+      wh_nightly_release: {
+        Args: { _lease_token: string; _run_id: string }
+        Returns: undefined
       }
       wh_norm_unit_label: { Args: { _v: string }; Returns: string }
       wh_occupancy_asof: {
