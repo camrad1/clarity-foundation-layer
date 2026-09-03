@@ -117,6 +117,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, dateRange: { preset: "custom", start, end } }));
   }, []);
 
+  const setComparisonMode = useCallback((comparisonMode: ComparisonPeriodMode) => {
+    setState((s) => ({ ...s, comparisonMode }));
+  }, []);
+
   const setCommunityScope = useCallback((communityScope: CommunityScope) => {
     setState((s) => ({ ...s, communityScope }));
   }, []);
