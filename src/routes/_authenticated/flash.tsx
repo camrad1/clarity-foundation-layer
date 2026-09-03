@@ -533,6 +533,14 @@ function FlashReportPage() {
             ]}
           />
         </div>
+        {data?.month.projectedOverCapacity ? (
+          <p className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+            Data Health warning — projected month-end occupied units
+            ({data.month.projectedOccupiedUnits}) exceed canonical census capacity
+            ({data.month.projectedCensusUnits}). Pending contract dates or unit census flags need
+            review in WelcomeHome. The calculation has not been adjusted.
+          </p>
+        ) : null}
       </Section>
 
 
