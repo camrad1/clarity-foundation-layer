@@ -168,9 +168,84 @@ export function ChartCard({
 export type TrendSeries = { key: string; label: string; color: string; dashed?: boolean };
 
 /**
+ * Legend hover + series focus.
+ *
+ * Presentation-only state: hovering (or tapping, on touch devices) a legend
+ * item emphasises one series and mutes the rest; clicking locks the focus.
+ * None of this touches the persisted series-toggle selection and none of it
+ * triggers a request — the aggregate for the whole window is already loaded.
+ */
+function useSeriesFocus() {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [locked, setLocked] = useState<string | null>(null);
+  const active = locked ?? hovered;
+  return {
+    active,
+    locked,
+    onEnter: (key: string) => setHovered(key),
+    onLeave: () => setHovered(null),
+    onSelect: (key: string) => setLocked((cur) => (cur === key ? null : key)),
+    clear: () => {
+      setLocked(null);
+      setHovered(null);
+    },
+  };
+}
+
+function FocusLegend({
+  series,
+  focus,
+  iconType = "square",
+}: {
+  series: TrendSeries[];
+  focus: ReturnType<typeof useSeriesFocus>;
+  iconType?: "square" | "line";
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 text-[11px]">
+      {series.map((s) => {
+        const dimmed = focus.active != null && focus.active !== s.key;
+        return (
+          <button
+            key={s.key}
+            type="button"
+            aria-pressed={focus.locked === s.key}
+            onMouseEnter={() => focus.onEnter(s.key)}
+            onMouseLeave={focus.onLeave}
+            onFocus={() => focus.onEnter(s.key)}
+            onBlur={focus.onLeave}
+            onClick={() => focus.onSelect(s.key)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-1.5 py-0.5 transition-opacity",
+              dimmed ? "opacity-40" : "opacity-100",
+              focus.locked === s.key && "bg-muted",
+            )}
+          >
+            <span
+              className={cn(iconType === "line" ? "h-0.5 w-3 rounded-full" : "size-2 rounded-[2px]")}
+              style={{ background: s.color }}
+            />
+            <span className="text-muted-foreground">{s.label}</span>
+          </button>
+        );
+      })}
+      {focus.locked ? (
+        <button
+          type="button"
+          onClick={focus.clear}
+          className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground"
+        >
+          Show all
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * Multi-series monthly line chart. Data must already be one row per bucket.
  * Only the latest point of each series is labelled, so multi-series trends stay
- * readable; every point remains available in the tooltip.
+ * readable; focusing a series labels every one of its points.
  */
 export function MetricTrendChart({
   data,
@@ -184,8 +259,10 @@ export function MetricTrendChart({
   labelLatest?: boolean;
 }) {
   const isMobile = useIsMobile();
+  const focus = useSeriesFocus();
   const lastIndex = data.length - 1;
   const showLabels = labelLatest && !isMobile && lastIndex >= 0;
+  const multi = series.length > 1;
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data} margin={{ top: 12, right: 28, bottom: 0, left: -18 }}>
@@ -198,20 +275,34 @@ export function MetricTrendChart({
           height={28}
           iconType="plainline"
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
+          {...(multi ? { content: <FocusLegend series={series} focus={focus} iconType="line" /> } : {})}
         />
-        {series.map((s) => (
+        {series.map((s) => {
+          const isActive = focus.active === s.key;
+          const dimmed = focus.active != null && !isActive;
+          return (
           <Line
             key={s.key}
             type="monotone"
             dataKey={s.key}
             name={s.label}
             stroke={s.color}
-            strokeWidth={2}
+            strokeWidth={isActive ? 3 : 2}
+            strokeOpacity={dimmed ? 0.15 : 1}
             strokeDasharray={s.dashed ? "4 3" : undefined}
             dot={false}
             activeDot={{ r: 4 }}
+            isAnimationActive={false}
           >
-            {showLabels ? (
+            {isActive ? (
+              <LabelList
+                dataKey={s.key}
+                position="top"
+                offset={8}
+                style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
+                formatter={(v: any) => (v == null ? "" : fmtCount(Number(v)))}
+              />
+            ) : showLabels && !dimmed ? (
               <LabelList
                 dataKey={s.key}
                 position="top"
@@ -239,11 +330,12 @@ export function MetricTrendChart({
               />
             ) : null}
           </Line>
-        ))}
+        );})}
       </LineChart>
     </ResponsiveContainer>
   );
 }
+
 
 /**
  * Grouped (or stacked) monthly bars with an optional overlay line.
