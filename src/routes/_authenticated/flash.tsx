@@ -511,45 +511,56 @@ function FlashReportPage() {
             )}
           </TrackerCard>
 
-          <TrackerCard title={`Hot Lead Monthly Tracker (${hotLeads.data?.total ?? 0})`} loading={hotLeads.isLoading}>
+          {/* Current-state working list: every open prospect currently scored Hot,
+              regardless of inquiry date or the selected Flash week/month. */}
+          <TrackerCard
+            title={`Hot Lead Tracker (${hotLeads.data?.total ?? 0})`}
+            badge={<CurrentStateBadge />}
+            loading={hotLeads.isLoading}
+          >
             {(hotLeads.data?.rows ?? []).length === 0 && !hotLeads.isLoading ? (
               <p className="px-3 py-4 text-xs text-muted-foreground">No open prospects mapped to the Hot score.</p>
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="thead-brand text-[10px] uppercase tracking-wide">
-                    <th className="px-3 py-1.5 text-left font-medium">Resident/Prospect</th>
-                    <th className="px-3 py-1.5 text-left font-medium">Stage</th>
-                    <th className="px-3 py-1.5 text-left font-medium">Next activity / Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(hotLeads.data?.rows ?? []).map((r: any) => (
-                    <tr key={r.source_id} className="border-t border-brand-border/50">
-                      <td className="max-w-[110px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
-                      <td className="max-w-[90px] truncate px-3 py-1.5 text-muted-foreground">
-                        {resolveLabel(labels.stage, r.stage_id, "Unknown stage")}
-                      </td>
-                      <td className="px-3 py-1.5 text-muted-foreground">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="whitespace-nowrap">
-                            {r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toLocaleDateString() : "—"}
-                          </span>
-                          <NoteCell
-                            organizationId={organizationId}
-                            communityId={r.community_id}
-                            subjectType="hot_lead"
-                            subjectKey={r.source_id}
-                            month={mStart}
-                            weekStart={week.start}
-                            notes={notes.data ?? {}}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="divide-y divide-brand-border/50 text-xs">
+                {(hotLeads.data?.rows ?? []).map((r: any) => (
+                  <li key={r.source_id} className="px-3 py-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="truncate font-medium">{personName(r.person_name)}</span>
+                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-brand">
+                        {r.score_label ?? "Hot"}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                      <span className="truncate">
+                        {resolveLabel(labels.stage, r.stage_id, r.stage_label ?? "Unknown stage")}
+                      </span>
+                      <span className="truncate">Inq. {formatDay(r.inquiry_date)}</span>
+                      <span className="truncate">
+                        {r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, "Source n/a")}
+                      </span>
+                      <span className="truncate">
+                        {resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
+                      </span>
+                      <span className="truncate">Last {formatDay(r.last_contact_at)}</span>
+                      <span className="truncate">
+                        Next{" "}
+                        {r.next_activity_scheduled_at
+                          ? new Date(r.next_activity_scheduled_at).toLocaleDateString()
+                          : "—"}
+                      </span>
+                    </div>
+                    <NoteCell
+                      organizationId={organizationId}
+                      communityId={r.community_id}
+                      subjectType="hot_lead"
+                      subjectKey={r.source_id}
+                      month={mStart}
+                      weekStart={week.start}
+                      notes={notes.data ?? {}}
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
           </TrackerCard>
         </div>
