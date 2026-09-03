@@ -106,7 +106,7 @@ function TooltipBox({
       {showTotal && rows.length > 1 ? (
         <p className="mt-1 flex items-center gap-2 border-t border-border pt-1 text-muted-foreground">
           <span className="size-2" />
-          <span className="text-foreground">Total</span>
+          <span className="text-foreground">{totalLabel}</span>
           <span className="ml-auto tabular-nums font-medium text-foreground">{fmtCount(total)}</span>
         </p>
       ) : null}
@@ -353,12 +353,15 @@ export function GroupedBarChart({
   line,
   xKey = "label",
   stacked = false,
+  totalLabel,
 }: {
   data: Record<string, any>[];
   bars: TrendSeries[];
   line?: TrendSeries | undefined;
   xKey?: string;
   stacked?: boolean;
+  /** Label for the stacked tooltip total row (defaults to "Total"). */
+  totalLabel?: string;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();

@@ -673,7 +673,12 @@ export function LostLeadsTab({ organizationId, communityIds, end, months = 12 }:
         empty={rows.length === 0 ? "No closed prospects in this window." : undefined}
         actions={<SeriesToggleChips series={series} visible={vis.visible} onToggle={vis.toggle} />}
       >
-        <GroupedBarChart data={pivot} bars={series.filter((s) => vis.visible.includes(s.key))} stacked />
+        <GroupedBarChart
+          data={pivot}
+          bars={series.filter((s) => vis.visible.includes(s.key))}
+          stacked
+          totalLabel="Total lost leads"
+        />
       </ChartCard>
 
       <MonthGrid
