@@ -374,7 +374,7 @@ function FlashReportPage() {
                       {isOrgAdmin ? (
                         <Link
                           to="/admin/communities"
-                          className="no-print text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-strong"
+                          className="no-print text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
                         >
                           Edit community budget
                         </Link>
