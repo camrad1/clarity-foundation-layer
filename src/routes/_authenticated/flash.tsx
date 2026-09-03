@@ -747,7 +747,7 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     w.label,
     `${w.start} → ${w.end}`,
     o ? o.totalUnits : (totalUnits ?? ""),
-    occupied ?? "snapshot required",
+    occupied ?? "—",
     b ?? "",
     variance ?? "",
     occupied != null && o?.censusUnits ? ((occupied / o.censusUnits) * 100).toFixed(1) : "",
