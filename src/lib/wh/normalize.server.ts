@@ -248,8 +248,9 @@ export function normalizeProspect(raw: Rec, ctx: Ctx) {
       "next_scheduled_activity_at",
     ),
     expected_move_timing_id: pick(rec, "expected_move_timing_id", "expected_move_timings_id"),
-    original_sales_counselor_id: pick(rec, "original_sales_counselor_id"),
-    current_sales_counselor_id: pick(rec, "current_sales_counselor_id", "sales_counselor_id"),
+    original_sales_counselor_id: pick(rec, "original_sales_counselor_id", "original_users_id"),
+    // WelcomeHome's Prospects export exposes the current counselor as users_id.
+    current_sales_counselor_id: pick(rec, "current_sales_counselor_id", "sales_counselor_id", "users_id"),
     close_reason_id: pick(rec, "close_reason_id", "close_reasons_id"),
     close_reason_label: pick(rec, "close_reasons_name"),
     merged_into_prospect_id: pick(rec, "merged_into_prospect_id", "merged_into_id"),
