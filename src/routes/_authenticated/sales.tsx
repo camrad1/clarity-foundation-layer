@@ -787,7 +787,7 @@ function KpiCard({
     compare && compare.previous > 0 && delta != null ? `${Math.round((delta / compare.previous) * 100)}%` : null;
 
   return (
-    <div className="panel space-y-2 p-5">
+    <div className="kpi-card space-y-2 p-5">
       <p className="eyebrow">{label}</p>
       {value == null ? (
         <p className="font-display text-lg font-medium text-muted-foreground">Not configured</p>
@@ -836,7 +836,7 @@ const TREND_SERIES = [
   { key: "re_tours", label: "Re-tours", color: "var(--chart-4)" },
   { key: "deposits", label: "Deposits", color: CHART_TOKENS.provisional, provisional: true },
   { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.tertiary },
-  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative },
+  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.quaternary },
   { key: "net_move_ins", label: "Net move-ins", color: "var(--chart-5)" },
 ];
 const TREND_DEFAULTS = ["inquiries", "tours", "move_ins"];
@@ -870,7 +870,7 @@ function SalesTrendCard({ data, loading }: { data: Record<string, any>[]; loadin
 
 const MOVE_TREND_SERIES = [
   { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.primary },
-  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.negative },
+  { key: "move_outs", label: "Move-outs", color: CHART_TOKENS.quaternary },
   { key: "net_move_ins", label: "Net move-ins", color: CHART_TOKENS.tertiary },
 ];
 
