@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/clarity/status-pill";
 import { CommunityEditDialog } from "@/components/clarity/community-edit-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
+import { COMMON_TIMEZONES, isValidTimezone, timezoneLabel } from "@/lib/timezones";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/admin/communities")({
@@ -69,8 +70,13 @@ function Communities() {
                 {
                   name: "timezone",
                   label: "Reporting timezone",
-                  placeholder: "America/Chicago",
+                  type: "select",
+                  required: true,
                   help: "Reporting periods are calculated in this community's timezone.",
+                  options: COMMON_TIMEZONES.map((t) => ({
+                    value: t.value,
+                    label: `${t.label} — ${t.value}`,
+                  })),
                 },
                 { name: "website_url", label: "Website URL" },
                 { name: "primary_domain", label: "Primary domain" },
@@ -90,7 +96,11 @@ function Communities() {
                   slug: v("slug"),
                   city: v("city") || null,
                   state: v("state") || null,
-                  timezone: v("timezone") || "America/Chicago",
+                  timezone: (() => {
+                    const tz = v("timezone");
+                    if (!isValidTimezone(tz)) throw new Error("Select a supported reporting timezone");
+                    return tz;
+                  })(),
                   website_url: v("website_url") || null,
                   primary_domain: v("primary_domain") || null,
                   unit_count: v("unit_count") ? Number(v("unit_count")) : null,
@@ -136,7 +146,16 @@ function Communities() {
             render: (r) =>
               (regions.data ?? []).find((x) => x.id === r.region_id)?.name ?? "—",
           },
-          { key: "tz", header: "Timezone", render: (r) => r.timezone },
+          {
+            key: "tz",
+            header: "Timezone",
+            render: (r) => (
+              <div>
+                <p>{timezoneLabel(r.timezone)}</p>
+                <p className="font-mono text-xs text-muted-foreground">{r.timezone}</p>
+              </div>
+            ),
+          },
           { key: "units", header: "Units", align: "right", render: (r) => r.unit_count ?? "—" },
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
           {
