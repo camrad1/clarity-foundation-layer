@@ -668,6 +668,21 @@ export async function runWelcomeHomeSyncUnit(
       }
     : undefined;
 
+  const checkpoint = async (p: { cursorUrl: string | null; pages: number; rows: number }) => {
+    await admin
+      .from("wh_sync_state")
+      .update({
+        resume_cursor_url: p.cursorUrl,
+        resume_pages: p.cursorUrl ? p.pages : 0,
+        resume_rows: p.cursorUrl ? p.rows : 0,
+        resume_updated_after: p.cursorUrl ? updatedAfter : null,
+        resume_saved_at: new Date().toISOString(),
+      })
+      .eq("connection_id", args.connectionId)
+      .eq("source_table", args.table)
+      .eq("community_scope", scopeKey);
+  };
+
   const result = isCoreTable(args.table)
     ? await syncCoreTable(admin, auth, {
         organizationId: args.organizationId,
@@ -677,7 +692,10 @@ export async function runWelcomeHomeSyncUnit(
         targets,
         updatedAfter,
         beat,
+        resume,
+        checkpoint,
       })
+
     : await syncLookupTable(admin, auth, {
         organizationId: args.organizationId,
         connectionId: args.connectionId,
