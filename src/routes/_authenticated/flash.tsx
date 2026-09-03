@@ -157,6 +157,12 @@ const pct1 = (n: number | null) => (n == null ? "—" : `${(n * 100).toFixed(1)}
 const money = (n: number | null | undefined) =>
   n == null ? "—" : `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
+/** Neutral fallback so raw reference ids never surface as a person's name. */
+function personName(v: string | null | undefined) {
+  const t = (v ?? "").trim();
+  return t.length ? t : "Name unavailable";
+}
+
 function downloadCsv(filename: string, rows: (string | number | null | undefined)[][]) {
   const body = rows
     .map((r) =>
@@ -428,7 +434,7 @@ function FlashReportPage() {
               rows={moveIns.data?.rows ?? []}
               empty={<EmptyState title="No move-ins" description="No counted move-ins in this month." />}
               columns={[
-                { key: "ref", header: "Resident reference", render: (r) => r.resident_source_id ?? r.prospect_source_id ?? r.source_id },
+                { key: "name", header: "Resident", render: (r) => personName(r.person_name) },
                 { key: "date", header: "Move-in date", render: (r) => formatDay(r.move_in_date) },
                 { key: "care", header: "Care type", render: (r) => r.care_type ?? "—" },
                 { key: "unit", header: "Unit", render: (r) => r.unit_label ?? "—" },
@@ -436,8 +442,8 @@ function FlashReportPage() {
               ] as Column<any>[]}
             />
             <p className="pt-2 text-[11px] text-muted-foreground">
-              ClarityIQ does not store resident names — WelcomeHome PII is stripped at ingestion. Records
-              are identified by their WelcomeHome reference so they can be opened in the CRM.
+              Names come from the WelcomeHome record. Contact details, addresses and notes remain excluded;
+              records without a name in the source show “Name unavailable”.
             </p>
           </AccordionContent>
         </AccordionItem>
@@ -454,7 +460,7 @@ function FlashReportPage() {
               rows={deposits.data?.rows ?? []}
               empty={<EmptyState title="No deposits" description="No standard deposits recorded in this month." />}
               columns={[
-                { key: "ref", header: "Depositor reference", render: (r) => r.depositor_key ?? "—" },
+                { key: "name", header: "Depositor", render: (r) => personName(r.person_name) },
                 { key: "date", header: "Deposit date", render: (r) => formatDay(r.deposit_date) },
                 { key: "amt", header: "Amount", align: "right", render: (r) => money(r.amount) },
                 { key: "mi", header: "Expected MI", render: (r) => formatDay(r.expected_move_in_date) },
@@ -477,11 +483,12 @@ function FlashReportPage() {
               rows={hotLeads.data?.rows ?? []}
               empty={<EmptyState title="No hot leads" description="No open prospects mapped to the Hot score." />}
               columns={[
-                { key: "ref", header: "Hot lead reference", render: (r) => r.source_id },
-                { key: "stage", header: "Stage", render: (r) => resolveLabel(labels.stage, r.stage, "—") },
+                { key: "name", header: "Prospect", render: (r) => personName(r.person_name) },
+                { key: "stage", header: "Stage", render: (r) => resolveLabel(labels.stage, r.stage_id, "Unknown stage") },
                 { key: "next", header: "Next activity", render: (r) => (r.next_activity_scheduled_at ? new Date(r.next_activity_scheduled_at).toLocaleDateString() : "—") },
                 { key: "last", header: "Last contact", render: (r) => (r.last_contact_at ? new Date(r.last_contact_at).toLocaleDateString() : "—") },
-                { key: "cnsl", header: "Counselor", render: (r) => resolveLabel(labels.user, r.counselor, "—") },
+                { key: "cnsl", header: "Counselor", render: (r) => resolveLabel(labels.user, r.counselor_id, "Unassigned") },
+                { key: "src", header: "Lead source", render: (r) => resolveLabel(labels.leadSource, r.lead_source_id, "Unknown source") },
                 {
                   key: "notes",
                   header: "Notes & updates",
@@ -510,7 +517,7 @@ function FlashReportPage() {
               rows={moveOuts.data?.rows ?? []}
               empty={<EmptyState title="No move-outs" description="No counted move-outs in this month." />}
               columns={[
-                { key: "ref", header: "Resident reference", render: (r) => r.resident_source_id ?? r.source_id },
+                { key: "name", header: "Resident", render: (r) => personName(r.person_name) },
                 { key: "date", header: "Move-out date", render: (r) => formatDay(r.move_out_date) },
                 { key: "care", header: "Care type / unit", render: (r) => `${r.care_type ?? "—"} · ${r.unit_label ?? "—"}` },
                 { key: "reason", header: "Reason", render: (r) => r.reason ?? "Not provided by source" },
@@ -549,7 +556,7 @@ function FlashReportPage() {
               rows={notices.data?.rows ?? []}
               empty={<EmptyState title="No upcoming notices" description={`No pending move-outs dated in ${formatMonth(nmStart)}.`} />}
               columns={[
-                { key: "ref", header: "Resident reference", render: (r) => r.resident_source_id ?? r.source_id },
+                { key: "name", header: "Resident", render: (r) => personName(r.person_name) },
                 { key: "notice", header: "Notice date", render: (r) => formatDay(r.notice_date) },
                 { key: "mo", header: "Expected move-out", render: (r) => formatDay(r.expected_move_out_date) },
                 { key: "care", header: "Care type / unit", render: (r) => `${r.care_type ?? "—"} · ${r.unit_label ?? "—"}` },

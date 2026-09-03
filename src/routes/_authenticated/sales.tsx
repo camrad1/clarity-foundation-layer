@@ -1091,10 +1091,10 @@ function ProspectDrillThrough() {
       </div>
       <DataTable
         columns={[
-          { key: "src", header: "Prospect", render: (p: any) => <code className="text-xs">{p.source_id}</code> },
+          { key: "name", header: "Prospect", render: (p: any) => personName(p.person_name) },
           { key: "com", header: "Community", render: (p: any) => ctx.communityNames[p.community_id ?? ""] ?? "—" },
-          { key: "stage", header: "Stage", render: (p: any) => resolveLabel(labels.stage, p.stage_id, "—") },
-          { key: "score", header: "Score", render: (p: any) => resolveLabel(labels.score, p.score_id, "—") },
+          { key: "stage", header: "Stage", render: (p: any) => resolveLabel(labels.stage, p.stage_id, "Unknown stage") },
+          { key: "score", header: "Score", render: (p: any) => resolveLabel(labels.score, p.score_id, "Unscored") },
           {
             key: "next",
             header: "Scheduled",
@@ -1103,7 +1103,7 @@ function ProspectDrillThrough() {
           {
             key: "counselor",
             header: "Counselor",
-            render: (p: any) => resolveLabel(labels.user, p.current_sales_counselor_id, "—"),
+            render: (p: any) => resolveLabel(labels.user, p.current_sales_counselor_id, "Unassigned"),
           },
         ]}
         rows={(q.data?.rows ?? []) as any[]}
@@ -1187,7 +1187,7 @@ function TourDrillThrough() {
       </div>
       <DataTable
         columns={[
-          { key: "src", header: "Activity", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "name", header: "Prospect", render: (r: any) => personName(r.person_name) },
           { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
           { key: "date", header: "Completed", render: (r: any) => r.completed_local_date ?? "—" },
           { key: "result", header: "Result", render: (r: any) => r.result_label ?? "—" },
@@ -1197,11 +1197,7 @@ function TourDrillThrough() {
             header: "Sequence",
             render: (r: any) => (r.first_completed_of_type ? "Initial" : "Repeat"),
           },
-          {
-            key: "prospect",
-            header: "Prospect",
-            render: (r: any) => <code className="text-xs">{r.prospect_source_id ?? "—"}</code>,
-          },
+          { key: "type", header: "Activity type", render: (r: any) => r.activity_type_label ?? "Unlabeled activity" },
         ]}
         rows={(q.data?.rows ?? []) as any[]}
         loading={q.isLoading}
@@ -1245,7 +1241,7 @@ function DepositDrillThrough() {
       </p>
       <DataTable
         columns={[
-          { key: "src", header: "Transaction", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "name", header: "Depositor", render: (r: any) => personName(r.person_name) },
           { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
           { key: "date", header: "Date", render: (r: any) => r.occurred_local_date ?? "—" },
           { key: "type", header: "Deposit type", render: (r: any) => r.deposit_type ?? "—" },
@@ -1255,11 +1251,6 @@ function DepositDrillThrough() {
             align: "right",
             render: (r: any) => (r.amount == null ? "—" : Number(r.amount).toLocaleString()),
           },
-          {
-            key: "prospect",
-            header: "Prospect",
-            render: (r: any) => <code className="text-xs">{r.prospect_source_id ?? "—"}</code>,
-          },
         ]}
         rows={(q.data?.rows ?? []) as any[]}
         loading={q.isLoading}
@@ -1268,6 +1259,12 @@ function DepositDrillThrough() {
       <Pager page={page} pages={pages} total={total} noun="counted deposits" onChange={setPage} />
     </section>
   );
+}
+
+/** Neutral fallback so raw reference ids never surface as a person's name. */
+function personName(v: string | null | undefined) {
+  const t = (v ?? "").trim();
+  return t.length ? t : "Name unavailable";
 }
 
 function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
@@ -1360,10 +1357,11 @@ function MoveInDrillThrough() {
       </div>
       <DataTable
         columns={[
-          { key: "src", header: "Contract", render: (r: any) => <code className="text-xs">{r.source_id}</code> },
+          { key: "name", header: "Resident", render: (r: any) => personName(r.person_name) },
           { key: "com", header: "Community", render: (r: any) => ctx.communityNames[r.community_id ?? ""] ?? "—" },
           { key: "date", header: "Financial move-in", render: (r: any) => r.financial_move_in_date ?? "—" },
-          { key: "unit", header: "Unit", render: (r: any) => <code className="text-xs">{r.unit_source_id ?? "—"}</code> },
+          { key: "unit", header: "Unit", render: (r: any) => r.unit_label ?? "Unassigned unit" },
+          { key: "care", header: "Care type", render: (r: any) => r.care_type ?? "Unspecified" },
           { key: "status", header: "Status", render: (r: any) => r.status ?? "—" },
           { key: "counted", header: "Counted", render: () => (mode === "move_in" ? "Yes" : "No") },
         ]}
