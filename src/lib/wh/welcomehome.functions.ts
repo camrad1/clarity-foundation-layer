@@ -285,6 +285,13 @@ export const whPlanSync = createServerFn({ method: "POST" })
     const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
     const admin = await adminClient();
 
+    // Never plan on top of an abandoned run: reap stalled units first so any
+    // previous run is finalized honestly instead of lingering as `running`.
+    await admin.rpc("wh_sync_reap_stalled", {
+      _org_id: organizationId,
+      _stall_minutes: WH_STALL_MINUTES,
+    });
+
     const all = await mappedTargets(admin, organizationId);
     const targets = data.communityIds?.length
       ? all.filter((t) => data.communityIds!.includes(t.communityId))
