@@ -21,6 +21,9 @@ import { WH_ALL_TABLES, WH_CORE_TABLES, WH_LOOKUP_SOURCE, type WhTable } from ".
 
 const connectionInput = z.object({ connectionId: z.string().uuid() });
 
+/** Minutes without a persisted heartbeat before a work unit counts as stalled. */
+export const WH_STALL_MINUTES = 10;
+
 type Guarded = {
   organizationId: string;
   connectionId: string;
