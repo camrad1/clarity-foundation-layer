@@ -678,7 +678,7 @@ function CompactRow({
       </p>
       <div className="flex flex-wrap gap-x-7 gap-y-3">
         {items.map((it) => (
-          <div key={it.label} className="min-w-[60px] space-y-0.5">
+          <div key={it.label} className="min-w-[60px] space-y-0.5 text-center">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {it.label}
             </p>
