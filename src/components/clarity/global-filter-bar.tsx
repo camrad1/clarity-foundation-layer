@@ -1,16 +1,30 @@
-import { Check, CalendarRange, Building2 } from "lucide-react";
+import { Check, CalendarRange, Building2, GitCompareArrows } from "lucide-react";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAppState } from "@/state/app-state";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
-import { DATE_RANGE_PRESETS, formatRangeLabel } from "@/lib/date-ranges";
+import {
+  COMPARISON_PERIOD_MODES,
+  DATE_RANGE_PRESET_GROUPS,
+  formatPeriodLabel,
+  formatRangeLabel,
+  type ComparisonPeriodMode,
+} from "@/lib/date-ranges";
 import { cn } from "@/lib/utils";
 
 /**
