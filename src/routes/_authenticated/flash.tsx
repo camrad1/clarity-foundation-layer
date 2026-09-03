@@ -754,7 +754,7 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     occupied != null && b ? ((occupied / b) * 100).toFixed(1) : "",
     ...careTypes.map((ct) => {
       const row = o?.byCareType.find((c) => c.careType === ct);
-      return row ? `${row.occupied}/${row.units}` : "snapshot required";
+      return row ? `${row.occupied}/${row.units}` : "—";
     }),
     w.moveIns,
     w.moveOuts,
