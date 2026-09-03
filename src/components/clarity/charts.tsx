@@ -430,7 +430,13 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
                   {stage.value.toLocaleString()}
                 </span>
                 {stepRatio != null ? <span className="ml-2">{stepRatio.toFixed(0)}% of previous stage</span> : null}
+                {i > 1 && base > 0 ? (
+                  <span className="ml-2">
+                    {((stage.value / base) * 100).toFixed(0)}% of {stages[0]!.label.toLowerCase()}
+                  </span>
+                ) : null}
               </span>
+
             </div>
             <div className="h-8 w-full rounded-md bg-muted/60">
               <div
