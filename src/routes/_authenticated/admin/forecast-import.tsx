@@ -108,7 +108,11 @@ function ForecastImport() {
           }),
         },
       });
-      toast.success(`Imported ${result.imported} weekly forecast records.`);
+      toast.success(
+        `Imported ${result.imported} weekly forecast records (${result.notes} notes, ${result.stretch} stretch/goal values)` +
+          (result.alreadyPresent ? ` · ${result.alreadyPresent} already imported, left unchanged` : "") +
+          (result.protectedManual ? ` · ${result.protectedManual} manual entries left untouched` : ""),
+      );
       setPreview(null);
       setFile(null);
       if (fileRef.current) fileRef.current.value = "";
@@ -171,9 +175,13 @@ function ForecastImport() {
               <h2 className="text-sm font-semibold">{preview.fileName}</h2>
               <p className="text-xs text-muted-foreground">
                 Sheet “{preview.sheetName}” · {preview.communities.length} communities ·{" "}
-                {preview.forecastDates.length} forecast dates · {preview.numericRecords} numeric forecasts ·{" "}
+                {preview.months.length} forecast months · {preview.forecastDates.length} weekly forecast dates ·{" "}
+                {preview.numericRecords} numeric forecasts · {preview.stretchRecords} stretch/goal values ·{" "}
                 {preview.noteRecords} notes · {preview.ambiguousRecords} ambiguous cells ·{" "}
                 {preview.eomMonths.length} month-end reference column(s)
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {preview.months.map((m) => `${m.label} (${m.dates.length})`).join(" · ")}
               </p>
             </div>
             <Button onClick={() => void onImport()} disabled={busy || mappedCount === 0}>
@@ -192,13 +200,26 @@ function ForecastImport() {
             </div>
           )}
 
+          {preview.ambiguousSamples.length > 0 && (
+            <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <p className="mb-1 font-medium text-foreground">Ambiguous cells kept as notes (no numbers inferred)</p>
+              {preview.ambiguousSamples.slice(0, 8).map((a) => (
+                <p key={`${a.community}-${a.date}-${a.text}`}>
+                  {a.community} · {a.date} · “{a.text}”
+                </p>
+              ))}
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Workbook community</TableHead>
                 <TableHead className="text-right">Forecasts</TableHead>
+                <TableHead className="text-right">Stretch</TableHead>
                 <TableHead className="text-right">Notes</TableHead>
                 <TableHead>Range</TableHead>
+                <TableHead>Match</TableHead>
                 <TableHead>Maps to</TableHead>
               </TableRow>
             </TableHeader>
@@ -207,9 +228,17 @@ function ForecastImport() {
                 <TableRow key={c.normalizedName}>
                   <TableCell className="font-medium">{c.sourceName}</TableCell>
                   <TableCell className="text-right tabular-nums">{c.numericCells}</TableCell>
+                  <TableCell className="text-right tabular-nums">{c.stretchCells || "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{c.noteCells || "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {c.firstDate ?? "—"} → {c.lastDate ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {c.matchSource === "unmapped" ? (
+                      <span className="text-warning">needs mapping</span>
+                    ) : (
+                      c.matchSource
+                    )}
                   </TableCell>
                   <TableCell>
                     <Select

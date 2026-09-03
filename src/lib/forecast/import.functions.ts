@@ -9,6 +9,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+/** Marker written to every record created by the historical workbook import. */
+const SOURCE_TYPE = "historical_forecast_import";
+
 async function guard(supabase: any, organizationId: string) {
   const { data: allowed, error } = await supabase.rpc("can_manage_imports", {
     _org_id: organizationId,
@@ -57,6 +60,13 @@ export const forecastImportPreview = createServerFn({ method: "POST" })
 
     const byNorm = new Map<string, { id: string; name: string }>();
     for (const c of communities ?? []) byNorm.set(normalizeCommunityName(c.name), { id: c.id, name: c.name });
+    /** Workbook rows use short names ("The Esther") for longer canonical names. */
+    function fuzzyMatch(norm: string): { id: string; name: string } | null {
+      const hits = [...byNorm.entries()].filter(
+        ([k]) => k.startsWith(`${norm} `) || norm.startsWith(`${k} `) || k === norm,
+      );
+      return hits.length === 1 ? hits[0]![1] : null;
+    }
     const savedByNorm = new Map<string, { community_id: string | null; ignored: boolean }>();
     for (const m of saved ?? []) savedByNorm.set(m.normalized_name, m);
 
@@ -64,14 +74,20 @@ export const forecastImportPreview = createServerFn({ method: "POST" })
       fileName: parsed.fileName,
       sheetName: parsed.sheetName,
       forecastDates: parsed.forecastDates,
+      months: parsed.months,
       eomMonths: parsed.eomMonths,
+      correctedDateColumns: parsed.correctedDateColumns,
+      ambiguousSamples: parsed.ambiguousSamples,
+      stretchRecords: parsed.stretchRecords,
       numericRecords: parsed.numericRecords,
       noteRecords: parsed.noteRecords,
       ambiguousRecords: parsed.ambiguousRecords,
       warnings: parsed.warnings,
       communities: parsed.communities.map((c) => {
         const savedMap = savedByNorm.get(c.normalizedName);
-        const auto = byNorm.get(c.normalizedName);
+        const exact = byNorm.get(c.normalizedName);
+        const fuzzy = exact ? null : fuzzyMatch(c.normalizedName);
+        const auto = exact ?? fuzzy ?? undefined;
         const numeric = c.cells.filter((x) => x.projectedMoveIns !== null || x.projectedMoveOuts !== null);
         return {
           sourceName: c.sourceName,
@@ -83,7 +99,9 @@ export const forecastImportPreview = createServerFn({ method: "POST" })
           lastDate: numeric[numeric.length - 1]?.forecastDate ?? null,
           suggestedCommunityId: savedMap?.ignored ? null : (savedMap?.community_id ?? auto?.id ?? null),
           ignored: savedMap?.ignored ?? false,
-          matchSource: savedMap ? "saved" : auto ? "auto" : "unmapped",
+          matchSource: savedMap ? "saved" : exact ? "exact" : fuzzy ? "fuzzy" : "unmapped",
+          stretchCells: c.cells.filter((x) => x.stretchGoal !== null).length,
+          ambiguousCells: c.cells.filter((x) => x.ambiguous).length,
         };
       }),
       availableCommunities: (communities ?? []).map((c: any) => ({ id: c.id, name: c.name })),
@@ -141,7 +159,10 @@ export const forecastImportRun = createServerFn({ method: "POST" })
 
     let imported = 0;
     let notes = 0;
+    let stretch = 0;
     let skipped = 0;
+    let protectedManual = 0;
+    let alreadyPresent = 0;
     const unmapped: string[] = [];
 
     for (const community of parsed.communities) {
@@ -152,26 +173,63 @@ export const forecastImportRun = createServerFn({ method: "POST" })
         continue;
       }
 
-      const rows = community.cells.map((cell) => ({
+      // never silently overwrite a manually entered Monday-call forecast
+      const { data: existing } = await admin
+        .from("forecast_weekly_entries")
+        .select("forecast_date, source_type")
+        .eq("organization_id", data.organizationId)
+        .eq("community_id", m.communityId);
+      const manualDates = new Set(
+        (existing ?? [])
+          .filter((e: any) => e.source_type && e.source_type !== SOURCE_TYPE)
+          .map((e: any) => String(e.forecast_date)),
+      );
+      const importedDates = new Set(
+        (existing ?? [])
+          .filter((e: any) => e.source_type === SOURCE_TYPE)
+          .map((e: any) => String(e.forecast_date)),
+      );
+
+      // Idempotency: a historical week already imported is left exactly as it
+      // is. Manually entered Monday-call forecasts are never overwritten.
+      const importable = community.cells.filter((c) => {
+        if (manualDates.has(c.forecastDate)) {
+          protectedManual += 1;
+          return false;
+        }
+        if (importedDates.has(c.forecastDate)) {
+          alreadyPresent += 1;
+          return false;
+        }
+        return true;
+      });
+
+      const rows = importable.map((cell) => ({
         organization_id: data.organizationId,
         community_id: m.communityId,
         forecast_month: `${cell.forecastDate.slice(0, 7)}-01`,
         forecast_date: cell.forecastDate,
         projected_move_ins: cell.projectedMoveIns,
         projected_move_outs: cell.projectedMoveOuts,
+        stretch_goal: cell.stretchGoal,
         historical_source_note: cell.sourceNote,
-        source_type: "historical_import",
+        source_type: SOURCE_TYPE,
         source_file_name: data.fileName,
         import_batch_id: batch.id,
         entered_by: userId,
       }));
       notes += rows.filter((r) => r.historical_source_note).length;
+      stretch += rows.filter((r) => r.stretch_goal !== null).length;
+      if (!rows.length) continue;
 
       for (let i = 0; i < rows.length; i += 300) {
         const chunk = rows.slice(i, i + 300);
         const { error } = await admin
           .from("forecast_weekly_entries")
-          .upsert(chunk, { onConflict: "organization_id,community_id,forecast_date" });
+          .upsert(chunk, {
+            onConflict: "organization_id,community_id,forecast_date",
+            ignoreDuplicates: true,
+          });
         if (error) throw new Error(`Import failed while writing forecasts: ${error.message}`);
         imported += chunk.length;
       }
@@ -191,7 +249,10 @@ export const forecastImportRun = createServerFn({ method: "POST" })
       if (eomRows.length) {
         const { error } = await admin
           .from("forecast_eom_source_values")
-          .upsert(eomRows, { onConflict: "organization_id,community_id,forecast_month" });
+          .upsert(eomRows, {
+            onConflict: "organization_id,community_id,forecast_month",
+            ignoreDuplicates: true,
+          });
         if (error) throw new Error(`Import failed while writing month-end reference values: ${error.message}`);
       }
 
@@ -229,6 +290,9 @@ export const forecastImportRun = createServerFn({ method: "POST" })
     const report = {
       imported,
       notes,
+      stretch,
+      protectedManual,
+      alreadyPresent,
       skipped,
       unmapped,
       ambiguous: parsed.ambiguousRecords,
