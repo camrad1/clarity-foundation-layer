@@ -1039,7 +1039,7 @@ function WeekByWeekGrid({
         <thead>
           {/* Grouped legacy heading row — visually dominant */}
           <tr className="thead-brand-strong text-[11px] font-semibold uppercase tracking-wider">
-            <th className="sticky left-0 z-[4] bg-inherit whitespace-nowrap border-r border-white/25 px-3 py-2 text-left">
+            <th className="sticky left-0 z-[4] bg-brand-dark whitespace-nowrap border-r border-white/25 px-3 py-2 text-left">
               Week / Date
             </th>
             {groups.map((g) => (
