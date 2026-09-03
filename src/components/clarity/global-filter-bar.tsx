@@ -35,9 +35,12 @@ export function GlobalFilterBar() {
   const {
     organizationId,
     dateRange,
+    comparisonMode,
+    comparisonRange,
     communityScope,
     setDatePreset,
     setCustomRange,
+    setComparisonMode,
     setCommunityScope,
     toggleCommunity,
   } = useAppState();
