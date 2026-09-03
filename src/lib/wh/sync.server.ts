@@ -92,7 +92,20 @@ export type CommunityTarget = {
   timezone: string | null;
 };
 
-const CHUNK = 500;
+const CHUNK = 250;
+
+/** Smallest slice we still try as a batch before isolating rows one by one. */
+const MIN_CHUNK = 25;
+
+/**
+ * A Postgres statement timeout is a *capacity* signal, not a data defect: the
+ * same rows succeed in a smaller batch. Sonnet Hill Activities failed exactly
+ * this way — a 500-row upsert into a 372k-row table (each row firing the
+ * activity-result BEFORE trigger) exceeded the 8s API statement timeout while
+ * other syncs competed for the database. So timeouts split, they do not
+ * quarantine.
+ */
+const TIMEOUT_RE = /statement timeout|57014|canceling statement/i;
 
 /**
  * Decides the outcome of a table from what actually landed in the warehouse.
@@ -109,13 +122,22 @@ function classify(result: TableResult): TableStatus {
 }
 
 
+/**
+ * Upserts a slice, adaptively splitting it when the database pushes back.
+ *
+ * - statement timeout  -> halve and retry; a single row that still times out is
+ *   a real infrastructure fault and is rethrown.
+ * - any other error    -> halve to isolate the offending record, then report
+ *   that single row as rejected so the caller can quarantine it with its
+ *   source id and the exact error. Nothing is ever silently skipped.
+ */
 async function upsertChunk(
   admin: Admin,
   destination: string,
   connectionId: string,
   rows: Record<string, unknown>[],
-): Promise<{ inserted: number; updated: number }> {
-  if (!rows.length) return { inserted: 0, updated: 0 };
+): Promise<{ inserted: number; updated: number; rejected: { sourceId: string; reason: string }[] }> {
+  if (!rows.length) return { inserted: 0, updated: 0, rejected: [] };
   const ids = rows.map((r) => String(r["source_id"]));
   const { data: existing, error: exErr } = await admin
     .from(destination)
@@ -127,10 +149,40 @@ async function upsertChunk(
   const { error } = await admin
     .from(destination)
     .upsert(rows, { onConflict: "connection_id,source_id" });
-  if (error) throw new Error(`${destination}: ${error.message}`);
+
+  if (error) {
+    const message = `${destination}: ${error.message}`;
+    if (rows.length === 1) {
+      if (TIMEOUT_RE.test(error.message)) throw new Error(message);
+      return { inserted: 0, updated: 0, rejected: [{ sourceId: ids[0]!, reason: message }] };
+    }
+    if (rows.length <= MIN_CHUNK && !TIMEOUT_RE.test(error.message)) {
+      // Isolate the bad record without re-batching noise around it.
+      let inserted = 0;
+      let updated = 0;
+      const rejected: { sourceId: string; reason: string }[] = [];
+      for (const row of rows) {
+        const one = await upsertChunk(admin, destination, connectionId, [row]);
+        inserted += one.inserted;
+        updated += one.updated;
+        rejected.push(...one.rejected);
+      }
+      return { inserted, updated, rejected };
+    }
+    const mid = Math.ceil(rows.length / 2);
+    const a = await upsertChunk(admin, destination, connectionId, rows.slice(0, mid));
+    const b = await upsertChunk(admin, destination, connectionId, rows.slice(mid));
+    return {
+      inserted: a.inserted + b.inserted,
+      updated: a.updated + b.updated,
+      rejected: [...a.rejected, ...b.rejected],
+    };
+  }
+
   const updated = ids.filter((id) => known.has(id)).length;
-  return { inserted: ids.length - updated, updated };
+  return { inserted: ids.length - updated, updated, rejected: [] };
 }
+
 
 async function storeRaw(
   admin: Admin,
