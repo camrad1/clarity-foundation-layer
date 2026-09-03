@@ -82,6 +82,7 @@ function TooltipBox({
   formatter,
   share,
   showTotal,
+  totalLabel = "Total",
 }: any) {
   if (!active || !payload?.length) return null;
   const rows = payload.filter((p: any) => p?.value != null);
