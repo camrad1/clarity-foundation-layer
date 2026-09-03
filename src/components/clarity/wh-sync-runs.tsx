@@ -47,6 +47,14 @@ export type RunSummary = {
   unsupported: number;
   failed: number;
   pending: number;
+  /** Units currently claimed and still heartbeating. */
+  running: number;
+  /** Units reaped after 10 minutes without a persisted heartbeat. */
+  stalled: number;
+  /** Newest heartbeat across all units of the run. */
+  lastProgressAt: string | null;
+  /** Table (and community) that last reported progress, for "slow vs stuck". */
+  currentUnit: { table: string; communityName: string | null } | null;
   failedUnits: { table: string; communityId: string | null; communityName: string | null }[];
   communities: CommunityCompletion[];
   communityNames: string[];
@@ -78,12 +86,41 @@ export function summarizeRun(
     (tables.length ? accountTables.length + communityTables.length * communityIds.length : units.length);
 
   const isClean = (s: string) => s === "success" || s === "unsupported";
-  const isFailed = (s: string) => s === "failed" || s === "partial";
+  // A stalled unit is a terminal attention state: it can never make a run Complete.
+  const isFailed = (s: string) => s === "failed" || s === "partial" || s === "stalled";
+  const isRunning = (s: string) => s === "running" || s === "pending";
 
   const successful = units.filter((u) => u.status === "success").length;
   const unsupported = units.filter((u) => u.status === "unsupported").length;
   const failedList = units.filter((u) => isFailed(u.status));
-  const pending = Math.max(0, planned - units.filter((u) => isClean(u.status) || isFailed(u.status)).length);
+  const stalled = units.filter((u) => u.status === "stalled").length;
+  const running = units.filter((u) => isRunning(u.status)).length;
+  const notStarted = Math.max(
+    0,
+    planned - units.filter((u) => isClean(u.status) || isFailed(u.status) || isRunning(u.status)).length,
+  );
+  const pending = notStarted + running;
+
+  // Newest heartbeat wins: this is what separates "slow but healthy" from "stuck".
+  const beats = units
+    .map((u) => u.last_progress_at ?? u.completed_at ?? u.started_at)
+    .filter(Boolean) as string[];
+  const lastProgressAt = beats.length
+    ? beats.reduce((a, b) => (new Date(b).getTime() > new Date(a).getTime() ? b : a))
+    : null;
+  const active = units
+    .filter((u) => isRunning(u.status))
+    .sort(
+      (a, b) =>
+        new Date(b.last_progress_at ?? b.started_at ?? 0).getTime() -
+        new Date(a.last_progress_at ?? a.started_at ?? 0).getTime(),
+    )[0];
+  const currentUnit = active
+    ? {
+        table: active.source_table,
+        communityName: active.community_id ? nameOf(active.community_id) : null,
+      }
+    : null;
 
   const live = run.status === "running" || run.status === "queued";
   let status: OverallStatus;
@@ -147,6 +184,10 @@ export function summarizeRun(
     unsupported,
     failed: failedList.length,
     pending,
+    running,
+    stalled,
+    lastProgressAt,
+    currentUnit,
     failedUnits: failedList.map((u) => ({
       table: u.source_table,
       communityId: u.community_id,
@@ -279,7 +320,10 @@ export function SyncRunSummary({
       </section>
     );
   }
-  const headline = `${summary.successful + summary.unsupported}/${summary.planned} work units successful`;
+  const headline = `${summary.successful + summary.unsupported}/${summary.planned} complete`;
+  const sinceProgress = summary.lastProgressAt
+    ? Date.now() - new Date(summary.lastProgressAt).getTime()
+    : null;
   return (
     <section className="panel space-y-4 p-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -296,10 +340,28 @@ export function SyncRunSummary({
         {" · "}
         {headline}
         {" · "}
-        {summary.failed} failed
+        {summary.running} running
         {" · "}
-        {summary.pending} pending
+        <span className={summary.stalled ? "text-destructive" : undefined}>{summary.stalled} stalled</span>
+        {" · "}
+        {Math.max(0, summary.failed - summary.stalled)} failed
         {summary.unsupported ? ` · ${summary.unsupported} unsupported/skipped` : ""}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {summary.status === "running" ? (
+          <>
+            Elapsed {fmtDuration(summary.durationMs)}
+            {summary.currentUnit
+              ? ` · currently ${summary.currentUnit.table}${summary.currentUnit.communityName ? ` (${summary.currentUnit.communityName})` : ""}`
+              : ""}
+            {" · "}
+            <span className={sinceProgress != null && sinceProgress > 10 * 60_000 ? "text-destructive" : undefined}>
+              {sinceProgress == null ? "no progress recorded yet" : `Last progress ${fmtDuration(sinceProgress)} ago`}
+            </span>
+          </>
+        ) : (
+          <>Last progress {summary.lastProgressAt ? fmtTime(summary.lastProgressAt) : "—"}</>
+        )}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -313,9 +375,14 @@ export function SyncRunSummary({
         />
         <Stat label="Failed" value={String(summary.failed)} tone={summary.failed ? "text-destructive" : ""} />
         <Stat
-          label="Pending / running"
-          value={String(summary.pending)}
-          tone={summary.pending ? "text-amber-600 dark:text-amber-400" : ""}
+          label="Running"
+          value={String(summary.running)}
+          tone={summary.running ? "text-primary" : ""}
+        />
+        <Stat
+          label="Stalled"
+          value={String(summary.stalled)}
+          tone={summary.stalled ? "text-destructive" : ""}
         />
       </div>
 
@@ -340,14 +407,15 @@ export function SyncRunSummary({
           </span>
           {onRetryFailed ? (
             <Button size="sm" variant="outline" disabled={busy} onClick={() => onRetryFailed(summary)}>
-              Retry failed work units
+              Retry failed / stalled work units
             </Button>
           ) : null}
         </div>
       ) : null}
       <p className="text-xs text-muted-foreground">
         A run is Complete only when every planned work unit finished successfully or was explicitly
-        unsupported. Successful work is never re-run by a retry.
+        unsupported. A unit that records no progress for 10 minutes is marked stalled and its run is
+        finalized, so nothing stays Running forever. Successful work is never re-run by a retry.
       </p>
     </section>
   );

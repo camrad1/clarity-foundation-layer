@@ -4040,16 +4040,22 @@ export type Database = {
           completed_at: string | null
           connection_id: string
           created_at: string
+          current_page: number | null
           duration_ms: number | null
           error_summary: string | null
           id: string
+          last_error: string | null
+          last_progress_at: string | null
           mode: Database["public"]["Enums"]["wh_sync_mode"]
           organization_id: string
           pages_fetched: number
+          pages_processed: number
           raw_rows_stored: number
           requested_after: string | null
+          retry_count: number
           rows_failed: number
           rows_inserted: number
+          rows_processed: number
           rows_received: number
           rows_unmapped: number
           rows_updated: number
@@ -4066,16 +4072,22 @@ export type Database = {
           completed_at?: string | null
           connection_id: string
           created_at?: string
+          current_page?: number | null
           duration_ms?: number | null
           error_summary?: string | null
           id?: string
+          last_error?: string | null
+          last_progress_at?: string | null
           mode: Database["public"]["Enums"]["wh_sync_mode"]
           organization_id: string
           pages_fetched?: number
+          pages_processed?: number
           raw_rows_stored?: number
           requested_after?: string | null
+          retry_count?: number
           rows_failed?: number
           rows_inserted?: number
+          rows_processed?: number
           rows_received?: number
           rows_unmapped?: number
           rows_updated?: number
@@ -4092,16 +4104,22 @@ export type Database = {
           completed_at?: string | null
           connection_id?: string
           created_at?: string
+          current_page?: number | null
           duration_ms?: number | null
           error_summary?: string | null
           id?: string
+          last_error?: string | null
+          last_progress_at?: string | null
           mode?: Database["public"]["Enums"]["wh_sync_mode"]
           organization_id?: string
           pages_fetched?: number
+          pages_processed?: number
           raw_rows_stored?: number
           requested_after?: string | null
+          retry_count?: number
           rows_failed?: number
           rows_inserted?: number
+          rows_processed?: number
           rows_received?: number
           rows_unmapped?: number
           rows_updated?: number
@@ -4897,6 +4915,10 @@ export type Database = {
       wh_successful_result_labels: {
         Args: { _org_id: string }
         Returns: string[]
+      }
+      wh_sync_reap_stalled: {
+        Args: { _org_id: string; _stall_minutes?: number }
+        Returns: Json
       }
       wh_tour_page: {
         Args: {

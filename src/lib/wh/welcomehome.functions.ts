@@ -21,6 +21,9 @@ import { WH_ALL_TABLES, WH_CORE_TABLES, WH_LOOKUP_SOURCE, type WhTable } from ".
 
 const connectionInput = z.object({ connectionId: z.string().uuid() });
 
+/** Minutes without a persisted heartbeat before a work unit counts as stalled. */
+export const WH_STALL_MINUTES = 10;
+
 type Guarded = {
   organizationId: string;
   connectionId: string;
@@ -282,6 +285,13 @@ export const whPlanSync = createServerFn({ method: "POST" })
     const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
     const admin = await adminClient();
 
+    // Never plan on top of an abandoned run: reap stalled units first so any
+    // previous run is finalized honestly instead of lingering as `running`.
+    await admin.rpc("wh_sync_reap_stalled", {
+      _org_id: organizationId,
+      _stall_minutes: WH_STALL_MINUTES,
+    });
+
     const all = await mappedTargets(admin, organizationId);
     const targets = data.communityIds?.length
       ? all.filter((t) => data.communityIds!.includes(t.communityId))
@@ -481,18 +491,27 @@ export const whFinalizeSync = createServerFn({ method: "POST" })
       .from("wh_sync_table_runs")
       .select("source_table, community_id, status, rows_received, rows_inserted, rows_updated, rows_failed, source_max_updated_at, error_summary")
       .eq("sync_run_id", data.syncRunId)
-      .eq("organization_id", organizationId);
+      .eq("organization_id", organizationId)
+      .order("started_at", { ascending: true });
 
     const rows = (children ?? []) as any[];
-    // De-duplicate retries: the latest row per unit key wins.
+    // De-duplicate retries: the latest attempt per unit key wins.
     const latest = new Map<string, any>();
     for (const r of rows) latest.set(`${r.source_table}:${r.community_id ?? "*"}`, r);
     const units = [...latest.values()];
 
+    // A unit still claimed (running) or reaped as stalled is NOT a completed
+    // unit: it can never make the parent run Complete.
+    const nonTerminal = units.filter((r) => r.status === "running" || r.status === "pending");
+    const stalled = units.filter((r) => r.status === "stalled");
     const core = units.filter((r) => (WH_CORE_TABLES as readonly string[]).includes(r.source_table));
     const coreOk = core.filter((r) => r.status === "success" || r.status === "partial");
     const allClean = units.every((r) => r.status === "success" || r.status === "unsupported");
-    const complete = units.length >= data.expectedUnits;
+    const complete =
+      units.filter((r) => r.status !== "running" && r.status !== "pending").length >=
+        data.expectedUnits && nonTerminal.length === 0 && stalled.length === 0;
+
+
 
     const status = data.canceled
       ? "canceled"
@@ -550,6 +569,50 @@ export const whFinalizeSync = createServerFn({ method: "POST" })
 
     return { status, totals, unitsCompleted: units.length, expectedUnits: data.expectedUnits };
   });
+
+/**
+ * STALLED-WORK REAPER.
+ *
+ * A work unit heartbeats (`last_progress_at`) every time a page of source rows
+ * is fetched AND persisted. This function marks any non-terminal unit that has
+ * not heartbeat inside the window as `stalled`, then finalizes parent runs
+ * whose entire unit set has stopped advancing — as `partial` when other units
+ * succeeded, `failed` when none did. A slow-but-healthy unit keeps beating and
+ * is never touched, so the cure is progress-based, not timeout-based.
+ */
+export const whReapStalled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        connectionId: z.string().uuid(),
+        stallMinutes: z.number().int().min(1).max(240).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId } = await guard(context.supabase as any, data.connectionId);
+    const admin = await adminClient();
+    const { data: result, error } = await admin.rpc("wh_sync_reap_stalled", {
+      _org_id: organizationId,
+      _stall_minutes: data.stallMinutes ?? WH_STALL_MINUTES,
+    });
+    if (error) throw new Error(error.message);
+    const payload = (result ?? {}) as { stalled_units?: number; finalized_runs?: unknown[] };
+    return {
+      stalledUnits: payload.stalled_units ?? 0,
+      finalizedRuns: (payload.finalized_runs ?? []) as {
+        run_id: string;
+        status: string;
+        successful: number;
+        failed_or_stalled: number;
+        planned: number;
+        never_started: number;
+      }[],
+    };
+  });
+
+
 
 
 /**

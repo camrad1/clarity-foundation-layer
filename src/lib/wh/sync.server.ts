@@ -53,6 +53,22 @@ type Admin = SupabaseClient<any, "public", any>;
  */
 export type TableStatus = "success" | "partial" | "failed" | "skipped" | "unsupported";
 
+/**
+ * HEARTBEAT — persisted proof of forward progress.
+ *
+ * A work unit writes one of these every time a page of source rows has been
+ * fetched AND persisted. Stall detection is defined purely in terms of this
+ * timestamp: a unit that is genuinely slow keeps advancing pages and is never
+ * reaped, while a unit whose HTTP request died, whose pagination stopped, or
+ * whose driving client vanished stops heartbeating and becomes `stalled` after
+ * the configured window. This is why the fix is not "raise the timeout".
+ */
+export type Heartbeat = (p: { page: number; pages: number; rows: number }) => Promise<void>;
+
+/** How long a non-terminal unit may go without a heartbeat before it is stalled. */
+export const WH_STALL_MINUTES = 10;
+
+
 export type TableResult = {
   table: WhTable;
   status: TableStatus;
@@ -154,7 +170,9 @@ async function syncLookupTable(
     connectionId: string;
     table: WhLookupTable;
     targets: CommunityTarget[];
+    beat?: Heartbeat | undefined;
   },
+
 ): Promise<TableResult> {
   const started = Date.now();
   const result: TableResult = {
@@ -189,6 +207,12 @@ async function syncLookupTable(
       const { records, pages } = await whLookup(auth, args.table, scope?.sourceCommunityId ?? null);
       result.pagesFetched += pages;
       result.rowsReceived += records.length;
+      await args.beat?.({
+        page: result.pagesFetched,
+        pages: result.pagesFetched,
+        rows: result.rowsReceived,
+      });
+
       for (const raw of records) {
         // Referrers rows are people; keep only the non-identifying columns.
         // Users are staff, not prospects/residents: their display name is kept
@@ -271,6 +295,8 @@ async function syncCoreTable(
     table: WhCoreTable;
     targets: CommunityTarget[];
     updatedAfter: string | null;
+    beat?: Heartbeat | undefined;
+
   },
 ): Promise<TableResult> {
   const started = Date.now();
@@ -363,6 +389,12 @@ async function syncCoreTable(
           result.rowsUpdated += updated;
         }
 
+        // Heartbeat AFTER the page has been persisted: progress means data
+        // landed, not merely that a request was issued.
+        await args.beat?.({ page: pages, pages: result.pagesFetched, rows: result.rowsReceived });
+
+
+
         if (!nextUrl || records.length === 0) break;
         if (pages >= WH_MAX_PAGES) {
           result.warnings.push(
@@ -443,6 +475,60 @@ export async function runWelcomeHomeSyncUnit(
 
   const targets = args.target ? [args.target] : [];
 
+  // CLAIM the work unit BEFORE any network call. Previously a unit only became
+  // visible when it finished, so an in-flight or orphaned unit left no trace at
+  // all and its parent run could stay `running` forever. The row now exists for
+  // the whole lifetime of the unit and carries its own progress heartbeat.
+  const { data: prior } = await admin
+    .from("wh_sync_table_runs")
+    .select("retry_count")
+    .eq("sync_run_id", args.syncRunId)
+    .eq("source_table", args.table)
+    // PostgREST treats eq(null) as a literal, so the account-wide scope
+    // (community_id IS NULL) has to be matched with `is`.
+    [args.target?.communityId ? "eq" : "is"]("community_id", args.target?.communityId ?? null)
+    .order("started_at", { ascending: false })
+    .limit(1);
+
+  const retryCount = ((prior?.[0]?.retry_count as number | undefined) ?? -1) + 1;
+
+  const nowIso = () => new Date().toISOString();
+  const { data: claimed } = await admin
+    .from("wh_sync_table_runs")
+    .insert({
+      organization_id: args.organizationId,
+      connection_id: args.connectionId,
+      sync_run_id: args.syncRunId,
+      community_id: args.target?.communityId ?? null,
+      source_community_id: args.target?.sourceCommunityId ?? null,
+      source_table: args.table,
+      mode: args.mode,
+      status: "running",
+      requested_after: updatedAfter,
+      retry_count: retryCount,
+      started_at: nowIso(),
+      last_progress_at: nowIso(),
+    })
+    .select("id")
+    .single();
+  const unitRunId = (claimed?.id as string | undefined) ?? null;
+
+  const beat: Heartbeat | undefined = unitRunId
+    ? async ({ page, pages, rows }) => {
+        await admin
+          .from("wh_sync_table_runs")
+          .update({
+            last_progress_at: nowIso(),
+            current_page: page,
+            pages_processed: pages,
+            pages_fetched: pages,
+            rows_processed: rows,
+            rows_received: rows,
+          })
+          .eq("id", unitRunId);
+      }
+    : undefined;
+
   const result = isCoreTable(args.table)
     ? await syncCoreTable(admin, auth, {
         organizationId: args.organizationId,
@@ -451,12 +537,14 @@ export async function runWelcomeHomeSyncUnit(
         table: args.table,
         targets,
         updatedAfter,
+        beat,
       })
     : await syncLookupTable(admin, auth, {
         organizationId: args.organizationId,
         connectionId: args.connectionId,
         table: args.table as WhLookupTable,
         targets,
+        beat,
       });
 
   if (args.mode === "incremental" && !supportsIncremental && isCoreTable(args.table)) {
@@ -465,7 +553,7 @@ export async function runWelcomeHomeSyncUnit(
     );
   }
 
-  await admin.from("wh_sync_table_runs").insert({
+  const terminal = {
     organization_id: args.organizationId,
     connection_id: args.connectionId,
     sync_run_id: args.syncRunId,
@@ -482,12 +570,23 @@ export async function runWelcomeHomeSyncUnit(
     rows_unmapped: result.rowsUnmapped,
     raw_rows_stored: result.rawRowsStored,
     pages_fetched: result.pagesFetched,
+    rows_processed: result.rowsReceived,
+    pages_processed: result.pagesFetched,
+    retry_count: retryCount,
     source_max_updated_at: result.sourceMaxUpdatedAt,
     duration_ms: result.durationMs,
     error_summary: result.error,
+    last_error: result.error,
     warnings: result.warnings,
-    completed_at: new Date().toISOString(),
-  });
+    last_progress_at: nowIso(),
+    completed_at: nowIso(),
+  };
+  if (unitRunId) {
+    await admin.from("wh_sync_table_runs").update(terminal).eq("id", unitRunId);
+  } else {
+    await admin.from("wh_sync_table_runs").insert(terminal);
+  }
+
 
   // The watermark only advances on a clean unit. An interrupted, failed or
   // partial unit keeps its previous watermark, so a retry re-reads the same
