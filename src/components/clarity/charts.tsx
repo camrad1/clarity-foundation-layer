@@ -195,8 +195,7 @@ export function GroupedBarChart({
             dataKey={b.key}
             name={b.label}
             fill={b.color}
-            stackId={stacked ? "stack" : undefined}
-            radius={stacked ? undefined : [3, 3, 0, 0]}
+            {...(stacked ? { stackId: "stack" } : { radius: [3, 3, 0, 0] as [number, number, number, number] })}
             maxBarSize={stacked ? 34 : 22}
           />
         ))}
