@@ -262,16 +262,25 @@ export function useFlashDeposits(
   );
 }
 
+/**
+ * Current-state Hot working list. Never filtered by inquiry date, month or
+ * the selected Flash week — a prospect scored Hot today belongs on today's
+ * tracker regardless of when it was created.
+ */
 export type FlashHotLeadRow = {
   source_id: string;
   community_id: string | null;
   person_name: string | null;
   stage_id: string | null;
+  stage_label: string | null;
+  score_label: string | null;
   status: string | null;
+  inquiry_date: string | null;
   next_activity_scheduled_at: string | null;
   last_contact_at: string | null;
   counselor_id: string | null;
   lead_source_id: string | null;
+  lead_source_label: string | null;
 };
 
 export function useFlashHotLeads(
