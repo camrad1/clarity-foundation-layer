@@ -224,8 +224,8 @@ export function MetricTrendChart({
                   if (v == null || !Number.isFinite(Number(v))) return null;
                   return (
                     <text
-                      x={Number(props.x) - 2}
-                      y={Number(props.y) - 8}
+                      x={Number(props.x) - 6}
+                      y={Number(props.y) - 10}
                       textAnchor="end"
                       style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
                     >
