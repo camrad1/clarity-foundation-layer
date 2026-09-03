@@ -265,7 +265,8 @@ function FlashReportPage() {
     const header = [
       "Week / Date", "Date range", "Total Units", "Unit Occ", "Unit Budget", "Variance",
       "OCC %", "Budget %", ...careTypes,
-      "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "NET",
+      "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "Pending NET",
+      "Projected Occ #", "Projected Occ %",
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
     const so = data?.starting?.occupancy ?? null;
@@ -288,7 +289,7 @@ function FlashReportPage() {
             }),
           ]
         : Array(6 + careTypes.length).fill("—")),
-      ...Array(10).fill(""),
+      ...Array(12).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
       gridRow(w, occ?.totalUnits ?? null, careTypes),
@@ -495,10 +496,28 @@ function FlashReportPage() {
           />
           <CompactRow
             heading={`This month — pending MIMO (${formatMonth(month)})`}
+            hint="Projected month-end occupancy — based on currently known pending move-ins and move-outs."
             items={[
-              { label: "Pending Move Ins", value: num(data?.month.pendingIn) },
-              { label: "Pending Outs", value: num(data?.month.pendingOut) },
-              { label: "Net", value: data ? String(data.month.pendingNet) : "—" },
+              { label: "Pending Move-Ins", value: num(data?.month.pendingIn) },
+              { label: "Pending Move-Outs", value: num(data?.month.pendingOut) },
+              {
+                label: "Net",
+                value: data ? (data.month.pendingNet > 0 ? `+${data.month.pendingNet}` : String(data.month.pendingNet)) : "—",
+                tone: !data ? "neutral" : data.month.pendingNet > 0 ? "up" : data.month.pendingNet < 0 ? "down" : "neutral",
+              },
+              {
+                label: "Projected Occupied Units",
+                value: num(data?.month.projectedOccupiedUnits ?? null),
+                group: true,
+              },
+              {
+                label: "Projected OCC %",
+                value:
+                  data?.month.projectedOccupancyPct == null
+                    ? "—"
+                    : `${Number(data.month.projectedOccupancyPct).toFixed(1)}%`,
+                group: true,
+              },
             ]}
           />
           <CompactRow
@@ -514,6 +533,14 @@ function FlashReportPage() {
             ]}
           />
         </div>
+        {data?.month.projectedOverCapacity ? (
+          <p className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+            Data Health warning — projected month-end occupied units
+            ({data.month.projectedOccupiedUnits}) exceed canonical census capacity
+            ({data.month.projectedCensusUnits}). Pending contract dates or unit census flags need
+            review in WelcomeHome. The calculation has not been adjusted.
+          </p>
+        ) : null}
       </Section>
 
 
@@ -797,19 +824,28 @@ function FlashReportPage() {
 /** Dense summary strip: legacy grouped heading + inline metrics. */
 function CompactRow({
   heading,
+  hint,
   items,
 }: {
   heading: string;
-  items: { label: string; value: React.ReactNode; tone?: "neutral" | "up" | "down" }[];
+  hint?: string;
+  items: { label: string; value: React.ReactNode; tone?: "neutral" | "up" | "down"; group?: boolean }[];
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-      <p className="w-full text-[10px] font-semibold uppercase tracking-wider text-brand md:w-48 md:shrink-0">
-        {heading}
-      </p>
+      <div className="w-full md:w-48 md:shrink-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">{heading}</p>
+        {hint ? <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{hint}</p> : null}
+      </div>
       <div className="flex flex-wrap gap-x-7 gap-y-3">
         {items.map((it) => (
-          <div key={it.label} className="min-w-[60px] space-y-0.5 text-center">
+          <div
+            key={it.label}
+            className={cn(
+              "min-w-[60px] space-y-0.5 text-center",
+              it.group && "rounded-md border border-brand-border/70 bg-brand-soft/60 px-3 py-1",
+            )}
+          >
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {it.label}
             </p>
@@ -893,6 +929,8 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
     w.pendingIn,
     w.pendingOut,
     w.pendingNet,
+    w.projectedOccupiedUnits ?? "—",
+    w.projectedOccupancyPct == null ? "—" : Number(w.projectedOccupancyPct).toFixed(1),
     w.inquiries,
     w.outreach,
     w.tours,
@@ -915,7 +953,10 @@ function WeekByWeekGrid({
   const groups: { label: string; cols: string[] }[] = [
     { label: "Current weekly summary", cols: ["Total Units", "Unit Occ", "Unit Budget", "Variance", "OCC %", "Budget %", ...careTypes] },
     { label: "Current MIMO", cols: ["MIs", "MOs", "NET"] },
-    { label: "This month – pending MIMO", cols: ["Pending Move Ins", "Pending Outs", "NET"] },
+    {
+      label: "This month – pending MIMO / projected month-end occupancy",
+      cols: ["Pending Move Ins", "Pending Outs", "NET", "Projected Occ #", "Projected Occ %"],
+    },
     { label: "Weekly sales update", cols: ["Inquiries", "Outreach Contacts", "Tours", "Re-Tours"] },
   ];
   const totalCols = 1 + groups.reduce((n, g) => n + g.cols.length, 0);
@@ -1090,6 +1131,10 @@ function GridRow({
       <td className={cn(cell, GROUP_BORDER)}>{w.pendingIn}</td>
       <td className={cell}>{w.pendingOut}</td>
       <td className={cell}>{w.pendingNet > 0 ? `+${w.pendingNet}` : w.pendingNet}</td>
+      <td className={cn(cell, "bg-brand-soft/40")}>{w.projectedOccupiedUnits ?? na}</td>
+      <td className={cn(cell, "bg-brand-soft/40")}>
+        {w.projectedOccupancyPct == null ? na : `${Number(w.projectedOccupancyPct).toFixed(1)}%`}
+      </td>
       <td className={cn(cell, GROUP_BORDER)}>{w.inquiries}</td>
       <td className={cell}>{w.outreach}</td>
       <td className={cell}>{w.tours}</td>

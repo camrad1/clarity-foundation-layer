@@ -28,6 +28,18 @@ export type FlashPeriod = {
   pendingIn: number;
   pendingOut: number;
   pendingNet: number;
+  /**
+   * Forward-looking month-end projection: CURRENT canonical occupied units
+   * + pending move-ins − pending move-outs, over the SAME canonical census
+   * denominator used by current occupancy. Only produced for an in-progress
+   * period — historical periods have no captured pending state and return
+   * null rather than borrowing today's.
+   */
+  projectedOccupiedUnits?: number | null;
+  projectedOccupancyPct?: number | null;
+  projectedCensusUnits?: number | null;
+  projectedOverCapacity?: boolean;
+  projectedBasis?: string;
   budget?: FlashBudgetValue | null;
   occupancy?: FlashOccupancy | null;
 };
