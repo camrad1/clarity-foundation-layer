@@ -217,36 +217,178 @@ export type Database = {
           },
         ]
       }
-      community_daily_snapshots: {
+      community_daily_snapshot_care_types: {
         Row: {
+          care_type_label: string
+          census_units: number
           community_id: string
           created_at: string
           id: string
+          occupancy_pct: number | null
+          occupied_units: number
           organization_id: string
-          payload: Json
           snapshot_date: string
-          snapshot_type: string
-          source_sync_run_id: string | null
+          snapshot_id: string
         }
         Insert: {
+          care_type_label: string
+          census_units?: number
           community_id: string
           created_at?: string
           id?: string
+          occupancy_pct?: number | null
+          occupied_units?: number
           organization_id: string
-          payload?: Json
           snapshot_date: string
-          snapshot_type: string
-          source_sync_run_id?: string | null
+          snapshot_id: string
         }
         Update: {
+          care_type_label?: string
+          census_units?: number
           community_id?: string
           created_at?: string
           id?: string
+          occupancy_pct?: number | null
+          occupied_units?: number
           organization_id?: string
-          payload?: Json
           snapshot_date?: string
-          snapshot_type?: string
-          source_sync_run_id?: string | null
+          snapshot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_daily_snapshot_care_types_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_daily_snapshot_care_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_daily_snapshot_care_types_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "community_daily_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_daily_snapshots: {
+        Row: {
+          budget_pct: number | null
+          budget_units: number | null
+          census_units: number | null
+          community_id: string
+          configured_operational_units: number | null
+          created_at: string
+          failure_reason: string | null
+          hot_leads: number | null
+          hot_no_future_activity: number | null
+          id: string
+          inactive_units: number | null
+          local_timezone: string | null
+          metric_version: string
+          notice_count: number | null
+          occupancy_pct: number | null
+          occupancy_variance_pct: number | null
+          occupancy_variance_units: number | null
+          occupied_units: number | null
+          off_census_units: number | null
+          open_pipeline: number | null
+          organization_id: string
+          pending_move_ins: number | null
+          pending_move_outs: number | null
+          pseudo_units: number | null
+          reserved_count: number | null
+          residents_count: number | null
+          snapshot_at: string
+          snapshot_date: string
+          source_connection_id: string | null
+          source_data_through_at: string | null
+          stalled_prospects: number | null
+          status: string
+          sync_run_id: string | null
+          total_unit_records: number | null
+          vacant_units: number | null
+        }
+        Insert: {
+          budget_pct?: number | null
+          budget_units?: number | null
+          census_units?: number | null
+          community_id: string
+          configured_operational_units?: number | null
+          created_at?: string
+          failure_reason?: string | null
+          hot_leads?: number | null
+          hot_no_future_activity?: number | null
+          id?: string
+          inactive_units?: number | null
+          local_timezone?: string | null
+          metric_version?: string
+          notice_count?: number | null
+          occupancy_pct?: number | null
+          occupancy_variance_pct?: number | null
+          occupancy_variance_units?: number | null
+          occupied_units?: number | null
+          off_census_units?: number | null
+          open_pipeline?: number | null
+          organization_id: string
+          pending_move_ins?: number | null
+          pending_move_outs?: number | null
+          pseudo_units?: number | null
+          reserved_count?: number | null
+          residents_count?: number | null
+          snapshot_at?: string
+          snapshot_date: string
+          source_connection_id?: string | null
+          source_data_through_at?: string | null
+          stalled_prospects?: number | null
+          status?: string
+          sync_run_id?: string | null
+          total_unit_records?: number | null
+          vacant_units?: number | null
+        }
+        Update: {
+          budget_pct?: number | null
+          budget_units?: number | null
+          census_units?: number | null
+          community_id?: string
+          configured_operational_units?: number | null
+          created_at?: string
+          failure_reason?: string | null
+          hot_leads?: number | null
+          hot_no_future_activity?: number | null
+          id?: string
+          inactive_units?: number | null
+          local_timezone?: string | null
+          metric_version?: string
+          notice_count?: number | null
+          occupancy_pct?: number | null
+          occupancy_variance_pct?: number | null
+          occupancy_variance_units?: number | null
+          occupied_units?: number | null
+          off_census_units?: number | null
+          open_pipeline?: number | null
+          organization_id?: string
+          pending_move_ins?: number | null
+          pending_move_outs?: number | null
+          pseudo_units?: number | null
+          reserved_count?: number | null
+          residents_count?: number | null
+          snapshot_at?: string
+          snapshot_date?: string
+          source_connection_id?: string | null
+          source_data_through_at?: string | null
+          stalled_prospects?: number | null
+          status?: string
+          sync_run_id?: string | null
+          total_unit_records?: number | null
+          vacant_units?: number | null
         }
         Relationships: [
           {
@@ -264,8 +406,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "community_daily_snapshots_source_sync_run_id_fkey"
-            columns: ["source_sync_run_id"]
+            foreignKeyName: "community_daily_snapshots_source_connection_id_fkey"
+            columns: ["source_connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_daily_snapshots_sync_run_id_fkey"
+            columns: ["sync_run_id"]
             isOneToOne: false
             referencedRelation: "source_sync_runs"
             referencedColumns: ["id"]
@@ -3763,6 +3912,38 @@ export type Database = {
         }[]
       }
       wh_norm_unit_label: { Args: { _v: string }; Returns: string }
+      wh_occupancy_asof: {
+        Args: {
+          _community_ids?: string[]
+          _date?: string
+          _org_id: string
+          _tolerance?: number
+        }
+        Returns: Json
+      }
+      wh_occupancy_trend: {
+        Args: {
+          _community_ids?: string[]
+          _end?: string
+          _grain?: string
+          _org_id: string
+          _start?: string
+        }
+        Returns: {
+          budget_pct: number
+          budget_units: number
+          census_units: number
+          communities: number
+          notice_count: number
+          occupancy_pct: number
+          occupied_units: number
+          period_start: string
+          reserved_count: number
+          snapshot_date: string
+          vacant_units: number
+          variance_units: number
+        }[]
+      }
       wh_person_label: {
         Args: {
           _org_id: string
@@ -3793,6 +3974,17 @@ export type Database = {
           total_count: number
         }[]
       }
+      wh_record_snapshot_failure: {
+        Args: {
+          _community_id: string
+          _connection_id?: string
+          _org_id: string
+          _reason: string
+          _snapshot_date?: string
+          _sync_run_id?: string
+        }
+        Returns: Json
+      }
       wh_sales_summary: {
         Args: {
           _community_ids?: string[]
@@ -3818,6 +4010,35 @@ export type Database = {
           net_move_ins: number
           re_tours: number
           tours: number
+        }[]
+      }
+      wh_snapshot_asof: {
+        Args: {
+          _date: string
+          _org_id: string
+          _scope: string[]
+          _tolerance?: number
+        }
+        Returns: Json
+      }
+      wh_snapshot_health: {
+        Args: { _community_ids?: string[]; _org_id: string }
+        Returns: {
+          community_id: string
+          community_name: string
+          days_behind: number
+          expected_snapshot_date: string
+          first_snapshot_date: string
+          last_failure_date: string
+          last_failure_reason: string
+          last_snapshot_at: string
+          last_snapshot_date: string
+          last_successful_sync_at: string
+          last_sync_status: string
+          snapshot_count: number
+          snapshot_missing: boolean
+          source_stale: boolean
+          timezone: string
         }[]
       }
       wh_successful_result_ids: { Args: { _org_id: string }; Returns: string[] }
@@ -3870,6 +4091,17 @@ export type Database = {
           unit_name: string
           unit_number: string
         }[]
+      }
+      wh_write_daily_snapshot: {
+        Args: {
+          _community_id: string
+          _connection_id?: string
+          _org_id: string
+          _snapshot_date?: string
+          _source_through?: string
+          _sync_run_id?: string
+        }
+        Returns: Json
       }
     }
     Enums: {
