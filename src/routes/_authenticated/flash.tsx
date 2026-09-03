@@ -240,8 +240,26 @@ function FlashReportPage() {
       "MIs", "MOs", "NET", "Pending Move Ins", "Pending Outs", "NET",
       "Inquiries", "Outreach Contacts", "Tours", "Re-Tours",
     ];
+    const so = data?.starting?.occupancy ?? null;
+    const sb = data?.starting?.budget?.units ?? null;
+    const sVar = so?.occupiedUnits != null && sb != null ? so.occupiedUnits - sb : null;
     const starting = [
-      "Starting #", "", ...Array(6 + careTypes.length).fill("—"),
+      "Starting #",
+      data?.starting?.asOfDate ?? "",
+      ...(so
+        ? [
+            so.totalUnits,
+            so.occupiedUnits,
+            sb ?? "—",
+            sVar ?? "—",
+            so.censusUnits ? ((so.occupiedUnits / so.censusUnits) * 100).toFixed(1) : "—",
+            sb ? ((so.occupiedUnits / sb) * 100).toFixed(1) : "—",
+            ...careTypes.map((ct) => {
+              const row = so.byCareType.find((c) => c.careType === ct);
+              return row ? `${row.occupied}/${row.units}` : "—";
+            }),
+          ]
+        : Array(6 + careTypes.length).fill("—")),
       ...Array(10).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
