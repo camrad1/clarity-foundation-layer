@@ -73,48 +73,78 @@ export function GlobalFilterBar() {
             {formatRangeLabel(dateRange)}
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-72 p-2">
-          <div className="space-y-0.5">
-            {DATE_RANGE_PRESETS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setDatePreset(p.value)}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
-                  dateRange.preset === p.value && "bg-muted font-medium",
-                )}
-              >
-                {p.label}
-                {dateRange.preset === p.value ? <Check className="size-4" /> : null}
-              </button>
-            ))}
-          </div>
-          {dateRange.preset === "custom" ? (
-            <>
-              <Separator className="my-2" />
-              <div className="grid grid-cols-2 gap-2 p-1">
-                <div className="space-y-1">
-                  <Label className="text-xs">Start</Label>
-                  <Input
-                    type="date"
-                    value={dateRange.start}
-                    onChange={(e) => setCustomRange(e.target.value, dateRange.end)}
-                  />
+        <PopoverContent align="start" className="w-auto max-w-[95vw] p-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="grid grid-cols-2 gap-x-4 sm:grid-cols-2">
+              {DATE_RANGE_PRESET_GROUPS.map((group) => (
+                <div key={group.label} className="min-w-[9.5rem] space-y-0.5">
+                  <p className="eyebrow px-2.5 pb-1">{group.label}</p>
+                  {group.presets.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setDatePreset(p.value)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
+                        dateRange.preset === p.value && "bg-muted font-medium",
+                      )}
+                    >
+                      {p.label}
+                      {dateRange.preset === p.value ? <Check className="size-4" /> : null}
+                    </button>
+                  ))}
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">End</Label>
-                  <Input
-                    type="date"
-                    value={dateRange.end}
-                    onChange={(e) => setCustomRange(dateRange.start, e.target.value)}
-                  />
-                </div>
+              ))}
+            </div>
+
+            {dateRange.preset === "custom" ? (
+              <div className="border-t pt-3 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
+                <Calendar
+                  mode="range"
+                  numberOfMonths={2}
+                  defaultMonth={new Date(`${dateRange.start}T00:00:00`)}
+                  selected={{
+                    from: new Date(`${dateRange.start}T00:00:00`),
+                    to: new Date(`${dateRange.end}T00:00:00`),
+                  }}
+                  onSelect={(range: DateRange | undefined) => {
+                    if (!range?.from) return;
+                    const from = format(range.from, "yyyy-MM-dd");
+                    const to = format(range.to ?? range.from, "yyyy-MM-dd");
+                    setCustomRange(from, to);
+                  }}
+                  className={cn("pointer-events-auto p-0")}
+                />
+                <p className="pt-2 text-xs text-muted-foreground">
+                  {formatRangeLabel(dateRange)}
+                </p>
               </div>
-            </>
-          ) : null}
+            ) : null}
+          </div>
         </PopoverContent>
       </Popover>
+
+      <Select
+        value={comparisonMode}
+        onValueChange={(v) => setComparisonMode(v as ComparisonPeriodMode)}
+      >
+        <SelectTrigger className="h-8 w-auto gap-2 text-sm font-normal">
+          <GitCompareArrows className="size-4 text-muted-foreground" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {COMPARISON_PERIOD_MODES.map((m) => (
+            <SelectItem key={m.value} value={m.value}>
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {comparisonRange ? (
+        <span className="text-xs text-muted-foreground">vs {formatPeriodLabel(comparisonRange)}</span>
+      ) : null}
+
 
       <Popover>
         <PopoverTrigger asChild>
