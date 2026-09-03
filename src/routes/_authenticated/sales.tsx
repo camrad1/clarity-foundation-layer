@@ -18,6 +18,14 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
+import {
+  LostLeadsTab,
+  MoveInsByLeadSourceTab,
+  MoveOutReasonsTab,
+  NewInquiriesTab,
+  OccupancyHistoryTab,
+} from "@/components/clarity/sales-reports";
 import { ratio } from "@/lib/wh/metrics";
 import { cn } from "@/lib/utils";
 import { WH_ACTIVITY_CATEGORY_LABELS, type WhActivityCategory } from "@/lib/wh/tables";
@@ -63,89 +71,6 @@ export const Route = createFileRoute("/_authenticated/sales")({
 });
 
 const pct = (n: number | null) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
-
-/**
- * Chart series visibility is a presentation-only concern, persisted for the
- * current browser session (sessionStorage) under a chart-specific key so
- * different charts keep independent selections. At least one series must
- * always stay active: attempts to hide the last visible one are ignored.
- */
-function useSeriesVisibility(storageKey: string, allKeys: string[], defaultKeys: string[]) {
-  const [visible, setVisible] = useState<string[]>(() => {
-    if (typeof window === "undefined") return defaultKeys;
-    try {
-      const raw = window.sessionStorage.getItem(storageKey);
-      if (!raw) return defaultKeys;
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) return defaultKeys;
-      const clean = parsed.filter((k): k is string => typeof k === "string" && allKeys.includes(k));
-      return clean.length > 0 ? clean : defaultKeys;
-    } catch {
-      return defaultKeys;
-    }
-  });
-
-  const toggle = (key: string) => {
-    setVisible((current) => {
-      const isOn = current.includes(key);
-      // Never allow the last visible series to be hidden.
-      if (isOn && current.length === 1) return current;
-      const next = isOn ? current.filter((k) => k !== key) : [...current, key];
-      try {
-        window.sessionStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        /* session storage unavailable; keep in-memory state */
-      }
-      return next;
-    });
-  };
-
-  return { visible, toggle };
-}
-
-/** Compact pill toggles for chart series. Chips wrap naturally on narrow screens. */
-function SeriesToggleChips({
-  series,
-  visible,
-  onToggle,
-}: {
-  series: { key: string; label: string; color: string; provisional?: boolean }[];
-  visible: string[];
-  onToggle: (key: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Toggle chart series">
-      {series.map((s) => {
-        const active = visible.includes(s.key);
-        return (
-          <button
-            key={s.key}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onToggle(s.key)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
-              active
-                ? "border-border bg-muted text-foreground"
-                : "border-transparent bg-transparent text-muted-foreground/60 hover:text-muted-foreground",
-            )}
-          >
-            <span
-              className={cn("size-2 rounded-full", !active && "opacity-40")}
-              style={{ background: s.color }}
-            />
-            {s.label}
-            {s.provisional ? (
-              <span className="rounded-full bg-warning/15 px-1 text-[9px] font-semibold uppercase text-warning">
-                Provisional
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 const MONTH_FMT = new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
 const monthLabel = (iso: string) => MONTH_FMT.format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
@@ -287,12 +212,17 @@ function SalesIntelligence() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <div className="-mx-1 overflow-x-auto px-1 pb-1">
-          <TabsList>
+          <TabsList className="w-max">
             <TabsTrigger value="funnel">Funnel</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline health</TabsTrigger>
             <TabsTrigger value="counselors">Counselors</TabsTrigger>
             <TabsTrigger value="sources">Lead sources</TabsTrigger>
             <TabsTrigger value="occupancy">Current occupancy</TabsTrigger>
+            <TabsTrigger value="occupancy-history">Occupancy history</TabsTrigger>
+            <TabsTrigger value="mi-sources">Move-ins by lead source</TabsTrigger>
+            <TabsTrigger value="move-out-reasons">Move-out reasons</TabsTrigger>
+            <TabsTrigger value="inquiries">New inquiries</TabsTrigger>
+            <TabsTrigger value="lost-leads">Lost leads</TabsTrigger>
           </TabsList>
         </div>
 
@@ -752,6 +682,47 @@ function SalesIntelligence() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </TabsContent>
+
+        {/* -------------------------------------------- Standard reports */}
+        <TabsContent value="occupancy-history" className="space-y-6 pt-6">
+          <OccupancyHistoryTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="mi-sources" className="space-y-6 pt-6">
+          <MoveInsByLeadSourceTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="move-out-reasons" className="space-y-6 pt-6">
+          <MoveOutReasonsTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="inquiries" className="space-y-6 pt-6">
+          <NewInquiriesTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="lost-leads" className="space-y-6 pt-6">
+          <LostLeadsTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
         </TabsContent>
       </Tabs>
     </div>

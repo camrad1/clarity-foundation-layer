@@ -4057,6 +4057,19 @@ export type Database = {
           unresolved_ids: string[]
         }[]
       }
+      wh_lost_lead_summary: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          lost_leads: number
+          month: string
+          reason_label: string
+        }[]
+      }
       wh_move_in_page: {
         Args: {
           _community_ids?: string[]
@@ -4081,6 +4094,47 @@ export type Database = {
           unit_source_id: string
         }[]
       }
+      wh_move_ins_by_lead_source_monthly: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          lead_source_label: string
+          month: string
+          move_ins: number
+        }[]
+      }
+      wh_move_out_reason_summary: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          los_days: number
+          los_sample: number
+          month: string
+          move_outs: number
+          reason_label: string
+        }[]
+      }
+      wh_new_inquiries_monthly: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _grain?: string
+          _org_id: string
+          _periods?: number
+        }
+        Returns: {
+          bucket: string
+          inquiries: number
+        }[]
+      }
       wh_nightly_claim: {
         Args: { _lease_seconds?: number; _run_id: string }
         Returns: string
@@ -4102,6 +4156,28 @@ export type Database = {
           _tolerance?: number
         }
         Returns: Json
+      }
+      wh_occupancy_monthly_history: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          beginning_census: number
+          beginning_occupied: number
+          beginning_pct: number
+          budget_pct: number
+          communities_in_scope: number
+          ending_census: number
+          ending_occupied: number
+          ending_pct: number
+          month: string
+          move_ins: number
+          move_outs: number
+          net_move_ins: number
+        }[]
       }
       wh_occupancy_trend: {
         Args: {
