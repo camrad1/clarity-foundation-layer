@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { CalendarClock, Download, Search } from "lucide-react";
 import {
@@ -15,14 +14,8 @@ import { EmptyState } from "@/components/clarity/empty-state";
 import { MetricCard } from "@/components/clarity/metric-card";
 import { PageHeader } from "@/components/clarity/page-header";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { COMPARISON_MODES, change, formatPeriod, resolveComparison, type ComparisonMode } from "@/lib/gsc/compare";
+import { change } from "@/lib/gsc/compare";
+import { comparisonModeLabel, formatPeriodLabel } from "@/lib/date-ranges";
 import { downloadCsv, fmtDelta, fmtInt, fmtPercent, fmtPosition, toCsv } from "@/lib/gsc/format";
 import { useDailySeries, useDailyTotals } from "@/lib/gsc/queries";
 import { useAppState } from "@/state/app-state";
@@ -49,14 +42,14 @@ export const Route = createFileRoute("/_authenticated/marketing/")({
 });
 
 function SearchOverview() {
-  const { organizationId, dateRange, communityScope } = useAppState();
-  const [mode, setMode] = useState<ComparisonMode>("prior_period");
+  const { organizationId, dateRange, comparisonMode, comparisonRange, communityScope } = useAppState();
 
   const period = { start: dateRange.start, end: dateRange.end };
-  const comparison = useMemo(() => resolveComparison(period, mode), [period.start, period.end, mode]);
+  // Comparison comes from the global Comparison Period control.
+  const comparison = comparisonRange;
 
   const totals = useDailyTotals(organizationId, period);
-  const prior = useDailyTotals(organizationId, comparison);
+  const prior = useDailyTotals(organizationId, comparison ?? period);
   const series = useDailySeries(organizationId, period);
 
   const current = totals.data as
@@ -74,11 +67,11 @@ function SearchOverview() {
   const previous = prior.data as typeof current;
 
   const hasData = !!current && current.impressions + current.clicks > 0;
-  const comparable = !!previous && previous.impressions + previous.clicks > 0;
+  const comparable = !!comparison && !!previous && previous.impressions + previous.clicks > 0;
 
   const clickDelta = comparable ? change(current!.clicks, previous!.clicks).percent : null;
   const imprDelta = comparable ? change(current!.impressions, previous!.impressions).percent : null;
-  const ctrDelta = comparable ? change(current!.ctr, previous!.ctr).percent : null;
+  const ctrPts = comparable ? change(current!.ctr, previous!.ctr).absolute : null;
   const posDelta = comparable ? change(current!.avg_position, previous!.avg_position).percent : null;
 
   const rows = (series.data ?? []) as {
@@ -97,18 +90,6 @@ function SearchOverview() {
         description="Daily totals from the Dates report of your Search Console exports. Click-through rate is recalculated from clicks and impressions, and average position is impression weighted — never a simple average of averages."
         actions={
           <div className="flex items-center gap-2">
-            <Select value={mode} onValueChange={(v) => setMode(v as ComparisonMode)}>
-              <SelectTrigger className="h-9 w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COMPARISON_MODES.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Button
               variant="outline"
               size="sm"
@@ -154,7 +135,18 @@ function SearchOverview() {
               value={fmtInt(current!.impressions)}
               delta={comparable ? fmtDelta(imprDelta) : null}
             />
-            <MetricCard label="CTR" value={fmtPercent(current!.ctr)} delta={comparable ? fmtDelta(ctrDelta) : null} />
+            <MetricCard
+              label="CTR"
+              value={fmtPercent(current!.ctr)}
+              delta={
+                comparable && ctrPts != null
+                  ? {
+                      label: `${ctrPts >= 0 ? "+" : ""}${(ctrPts * 100).toFixed(1)} pts`,
+                      tone: ctrPts > 0 ? "up" : ctrPts < 0 ? "down" : "neutral",
+                    }
+                  : null
+              }
+            />
             <MetricCard
               label="Average position"
               value={fmtPosition(current!.avg_position)}
@@ -171,8 +163,10 @@ function SearchOverview() {
               {current!.last_date ? format(parseISO(current!.last_date), "MMM d, yyyy") : "—"}
             </span>
             <span>
-              Compared with {formatPeriod(comparison)}
-              {comparable ? "" : " — no imported data in that period"}
+              {comparison
+                ? `${comparisonModeLabel(comparisonMode)} · compared with ${formatPeriodLabel(comparison)}`
+                : "No comparison selected"}
+              {comparison && !comparable ? " — no imported data in that period" : ""}
             </span>
           </div>
 

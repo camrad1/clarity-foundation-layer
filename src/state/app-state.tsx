@@ -7,7 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { resolvePreset, type DateRangePreset, type DateRangeValue } from "@/lib/date-ranges";
+import {
+  normalizePreset,
+  resolveComparisonPeriod,
+  resolvePreset,
+  type ComparisonPeriodMode,
+  type DateRangePreset,
+  type DateRangeValue,
+  type Period,
+} from "@/lib/date-ranges";
 
 /**
  * Global ClarityIQ filter state.
@@ -26,12 +34,16 @@ type PersistedState = {
   organizationId: string | null;
   dateRange: DateRangeValue;
   communityScope: CommunityScope;
+  comparisonMode: ComparisonPeriodMode;
 };
 
 type AppStateContextValue = PersistedState & {
+  /** Resolved comparison window, or null when comparison is off. */
+  comparisonRange: Period | null;
   setOrganizationId: (id: string | null) => void;
   setDatePreset: (preset: DateRangePreset) => void;
   setCustomRange: (start: string, end: string) => void;
+  setComparisonMode: (mode: ComparisonPeriodMode) => void;
   setCommunityScope: (scope: CommunityScope) => void;
   toggleCommunity: (id: string) => void;
   hydrated: boolean;
@@ -41,8 +53,9 @@ const STORAGE_KEY = "clarityiq.filters.v1";
 
 const defaultState: PersistedState = {
   organizationId: null,
-  dateRange: resolvePreset("current_month"),
+  dateRange: resolvePreset("this_month"),
   communityScope: { mode: "all" },
+  comparisonMode: "none",
 };
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
@@ -58,13 +71,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as PersistedState;
+        const preset = parsed.dateRange?.preset;
         setState({
           organizationId: parsed.organizationId ?? null,
           dateRange:
-            parsed.dateRange?.preset && parsed.dateRange.preset !== "custom"
-              ? resolvePreset(parsed.dateRange.preset)
+            preset && preset !== "custom"
+              ? resolvePreset(normalizePreset(preset))
               : (parsed.dateRange ?? defaultState.dateRange),
           communityScope: parsed.communityScope ?? { mode: "all" },
+          comparisonMode: parsed.comparisonMode ?? "none",
         });
       }
     } catch {
@@ -102,6 +117,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, dateRange: { preset: "custom", start, end } }));
   }, []);
 
+  const setComparisonMode = useCallback((comparisonMode: ComparisonPeriodMode) => {
+    setState((s) => ({ ...s, comparisonMode }));
+  }, []);
+
   const setCommunityScope = useCallback((communityScope: CommunityScope) => {
     setState((s) => ({ ...s, communityScope }));
   }, []);
@@ -122,10 +141,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppStateContextValue>(
     () => ({
       ...state,
+      comparisonRange: resolveComparisonPeriod(
+        { start: state.dateRange.start, end: state.dateRange.end },
+        state.comparisonMode,
+      ),
       hydrated,
       setOrganizationId,
       setDatePreset,
       setCustomRange,
+      setComparisonMode,
       setCommunityScope,
       toggleCommunity,
     }),
@@ -135,6 +159,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setOrganizationId,
       setDatePreset,
       setCustomRange,
+      setComparisonMode,
       setCommunityScope,
       toggleCommunity,
     ],

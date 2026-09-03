@@ -25,7 +25,7 @@ import {
  * ./summary.ts so KPI accuracy does not depend on a browser row limit.
  */
 export function useWhContext() {
-  const { organizationId, dateRange, communityScope } = useAppState();
+  const { organizationId, dateRange, comparisonMode, comparisonRange, communityScope } = useAppState();
   const communities = useCommunities(organizationId);
   const connection = useWhConnection(organizationId);
   const connectionId = connection.data?.id ?? null;
@@ -74,6 +74,8 @@ export function useWhContext() {
     connection: connection.data ?? null,
     connectionId,
     dateRange,
+    comparisonMode,
+    comparisonRange,
     communityIds,
     communityNames,
     tz,

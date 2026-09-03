@@ -27,6 +27,7 @@ import {
   OccupancyHistoryTab,
 } from "@/components/clarity/sales-reports";
 import { ratio } from "@/lib/wh/metrics";
+import { comparisonSuffix, formatPeriodLabel } from "@/lib/date-ranges";
 import { cn } from "@/lib/utils";
 import { WH_ACTIVITY_CATEGORY_LABELS, type WhActivityCategory } from "@/lib/wh/tables";
 import {
@@ -48,6 +49,7 @@ import {
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 import { effectiveBudget } from "@/lib/wh/occupancy";
 import { useFlashBudgets } from "@/lib/flash/queries";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -106,8 +108,22 @@ function SalesIntelligence() {
     ctx.dateRange.start,
     ctx.dateRange.end,
   );
-  const prior = priorPeriod(ctx.dateRange.start, ctx.dateRange.end);
+  // Global comparison picker wins; otherwise fall back to the prior equal-length period.
+  const prior = ctx.comparisonRange ?? priorPeriod(ctx.dateRange.start, ctx.dateRange.end);
+  const comparisonLabel = ctx.comparisonRange
+    ? comparisonSuffix(ctx.comparisonMode)
+    : "vs prior equal-length period";
   const priorSummary = useWhSalesSummary(ctx.organizationId, ctx.communityIds, prior.start, prior.end);
+  // Occupancy comparison comes from the canonical historical resolver
+  // (nightly snapshot first, official imported daily history next). Disabled
+  // entirely when no comparison period is selected.
+  const priorOccupancy = useOccupancyTrend(
+    ctx.comparisonRange ? ctx.organizationId : null,
+    ctx.communityIds,
+    prior.start,
+    prior.end,
+    "daily",
+  );
   const trend = useWhSalesTrend(ctx.organizationId, ctx.communityIds, ctx.dateRange.end, 12);
   const [tab, setTab] = useState("funnel");
 
@@ -171,7 +187,9 @@ function SalesIntelligence() {
 
   const p = priorSummary.data;
   const cmp = (current: number, previous: number | undefined) =>
-    p && previous != null ? { previous, label: `${prior.start} – ${prior.end}` } : undefined;
+    p && previous != null
+      ? { previous, label: `${formatPeriodLabel(prior)} · ${comparisonLabel}` }
+      : undefined;
 
   const deposits = candidate(
     s.deposits,
@@ -188,6 +206,17 @@ function SalesIntelligence() {
     s.stalled,
     `Open prospects with no contact for ${s.settings.stalled_threshold_days}+ days.`,
   );
+
+  // Latest historical occupancy percentage inside the comparison window.
+  const priorOccupancyPct = (() => {
+    const rows = priorOccupancy.data ?? [];
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const pct = rows[i]?.occupancy_pct;
+      // wh_occupancy_trend returns a 0–1 ratio; the strip works in percent.
+      if (pct != null) return Number(pct) * 100;
+    }
+    return null;
+  })();
 
   const occRaw = ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits);
   const occDisplay = s.occupancy.censusUnits
@@ -235,6 +264,14 @@ function SalesIntelligence() {
             moveOuts={s.moveOuts}
             tours={s.mappings.tour ? s.tours : null}
             periodLabel={`${ctx.dateRange.start} – ${ctx.dateRange.end}`}
+            occupancyComparison={
+              ctx.comparisonRange
+                ? {
+                    pct: priorOccupancyPct,
+                    label: comparisonLabel,
+                  }
+                : null
+            }
           />
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -775,7 +812,7 @@ function KpiCard({
               className={`inline-flex items-center gap-0.5 text-xs font-medium ${
                 good === null ? "text-muted-foreground" : good ? "text-success" : "text-destructive"
               }`}
-              title={`Prior period ${compare!.label}: ${compare!.previous.toLocaleString()}`}
+              title={`${compare!.label}: ${compare!.previous.toLocaleString()}`}
             >
               {delta === 0 ? (
                 <ArrowRight className="size-3" />
@@ -794,7 +831,7 @@ function KpiCard({
       <p className="text-xs leading-relaxed text-muted-foreground">{note}</p>
       {compare ? (
         <p className="text-[11px] text-muted-foreground">
-          Prior equal-length period {compare.label}: {compare.previous.toLocaleString()}
+          {compare.label}: {compare.previous.toLocaleString()}
         </p>
       ) : null}
     </div>
@@ -823,6 +860,7 @@ function ExecutiveSummaryStrip({
   moveOuts,
   tours,
   periodLabel,
+  occupancyComparison,
 }: {
   occupancy: WhSalesSummary["occupancy"];
   budgetUnits: number | null;
@@ -830,6 +868,8 @@ function ExecutiveSummaryStrip({
   moveOuts: number;
   tours: number | null;
   periodLabel: string;
+  /** Historical occupancy % for the comparison window, from the canonical resolver. */
+  occupancyComparison?: { pct: number | null; label: string } | null;
 }) {
   const { censusUnits, occupiedUnitsCandidate, noticeCount, pendingMoveIns } = occupancy;
   const actualPct = censusUnits ? (occupiedUnitsCandidate / censusUnits) * 100 : null;
@@ -852,6 +892,13 @@ function ExecutiveSummaryStrip({
     variancePts == null || variancePts === 0 ? ArrowRight : variancePts > 0 ? ArrowUpRight : ArrowDownRight;
 
   const net = moveIns - moveOuts;
+
+  // Occupancy is a percentage: the honest comparison is percentage points,
+  // never a relative percentage change.
+  const occPts =
+    occupancyComparison?.pct != null && actualPct != null
+      ? actualPct - occupancyComparison.pct
+      : null;
 
   const metrics: { label: string; value: string; sub: string }[] = [
     { label: "Move-ins (EOM)", value: moveIns.toLocaleString(), sub: "Selected period" },
@@ -888,6 +935,21 @@ function ExecutiveSummaryStrip({
             Occupancy %
           </p>
           <p className="font-display text-4xl font-semibold tracking-tight text-brand">{display}</p>
+          {occPts != null ? (
+            <p
+              className={cn(
+                "text-xs font-medium",
+                occPts > 0 ? "text-success" : occPts < 0 ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {occPts > 0 ? "+" : ""}
+              {occPts.toFixed(1)} pts {occupancyComparison?.label}
+            </p>
+          ) : occupancyComparison ? (
+            <p className="text-xs text-muted-foreground">
+              No stored history for the comparison period
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">Current state</p>
         </div>
         {metrics.map((m) => (
