@@ -262,7 +262,8 @@ export function GroupedBarChart({
   stacked?: boolean;
 }) {
   const isMobile = useIsMobile();
-  const crowded = isMobile || data.length * Math.max(1, bars.length) > 26;
+  // Stacked charts draw one label per period, so only bucket count matters.
+  const crowded = isMobile || (stacked ? data.length > 16 : data.length * Math.max(1, bars.length) > 26);
   const showLabels = !crowded;
   const totals = data.map((row) => bars.reduce((s, b) => s + Number(row[b.key] ?? 0), 0));
   const lastBarKey = bars.length ? bars[bars.length - 1]!.key : null;
