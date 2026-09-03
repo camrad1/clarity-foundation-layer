@@ -447,12 +447,13 @@ function FlashReportPage() {
         </div>
       </Section>
 
-      {/* Monthly trackers — three-column compact layout on desktop */}
+      {/* Monthly trackers — Move-In + Deposit share one row; Hot Lead spans full width below. */}
       <Section
         title="Monthly trackers"
         description="Compact operational view. Full detail remains available through Sales Intelligence drill-through."
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {/* First row: Move-In (50%) + Deposit (50%) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TrackerCard title={`Move-In Monthly Tracker (${moveIns.data?.total ?? 0})`} loading={moveIns.isLoading}>
             {(moveIns.data?.rows ?? []).length === 0 && !moveIns.isLoading ? (
               <p className="px-3 py-4 text-xs text-muted-foreground">No counted move-ins in this month.</p>
@@ -468,9 +469,9 @@ function FlashReportPage() {
                 <tbody>
                   {(moveIns.data?.rows ?? []).map((r: any) => (
                     <tr key={r.source_id} className="border-t border-brand-border/50">
-                      <td className="max-w-[120px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="max-w-[160px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.move_in_date)}</td>
-                      <td className="max-w-[110px] truncate px-3 py-1.5 text-muted-foreground">
+                      <td className="max-w-[140px] truncate px-3 py-1.5 text-muted-foreground">
                         {r.care_type ?? "—"} · {r.unit_label ?? "—"}
                       </td>
                     </tr>
@@ -500,7 +501,7 @@ function FlashReportPage() {
                 <tbody>
                   {(deposits.data?.rows ?? []).map((r: any) => (
                     <tr key={r.source_id} className="border-t border-brand-border/50">
-                      <td className="max-w-[110px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="max-w-[150px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.deposit_date)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums">{money(r.amount)}</td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{formatDay(r.expected_move_in_date)}</td>
@@ -510,60 +511,73 @@ function FlashReportPage() {
               </table>
             )}
           </TrackerCard>
+        </div>
 
-          {/* Current-state working list: every open prospect currently scored Hot,
-              regardless of inquiry date or the selected Flash week/month. */}
-          <TrackerCard
-            title={`Hot Lead Tracker (${hotLeads.data?.total ?? 0})`}
-            badge={<CurrentStateBadge />}
-            loading={hotLeads.isLoading}
-          >
-            {(hotLeads.data?.rows ?? []).length === 0 && !hotLeads.isLoading ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">No open prospects mapped to the Hot score.</p>
-            ) : (
-              <ul className="divide-y divide-brand-border/50 text-xs">
-                {(hotLeads.data?.rows ?? []).map((r: any) => (
-                  <li key={r.source_id} className="px-3 py-2">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate font-medium">{personName(r.person_name)}</span>
-                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-brand">
-                        {r.score_label ?? "Hot"}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
-                      <span className="truncate">
+        {/* Second row: Hot Lead tracker — full content width.
+            Current-state working list: every open prospect currently scored Hot,
+            regardless of inquiry date or the selected Flash week/month. */}
+        <TrackerCard
+          title={`Hot Lead Tracker (${hotLeads.data?.total ?? 0})`}
+          badge={<CurrentStateBadge />}
+          loading={hotLeads.isLoading}
+        >
+          {(hotLeads.data?.rows ?? []).length === 0 && !hotLeads.isLoading ? (
+            <p className="px-3 py-4 text-xs text-muted-foreground">No open prospects mapped to the Hot score.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="thead-brand text-[10px] uppercase tracking-wide">
+                    <th className="px-3 py-1.5 text-left font-medium">Prospect</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Stage</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Inquiry Date</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Lead Source</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Sales Counselor</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Last Contact</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Next Activity</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Weekly Update</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(hotLeads.data?.rows ?? []).map((r: any) => (
+                    <tr key={r.source_id} className="border-t border-brand-border/50 align-top">
+                      <td className="max-w-[200px] truncate px-3 py-1.5 font-medium">{personName(r.person_name)}</td>
+                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
                         {resolveLabel(labels.stage, r.stage_id, r.stage_label ?? "Unknown stage")}
-                      </span>
-                      <span className="truncate">Inq. {formatDay(r.inquiry_date)}</span>
-                      <span className="truncate">
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-1.5">{formatDay(r.inquiry_date)}</td>
+                      <td className="max-w-[150px] truncate px-3 py-1.5 text-muted-foreground">
                         {r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, "Source n/a")}
-                      </span>
-                      <span className="truncate">
+                      </td>
+                      <td className="max-w-[140px] truncate px-3 py-1.5 text-muted-foreground">
                         {resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
-                      </span>
-                      <span className="truncate">Last {formatDay(r.last_contact_at)}</span>
-                      <span className="truncate">
-                        Next{" "}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                        {formatDay(r.last_contact_at)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
                         {r.next_activity_scheduled_at
                           ? new Date(r.next_activity_scheduled_at).toLocaleDateString()
                           : "—"}
-                      </span>
-                    </div>
-                    <NoteCell
-                      organizationId={organizationId}
-                      communityId={r.community_id}
-                      subjectType="hot_lead"
-                      subjectKey={r.source_id}
-                      month={mStart}
-                      weekStart={week.start}
-                      notes={notes.data ?? {}}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </TrackerCard>
-        </div>
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <NoteCell
+                          organizationId={organizationId}
+                          communityId={r.community_id}
+                          subjectType="hot_lead"
+                          subjectKey={r.source_id}
+                          month={mStart}
+                          weekStart={week.start}
+                          notes={notes.data ?? {}}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TrackerCard>
         <p className="text-[11px] text-muted-foreground">
           Names come from the WelcomeHome record — “Name unavailable” appears only where the source has no
           usable name. Deposit remains provisional: only source-backed transactions are shown, nothing is
