@@ -27,6 +27,7 @@ import {
   OccupancyHistoryTab,
 } from "@/components/clarity/sales-reports";
 import { ratio } from "@/lib/wh/metrics";
+import { comparisonSuffix, formatPeriodLabel } from "@/lib/date-ranges";
 import { cn } from "@/lib/utils";
 import { WH_ACTIVITY_CATEGORY_LABELS, type WhActivityCategory } from "@/lib/wh/tables";
 import {
