@@ -69,12 +69,12 @@ export const Route = createFileRoute("/_authenticated/flash")({
       {
         name: "description",
         content:
-          "The Friday–Thursday operational Flash: occupancy versus budget, move-ins and move-outs, weekly sales activity and the monthly trackers leadership already knows.",
+          "The Sunday–Saturday operational Flash: occupancy versus budget, move-ins and move-outs, weekly sales activity and the monthly trackers leadership already knows.",
       },
       { property: "og:title", content: "Flash Report — ClarityIQ" },
       {
         property: "og:description",
-        content: "Automated Friday–Thursday Flash reporting built on validated WelcomeHome metrics.",
+        content: "Automated Sunday–Saturday Flash reporting built on validated WelcomeHome metrics.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -260,7 +260,7 @@ function FlashReportPage() {
       <PageHeader
         eyebrow="Operational reporting"
         title="Flash Report"
-        description="Friday–Thursday operational Flash, due EOD Thursday. Automated from validated WelcomeHome metrics, with manual Flash fields where the source has no equivalent."
+        description="Sunday–Saturday operational Flash. Automated from validated WelcomeHome metrics, with manual Flash fields where the source has no equivalent."
         actions={
           <div className="flex items-center gap-2 no-print">
             <Button variant="outline" size="sm" onClick={exportGrid}>
@@ -325,7 +325,7 @@ function FlashReportPage() {
         </div>
         <div className="ml-auto text-right text-xs text-muted-foreground">
           <p className="font-medium text-foreground">{formatFlashRange(week)}</p>
-          <p>{scopeLabel} · due EOD Thursday</p>
+          <p>{scopeLabel}</p>
         </div>
       </div>
 
@@ -405,7 +405,7 @@ function FlashReportPage() {
       {/* 2. MONTHLY WEEK-BY-WEEK GRID — the primary operational Flash view */}
       <Section
         title={`${formatMonth(month)} — Week by Week`}
-        description="Friday–Thursday weeks ending inside the month, plus month end."
+        description="Sunday–Saturday weeks ending inside the month, plus month end."
       >
         <WeekByWeekGrid data={data} loading={report.isLoading} occ={occ} />
         <p className="pt-2 text-[11px] text-muted-foreground">
