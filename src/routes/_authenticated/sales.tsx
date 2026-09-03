@@ -829,22 +829,34 @@ function KpiCard({
 }
 
 /**
- * Executive occupancy snapshot for the Funnel tab. Uses the exact same
- * canonical current-occupancy values as the Current Occupancy tab, Occupancy
- * Intelligence and Flash (`s.occupancy` / `wh_current_occupancy` semantics),
- * so the percentage can never disagree across ClarityIQ.
+ * Executive operational summary strip for the Funnel tab — mirrors the
+ * information hierarchy of the WelcomeHome Overview (occupancy → move-ins →
+ * move-outs → net → tours → tour-to-MI ratio) using ClarityIQ's own design
+ * system. Every value is passed in from the canonical summary; no metric is
+ * recalculated or redefined here.
  *
- * Snapshot readiness: the card is purely prop-driven. Once daily snapshots
- * accumulate, `vsLastWeek` / `vsLastMonth` / trend data can be threaded in as
- * additional optional props without restructuring — they are intentionally
- * not rendered until real snapshot history exists.
+ * Period semantics are mixed by design and disclosed inline: occupancy is
+ * current state (snapshots are not yet used for historical occupancy), while
+ * the five event metrics are the selected reporting period.
+ *
+ * Tour to MI ratio is intentionally withheld: the exact WelcomeHome Overview
+ * definition (move-ins/tours, tours/move-ins, or a cohort conversion) has not
+ * been reconciled, so no percentage is fabricated.
  */
-function OccupancyKpiCard({
+function ExecutiveSummaryStrip({
   occupancy,
   budgetUnits,
+  moveIns,
+  moveOuts,
+  tours,
+  periodLabel,
 }: {
   occupancy: WhSalesSummary["occupancy"];
   budgetUnits: number | null;
+  moveIns: number;
+  moveOuts: number;
+  tours: number | null;
+  periodLabel: string;
 }) {
   const { censusUnits, occupiedUnitsCandidate, noticeCount, pendingMoveIns } = occupancy;
   const actualPct = censusUnits ? (occupiedUnitsCandidate / censusUnits) * 100 : null;
@@ -855,8 +867,7 @@ function OccupancyKpiCard({
   // denominator. No budget is ever fabricated.
   const budgetPct = budgetUnits != null && censusUnits ? (budgetUnits / censusUnits) * 100 : null;
   const variancePts = actualPct != null && budgetPct != null ? actualPct - budgetPct : null;
-  const varianceUnits =
-    budgetUnits != null ? occupiedUnitsCandidate - budgetUnits : null;
+  const varianceUnits = budgetUnits != null ? occupiedUnitsCandidate - budgetUnits : null;
 
   const varianceTone =
     variancePts == null || variancePts === 0
@@ -867,25 +878,69 @@ function OccupancyKpiCard({
   const VarianceIcon =
     variancePts == null || variancePts === 0 ? ArrowRight : variancePts > 0 ? ArrowUpRight : ArrowDownRight;
 
+  const net = moveIns - moveOuts;
+
+  const metrics: { label: string; value: string; sub: string }[] = [
+    { label: "Move-ins (EOM)", value: moveIns.toLocaleString(), sub: "Selected period" },
+    { label: "Move-outs", value: moveOuts.toLocaleString(), sub: "Selected period" },
+    {
+      label: "Net MI/MO",
+      value: `${net > 0 ? "+" : ""}${net.toLocaleString()}`,
+      sub: "Move-ins − move-outs",
+    },
+    {
+      label: "Tours",
+      value: tours == null ? "—" : tours.toLocaleString(),
+      sub: tours == null ? "No activity type mapped to Tour" : "Successful tours, period",
+    },
+    {
+      label: "Tour to MI ratio",
+      value: "—",
+      sub: "Provisional — WelcomeHome definition not reconciled",
+    },
+  ];
+
   return (
-    <div className="kpi-card space-y-3 border-t-4 bg-(--clarity-primary-soft) p-5 sm:col-span-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="eyebrow">Current occupancy</p>
+    <section className="panel overflow-hidden bg-(--clarity-primary-soft)">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-(--clarity-border) px-5 py-3">
+        <p className="eyebrow">Executive summary</p>
         <span className="rounded-full border border-(--clarity-border) bg-(--color-surface) px-2 py-0.5 text-[11px] font-medium text-(--clarity-primary)">
-          Current state
+          Occupancy: current state · Activity: {periodLabel}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <p className="font-display text-3xl font-semibold tracking-tight text-brand">{display}</p>
-        <p className="text-sm text-muted-foreground">
-          {occupiedUnitsCandidate.toLocaleString()} of {censusUnits.toLocaleString()} occupied
-        </p>
+      <div className="grid grid-cols-2 divide-(--clarity-border) sm:grid-cols-3 sm:divide-x lg:grid-cols-6">
+        <div className="p-5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Occupancy %
+          </p>
+          <p className="font-display text-4xl font-semibold tracking-tight text-brand">{display}</p>
+          <p className="text-xs text-muted-foreground">Current state</p>
+        </div>
+        {metrics.map((m) => (
+          <div key={m.label} className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {m.label}
+            </p>
+            <p className="font-display text-2xl font-semibold tracking-tight">{m.value}</p>
+            <p className="text-xs text-muted-foreground">{m.sub}</p>
+          </div>
+        ))}
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-(--clarity-border) pt-3 text-sm sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-(--clarity-border) bg-(--color-surface) px-5 py-4 text-sm sm:grid-cols-3 lg:grid-cols-5">
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Budget</dt>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Occupied / census units
+          </dt>
+          <dd className="font-medium">
+            {occupiedUnitsCandidate.toLocaleString()} / {censusUnits.toLocaleString()}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Budgeted occupancy
+          </dt>
           <dd className="font-medium">
             {budgetPct != null ? `${budgetPct.toFixed(1)}%` : "Budget not set"}
           </dd>
@@ -915,7 +970,9 @@ function OccupancyKpiCard({
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">On notice</dt>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            On notice
+          </dt>
           <dd className="font-medium">{noticeCount.toLocaleString()}</dd>
         </div>
         <div>
@@ -926,13 +983,15 @@ function OccupancyKpiCard({
         </div>
       </dl>
 
-      <p className="text-[11px] text-muted-foreground">
-        Current state — not affected by the selected date range. Full unit diagnostics live on the
-        Current occupancy tab.
+      <p className="border-t border-(--clarity-border) bg-(--color-surface) px-5 pb-4 text-[11px] text-muted-foreground">
+        Occupancy is current state and not affected by the selected date range; historical occupancy
+        requires daily snapshots. Move-ins, move-outs, net and tours use the selected reporting
+        period. Full unit diagnostics live on the Current occupancy tab.
       </p>
-    </div>
+    </section>
   );
 }
+
 
 const TREND_STORAGE_KEY = "clarityiq.chart.sales-activity-trend";
 const MOVE_TREND_STORAGE_KEY = "clarityiq.chart.move-trend";
