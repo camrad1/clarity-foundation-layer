@@ -356,8 +356,12 @@ async function syncCoreTable(
     targets: CommunityTarget[];
     updatedAfter: string | null;
     beat?: Heartbeat | undefined;
-
+    /** Checkpoint from a previous interrupted attempt of this same unit. */
+    resume?: { cursorUrl: string; pages: number; rows: number } | null;
+    /** Persists the cursor for the page that was just fully written. */
+    checkpoint?: (p: { cursorUrl: string | null; pages: number; rows: number }) => Promise<void>;
   },
+
 ): Promise<TableResult> {
   const started = Date.now();
   const destination = WH_CORE_DESTINATION[args.table];
