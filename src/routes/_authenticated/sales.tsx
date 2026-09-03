@@ -689,8 +689,10 @@ function SalesIntelligence() {
           <OccupancyHistoryTab
             organizationId={ctx.organizationId}
             communityIds={ctx.communityIds}
+            start={ctx.dateRange.start}
             end={ctx.dateRange.end}
           />
+
         </TabsContent>
 
         <TabsContent value="mi-sources" className="space-y-6 pt-6">
