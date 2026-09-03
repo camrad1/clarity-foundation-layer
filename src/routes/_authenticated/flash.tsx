@@ -536,7 +536,7 @@ function FlashReportPage() {
                       </span>
                       <span className="truncate">Inq. {formatDay(r.inquiry_date)}</span>
                       <span className="truncate">
-                        {r.lead_source_label ?? resolveLabel(labels.lead_source, r.lead_source_id, "Source n/a")}
+                        {r.lead_source_label ?? resolveLabel(labels.leadSource, r.lead_source_id, "Source n/a")}
                       </span>
                       <span className="truncate">
                         {resolveLabel(labels.user, r.counselor_id, "Counselor n/a")}
