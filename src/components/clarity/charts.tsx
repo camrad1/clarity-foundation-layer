@@ -272,7 +272,7 @@ export function MetricTrendChart({
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis allowDecimals={false} {...axisProps} width={44} />
-        <Tooltip content={<TooltipBox />} cursor={{ stroke: "var(--border)" }} />
+        <Tooltip content={<TooltipBox formatter={valueFormatter} />} cursor={{ stroke: "var(--border)" }} />
         <Legend
           verticalAlign="bottom"
           height={28}

@@ -231,7 +231,11 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           <SeriesToggleChips series={pctSeries} visible={pctVis.visible} onToggle={pctVis.toggle} />
         }
       >
-        <MetricTrendChart data={chartData} series={pctSeries.filter((s) => pctVis.visible.includes(s.key))} />
+        <MetricTrendChart
+          data={chartData}
+          series={pctSeries.filter((s) => pctVis.visible.includes(s.key))}
+          valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
+        />
       </ChartCard>
 
       <ChartCard
