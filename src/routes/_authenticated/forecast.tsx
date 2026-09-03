@@ -223,8 +223,15 @@ function ForecastTracker() {
                         const e = byCell.get(`${r.id}|${d}`) ?? null;
                         const has = e && (e.projected_move_ins !== null || e.projected_move_outs !== null);
                         const net = (e?.projected_move_ins ?? 0) - (e?.projected_move_outs ?? 0);
+                        const isFinal = finalDate === d;
                         return (
-                          <td key={d} className="px-1 py-1 text-center">
+                          <td
+                            key={d}
+                            className={cn(
+                              "px-1 py-1 text-center",
+                              isFinal && "border-l-2 border-brand-border bg-brand-soft/40",
+                            )}
+                          >
                             <button
                               type="button"
                               onClick={() =>
@@ -241,8 +248,7 @@ function ForecastTracker() {
                                 <span className="font-medium">
                                   {e!.projected_move_ins ?? 0} / {e!.projected_move_outs ?? 0}
                                   <span className="ml-1 text-xs text-muted-foreground">
-                                    ({net >= 0 ? "+" : ""}
-                                    {net})
+                                    ({formatNet(net)})
                                   </span>
                                 </span>
                               ) : (
@@ -263,8 +269,10 @@ function ForecastTracker() {
                           </td>
                         );
                       })}
-                      <td className="px-3 py-1.5 text-center tabular-nums font-medium">
-                        {actual ? `${actual.move_ins} / ${actual.move_outs}` : "—"}
+                      <td className="border-l-2 border-brand-border px-3 py-1.5 text-center tabular-nums font-semibold">
+                        {actual
+                          ? `${actual.move_ins} / ${actual.move_outs} (${formatNet(actual.move_ins - actual.move_outs)})`
+                          : "—"}
                       </td>
                     </tr>
                   );
