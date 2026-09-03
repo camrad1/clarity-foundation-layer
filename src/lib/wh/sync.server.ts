@@ -386,18 +386,47 @@ async function syncCoreTable(
   try {
     for (const scope of args.targets) {
       // Exports ignore page/per_page; the Link cursor is the only way forward.
-      let cursorUrl: string | null = null;
-      let pages = 0;
+      // RESUME: a checkpoint from an interrupted attempt of this exact unit
+      // (same table, same community, same updated_after window) lets the retry
+      // continue at the first unwritten page. Safe because every page is
+      // upserted on (connection_id, source_id) before its cursor is saved.
+      const canResume = args.targets.length === 1 && !!args.resume?.cursorUrl;
+      let cursorUrl: string | null = canResume ? args.resume!.cursorUrl : null;
+      let pages = canResume ? args.resume!.pages : 0;
+      let resumedFrom = canResume ? args.resume!.pages : 0;
+      if (canResume) {
+        result.pagesFetched = args.resume!.pages;
+        result.warnings.push(
+          `${args.table}: resumed after page ${args.resume!.pages} (${args.resume!.rows} row(s) already persisted)`,
+        );
+      }
       for (;;) {
-        const { records, nextUrl } = await whExportPage(auth, {
-          table: args.table,
-          communitySourceId: scope.sourceCommunityId,
-          cursorUrl,
-          updatedAfter: args.updatedAfter,
-        });
+        let page: { records: Rec[]; nextUrl: string | null };
+        try {
+          page = await whExportPage(auth, {
+            table: args.table,
+            communitySourceId: scope.sourceCommunityId,
+            cursorUrl,
+            updatedAfter: args.updatedAfter,
+          });
+        } catch (err) {
+          // A stale/expired resume cursor must never strand the unit: fall back
+          // to a clean pass from page 1. Re-reading is idempotent.
+          if (!cursorUrl || pages !== resumedFrom || resumedFrom === 0) throw err;
+          result.warnings.push(
+            `${args.table}: resume cursor no longer valid (${safeError(err)}); restarted from the first page`,
+          );
+          cursorUrl = null;
+          pages = 0;
+          resumedFrom = 0;
+          result.pagesFetched = 0;
+          continue;
+        }
+        const { records, nextUrl } = page;
         pages += 1;
         result.pagesFetched += 1;
         result.rowsReceived += records.length;
+
 
         const good: Record<string, unknown>[] = [];
         const bad: Rec[] = [];
