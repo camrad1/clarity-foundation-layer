@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +21,7 @@ import {
   whDiscoverCommunities,
   whFinalizeSync,
   whPlanSync,
+  whReapStalled,
   whRunSyncUnit,
   whSaveCredential,
   whSeedMappingRows,
@@ -94,9 +95,42 @@ function WelcomeHomeAdmin() {
   const planSync = useServerFn(whPlanSync);
   const runUnit = useServerFn(whRunSyncUnit);
   const finalize = useServerFn(whFinalizeSync);
+  const reapStalled = useServerFn(whReapStalled);
   const snapshots = useServerFn(whCheckDailySnapshots);
   const seed = useServerFn(whSeedMappingRows);
 
+
+  // While any run is non-terminal, poll: refresh the run rows so elapsed time and
+  // "last progress" stay honest, and ask the server to reap units that stopped
+  // heartbeating so a run can never sit at Running forever.
+  const hasLiveRun = (syncRuns.data ?? []).some(
+    (r) => r.status === "running" || r.status === "queued",
+  );
+  useEffect(() => {
+    if (!connectionId || !hasLiveRun) return;
+    let cancelled = false;
+    const id = window.setInterval(async () => {
+      try {
+        const res = await reapStalled({ data: { connectionId } });
+        if (cancelled) return;
+        if (res.stalledUnits > 0) {
+          toast.warning(
+            `${res.stalledUnits} work unit(s) stopped reporting progress and were marked stalled.`,
+          );
+        }
+      } catch {
+        /* polling is best-effort */
+      }
+      if (!cancelled) {
+        syncRuns.refetch();
+        runs.refetch();
+      }
+    }, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [connectionId, hasLiveRun]);
 
   const credential = useQuery({
     queryKey: ["wh_credential_status", connectionId],
