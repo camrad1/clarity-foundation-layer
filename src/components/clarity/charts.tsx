@@ -97,7 +97,7 @@ function TooltipBox({
             <span className="text-foreground">{p.name}</span>
             <span className="ml-auto tabular-nums text-foreground">
               {formatter ? formatter(p.value) : fmtCount(Number(p.value))}
-              {pct ? <span className="ml-1 text-muted-foreground">({pct})</span> : null}
+              {pct ? <span className="ml-1 text-muted-foreground">· {pct}</span> : null}
             </span>
           </p>
         );
