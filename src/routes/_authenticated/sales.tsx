@@ -49,6 +49,7 @@ import {
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
 import { effectiveBudget } from "@/lib/wh/occupancy";
 import { useFlashBudgets } from "@/lib/flash/queries";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -113,6 +114,16 @@ function SalesIntelligence() {
     ? comparisonSuffix(ctx.comparisonMode)
     : "vs prior equal-length period";
   const priorSummary = useWhSalesSummary(ctx.organizationId, ctx.communityIds, prior.start, prior.end);
+  // Occupancy comparison comes from the canonical historical resolver
+  // (nightly snapshot first, official imported daily history next). Disabled
+  // entirely when no comparison period is selected.
+  const priorOccupancy = useOccupancyTrend(
+    ctx.comparisonRange ? ctx.organizationId : null,
+    ctx.communityIds,
+    prior.start,
+    prior.end,
+    "daily",
+  );
   const trend = useWhSalesTrend(ctx.organizationId, ctx.communityIds, ctx.dateRange.end, 12);
   const [tab, setTab] = useState("funnel");
 
@@ -196,6 +207,16 @@ function SalesIntelligence() {
     `Open prospects with no contact for ${s.settings.stalled_threshold_days}+ days.`,
   );
 
+  // Latest historical occupancy percentage inside the comparison window.
+  const priorOccupancyPct = (() => {
+    const rows = priorOccupancy.data ?? [];
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const pct = rows[i]?.occupancy_pct;
+      if (pct != null) return Number(pct);
+    }
+    return null;
+  })();
+
   const occRaw = ratio(s.occupancy.occupiedUnitsCandidate, s.occupancy.censusUnits);
   const occDisplay = s.occupancy.censusUnits
     ? `${Math.round((s.occupancy.occupiedUnitsCandidate / s.occupancy.censusUnits) * 100)}%`
@@ -242,6 +263,14 @@ function SalesIntelligence() {
             moveOuts={s.moveOuts}
             tours={s.mappings.tour ? s.tours : null}
             periodLabel={`${ctx.dateRange.start} – ${ctx.dateRange.end}`}
+            occupancyComparison={
+              ctx.comparisonRange
+                ? {
+                    pct: priorOccupancyPct,
+                    label: comparisonLabel,
+                  }
+                : null
+            }
           />
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -830,6 +859,7 @@ function ExecutiveSummaryStrip({
   moveOuts,
   tours,
   periodLabel,
+  occupancyComparison,
 }: {
   occupancy: WhSalesSummary["occupancy"];
   budgetUnits: number | null;
@@ -837,6 +867,8 @@ function ExecutiveSummaryStrip({
   moveOuts: number;
   tours: number | null;
   periodLabel: string;
+  /** Historical occupancy % for the comparison window, from the canonical resolver. */
+  occupancyComparison?: { pct: number | null; label: string } | null;
 }) {
   const { censusUnits, occupiedUnitsCandidate, noticeCount, pendingMoveIns } = occupancy;
   const actualPct = censusUnits ? (occupiedUnitsCandidate / censusUnits) * 100 : null;
@@ -859,6 +891,13 @@ function ExecutiveSummaryStrip({
     variancePts == null || variancePts === 0 ? ArrowRight : variancePts > 0 ? ArrowUpRight : ArrowDownRight;
 
   const net = moveIns - moveOuts;
+
+  // Occupancy is a percentage: the honest comparison is percentage points,
+  // never a relative percentage change.
+  const occPts =
+    occupancyComparison?.pct != null && actualPct != null
+      ? actualPct - occupancyComparison.pct
+      : null;
 
   const metrics: { label: string; value: string; sub: string }[] = [
     { label: "Move-ins (EOM)", value: moveIns.toLocaleString(), sub: "Selected period" },
