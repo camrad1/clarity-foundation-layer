@@ -71,13 +71,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as PersistedState;
+        const preset = parsed.dateRange?.preset;
         setState({
           organizationId: parsed.organizationId ?? null,
           dateRange:
-            parsed.dateRange?.preset && parsed.dateRange.preset !== "custom"
-              ? resolvePreset(parsed.dateRange.preset)
+            preset && preset !== "custom"
+              ? resolvePreset(normalizePreset(preset))
               : (parsed.dateRange ?? defaultState.dateRange),
           communityScope: parsed.communityScope ?? { mode: "all" },
+          comparisonMode: parsed.comparisonMode ?? "none",
         });
       }
     } catch {
