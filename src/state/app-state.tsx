@@ -141,10 +141,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppStateContextValue>(
     () => ({
       ...state,
+      comparisonRange: resolveComparisonPeriod(
+        { start: state.dateRange.start, end: state.dateRange.end },
+        state.comparisonMode,
+      ),
       hydrated,
       setOrganizationId,
       setDatePreset,
       setCustomRange,
+      setComparisonMode,
       setCommunityScope,
       toggleCommunity,
     }),
@@ -154,6 +159,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setOrganizationId,
       setDatePreset,
       setCustomRange,
+      setComparisonMode,
       setCommunityScope,
       toggleCommunity,
     ],
