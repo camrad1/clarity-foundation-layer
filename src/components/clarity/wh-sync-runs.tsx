@@ -321,12 +321,17 @@ export function SyncRunSummary({
 
       <CommunityRows summary={summary} />
 
-      {(summary.status === "partial" || summary.status === "failed") && summary.failedUnits.length ? (
+      {summary.status === "partial" || summary.status === "failed" ? (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
           <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" />
           <span className="text-sm">
-            {summary.failedUnits.length} work unit
-            {summary.failedUnits.length === 1 ? "" : "s"} require attention:{" "}
+            {summary.failedUnits.length
+              ? null
+              : `${summary.pending} work unit${summary.pending === 1 ? "" : "s"} never completed. `}
+            {summary.failedUnits.length ? `${summary.failedUnits.length} work unit` : ""}
+            {summary.failedUnits.length
+              ? `${summary.failedUnits.length === 1 ? "" : "s"} require attention: `
+              : ""}
             {summary.failedUnits
               .slice(0, 4)
               .map((u) => `${u.table}${u.communityName ? ` (${u.communityName})` : ""}`)
@@ -417,7 +422,7 @@ export function RecentSyncRuns({
                 <Button size="sm" variant="ghost" onClick={() => setOpen(open === r.id ? null : r.id)}>
                   View
                 </Button>
-                {(r.status === "partial" || r.status === "failed") && r.failedUnits.length && onRetryFailed ? (
+                {(r.status === "partial" || r.status === "failed") && onRetryFailed ? (
                   <Button size="sm" variant="outline" disabled={busy} onClick={() => onRetryFailed(r)}>
                     Retry failed
                   </Button>

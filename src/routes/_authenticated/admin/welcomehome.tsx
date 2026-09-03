@@ -333,10 +333,12 @@ function WelcomeHomeAdmin() {
 
 
   function retryFailed(summary: RunSummary) {
-    if (!summary.failedUnits.length) return;
+    // Resume the same parent run: the planner skips units that already
+    // succeeded, so only failed / never-completed work is re-attempted.
     void orchestrate({
       mode: "full",
       resumeRunId: summary.id,
+      ...(summary.failedUnits.length ? {} : { onlyUnits: undefined as never }),
       onlyUnits: summary.failedUnits.map((u) => ({
         key: `${u.table}:${u.communityId ?? "*"}`,
         table: u.table,
