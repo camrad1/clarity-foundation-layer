@@ -207,6 +207,12 @@ async function syncLookupTable(
       const { records, pages } = await whLookup(auth, args.table, scope?.sourceCommunityId ?? null);
       result.pagesFetched += pages;
       result.rowsReceived += records.length;
+      await args.beat?.({
+        page: result.pagesFetched,
+        pages: result.pagesFetched,
+        rows: result.rowsReceived,
+      });
+
       for (const raw of records) {
         // Referrers rows are people; keep only the non-identifying columns.
         // Users are staff, not prospects/residents: their display name is kept
