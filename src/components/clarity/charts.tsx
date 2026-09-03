@@ -252,11 +252,14 @@ export function MetricTrendChart({
   series,
   xKey = "label",
   labelLatest = true,
+  valueFormatter,
 }: {
   data: Record<string, any>[];
   series: TrendSeries[];
   xKey?: string;
   labelLatest?: boolean;
+  /** Tooltip-only value formatting (e.g. percent series); plotted values are unchanged. */
+  valueFormatter?: (value: number) => string;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();
