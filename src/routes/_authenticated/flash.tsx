@@ -493,9 +493,10 @@ function FlashReportPage() {
               { label: "MOs", value: num(data?.week.moveOuts) },
               {
                 label: "Net",
-                value: data ? (data.week.net > 0 ? `+${data.week.net}` : String(data.week.net)) : "—",
-                tone: !data ? "neutral" : data.week.net > 0 ? "up" : data.week.net < 0 ? "down" : "neutral",
+                value: signed(data?.week.net ?? null),
+                tone: tone(data?.week.net ?? null),
               },
+
             ]}
           />
           <CompactRow
