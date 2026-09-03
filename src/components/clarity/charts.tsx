@@ -379,7 +379,7 @@ export function GroupedBarChart({
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis allowDecimals={false} {...axisProps} width={44} />
         <Tooltip
-          content={<TooltipBox share={stacked} showTotal={stacked} />}
+          content={<TooltipBox share={stacked} showTotal={stacked} totalLabel={totalLabel} />}
           cursor={{ fill: "var(--muted)", opacity: 0.4 }}
         />
         <Legend
