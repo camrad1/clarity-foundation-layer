@@ -298,7 +298,17 @@ function SalesIntelligence() {
 
         {/* ---------------------------------------------------------------- Funnel */}
         <TabsContent value="funnel" className="space-y-8 pt-6">
+          <ExecutiveSummaryStrip
+            occupancy={s.occupancy}
+            budgetUnits={budgetUnits}
+            moveIns={s.moveIns}
+            moveOuts={s.moveOuts}
+            tours={s.mappings.tour ? s.tours : null}
+            periodLabel={`${range.start} – ${range.end}`}
+          />
+
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
             <KpiCard
               label="New inquiries"
               value={s.inquiries}
