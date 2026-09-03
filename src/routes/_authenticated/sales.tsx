@@ -1183,7 +1183,12 @@ function LeadSourceRatioCard({
         ) : null
       }
     >
-      <HorizontalBarChart data={data} valueLabel="Percent" color={CHART_TOKENS.provisional} />
+      <HorizontalBarChart
+        data={data}
+        valueLabel="Percent"
+        color={CHART_TOKENS.provisional}
+        showPercent={false}
+      />
     </ChartCard>
   );
 }
