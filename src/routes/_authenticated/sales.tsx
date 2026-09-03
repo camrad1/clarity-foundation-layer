@@ -304,7 +304,7 @@ function SalesIntelligence() {
             moveIns={s.moveIns}
             moveOuts={s.moveOuts}
             tours={s.mappings.tour ? s.tours : null}
-            periodLabel={`${range.start} – ${range.end}`}
+            periodLabel={`${ctx.dateRange.start} – ${ctx.dateRange.end}`}
           />
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
