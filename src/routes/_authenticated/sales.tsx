@@ -683,6 +683,47 @@ function SalesIntelligence() {
             </AccordionItem>
           </Accordion>
         </TabsContent>
+
+        {/* -------------------------------------------- Standard reports */}
+        <TabsContent value="occupancy-history" className="space-y-6 pt-6">
+          <OccupancyHistoryTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="mi-sources" className="space-y-6 pt-6">
+          <MoveInsByLeadSourceTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="move-out-reasons" className="space-y-6 pt-6">
+          <MoveOutReasonsTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="inquiries" className="space-y-6 pt-6">
+          <NewInquiriesTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
+
+        <TabsContent value="lost-leads" className="space-y-6 pt-6">
+          <LostLeadsTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            end={ctx.dateRange.end}
+          />
+        </TabsContent>
       </Tabs>
     </div>
   );
