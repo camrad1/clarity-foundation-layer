@@ -987,15 +987,10 @@ function CurrentSummaryPanel({
         </div>
 
         {/* B. MIMO progression */}
-        <div className="p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
-              {monthLabel} MIMO
-            </p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Move-Ins / Move-Outs / Net
-            </p>
-          </div>
+        <div className="bg-brand-soft/20 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+            {monthLabel} MIMO
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <MimoStage label="MTD actual" mi={mtdMi} mo={mtdMo} net={mtdNet} netTone={mtdNetTone} />
             <ArrowRight className="size-4 shrink-0 text-muted-foreground/60" />
@@ -1016,6 +1011,10 @@ function CurrentSummaryPanel({
               prominent
             />
           </div>
+          <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            Projected EOM combines month-to-date actuals with confirmed remaining move-ins and
+            move-outs.
+          </p>
         </div>
 
         {/* C. Projected month-end occupancy */}
