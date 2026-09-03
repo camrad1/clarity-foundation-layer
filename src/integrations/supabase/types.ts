@@ -947,6 +947,311 @@ export type Database = {
           },
         ]
       }
+      forecast_community_mappings: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ignored: boolean
+          normalized_name: string
+          organization_id: string
+          source_community_name: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ignored?: boolean
+          normalized_name: string
+          organization_id: string
+          source_community_name: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ignored?: boolean
+          normalized_name?: string
+          organization_id?: string
+          source_community_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_community_mappings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_community_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_entry_revisions: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          community_id: string
+          correction_reason: string | null
+          entry_id: string
+          forecast_date: string
+          id: string
+          organization_id: string
+          previous_move_ins: number | null
+          previous_move_outs: number | null
+          previous_notes: string | null
+          previous_stretch_goal: number | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          community_id: string
+          correction_reason?: string | null
+          entry_id: string
+          forecast_date: string
+          id?: string
+          organization_id: string
+          previous_move_ins?: number | null
+          previous_move_outs?: number | null
+          previous_notes?: string | null
+          previous_stretch_goal?: number | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          community_id?: string
+          correction_reason?: string | null
+          entry_id?: string
+          forecast_date?: string
+          id?: string
+          organization_id?: string
+          previous_move_ins?: number | null
+          previous_move_outs?: number | null
+          previous_notes?: string | null
+          previous_stretch_goal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_entry_revisions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "forecast_weekly_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_eom_source_values: {
+        Row: {
+          community_id: string
+          created_at: string
+          forecast_month: string
+          id: string
+          import_batch_id: string | null
+          organization_id: string
+          source_file_name: string | null
+          source_move_ins: number | null
+          source_move_outs: number | null
+          source_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          forecast_month: string
+          id?: string
+          import_batch_id?: string | null
+          organization_id: string
+          source_file_name?: string | null
+          source_move_ins?: number | null
+          source_move_outs?: number | null
+          source_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          forecast_month?: string
+          id?: string
+          import_batch_id?: string | null
+          organization_id?: string
+          source_file_name?: string | null
+          source_move_ins?: number | null
+          source_move_outs?: number | null
+          source_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_eom_source_values_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_eom_source_values_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "forecast_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_eom_source_values_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_import_batches: {
+        Row: {
+          ambiguous_cells: number
+          communities_detected: number
+          forecast_dates_detected: number
+          id: string
+          imported_at: string
+          imported_by: string | null
+          notes_imported: number
+          organization_id: string
+          records_imported: number
+          report: Json | null
+          rows_skipped: number
+          source_file_name: string
+          source_sheet_name: string | null
+          unmapped_communities: string[]
+        }
+        Insert: {
+          ambiguous_cells?: number
+          communities_detected?: number
+          forecast_dates_detected?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          notes_imported?: number
+          organization_id: string
+          records_imported?: number
+          report?: Json | null
+          rows_skipped?: number
+          source_file_name: string
+          source_sheet_name?: string | null
+          unmapped_communities?: string[]
+        }
+        Update: {
+          ambiguous_cells?: number
+          communities_detected?: number
+          forecast_dates_detected?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          notes_imported?: number
+          organization_id?: string
+          records_imported?: number
+          report?: Json | null
+          rows_skipped?: number
+          source_file_name?: string
+          source_sheet_name?: string | null
+          unmapped_communities?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_import_batches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_weekly_entries: {
+        Row: {
+          community_id: string
+          entered_at: string
+          entered_by: string | null
+          forecast_date: string
+          forecast_month: string
+          historical_source_note: string | null
+          id: string
+          import_batch_id: string | null
+          notes: string | null
+          organization_id: string
+          projected_move_ins: number | null
+          projected_move_outs: number | null
+          projected_net: number | null
+          source_file_name: string | null
+          source_type: string
+          stretch_goal: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          community_id: string
+          entered_at?: string
+          entered_by?: string | null
+          forecast_date: string
+          forecast_month: string
+          historical_source_note?: string | null
+          id?: string
+          import_batch_id?: string | null
+          notes?: string | null
+          organization_id: string
+          projected_move_ins?: number | null
+          projected_move_outs?: number | null
+          projected_net?: number | null
+          source_file_name?: string | null
+          source_type?: string
+          stretch_goal?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          community_id?: string
+          entered_at?: string
+          entered_by?: string | null
+          forecast_date?: string
+          forecast_month?: string
+          historical_source_note?: string | null
+          id?: string
+          import_batch_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          projected_move_ins?: number | null
+          projected_move_outs?: number | null
+          projected_net?: number | null
+          source_file_name?: string | null
+          source_type?: string
+          stretch_goal?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_weekly_entries_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_weekly_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gsc_country_facts: {
         Row: {
           clicks: number
@@ -3972,6 +4277,20 @@ export type Database = {
         Returns: Json
       }
       flash_week_start: { Args: { _d: string }; Returns: string }
+      forecast_eom_actuals: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          community_id: string
+          move_ins: number
+          move_outs: number
+          net_move_ins: number
+        }[]
+      }
       gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
       gsc_classify_query: {
         Args: { _org_id: string; _query: string }
