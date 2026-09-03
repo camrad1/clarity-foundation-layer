@@ -825,7 +825,7 @@ function WeekByWeekGrid({
           {/* Legacy "Starting #" row. Structured now; populated once immutable
               daily snapshots exist. Current-state occupancy is deliberately NOT
               backfilled here. */}
-          <StartingRow careTypes={careTypes} totalCols={totalCols} />
+          <StartingRow careTypes={careTypes} totalCols={totalCols} starting={data?.starting ?? null} />
           {(data?.weeks ?? []).map((w) => (
             <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} />
           ))}
