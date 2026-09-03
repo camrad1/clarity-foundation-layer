@@ -17,6 +17,13 @@ export type FlashPeriod = {
   end: string;
   label: string;
   isCurrent?: boolean;
+  /**
+   * Month row only: false while the calendar month is still in progress (row
+   * is labeled MONTH TO DATE and carries no finalized occupancy), true once
+   * the month has ended (MONTH END, occupancy from the canonical historical
+   * resolver).
+   */
+  isMonthClosed?: boolean;
   inquiries: number;
   outreach: number;
   outreachMapped: boolean;
