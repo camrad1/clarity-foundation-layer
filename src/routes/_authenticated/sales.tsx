@@ -212,7 +212,8 @@ function SalesIntelligence() {
     const rows = priorOccupancy.data ?? [];
     for (let i = rows.length - 1; i >= 0; i -= 1) {
       const pct = rows[i]?.occupancy_pct;
-      if (pct != null) return Number(pct);
+      // wh_occupancy_trend returns a 0–1 ratio; the strip works in percent.
+      if (pct != null) return Number(pct) * 100;
     }
     return null;
   })();
