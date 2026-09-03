@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Info, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
@@ -365,7 +365,25 @@ function FlashReportPage() {
               { label: "Total units", value: num(occ?.totalUnits) },
               { label: "Census", value: num(census) },
               { label: "Unit occ", value: num(occupied) },
-              { label: "Unit budget", value: budgetUnits == null ? "Not set" : num(budgetUnits) },
+              {
+                label: "Unit budget",
+                value:
+                  budgetUnits == null ? (
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span className="text-sm font-medium text-muted-foreground">Budget not set</span>
+                      {isOrgAdmin ? (
+                        <Link
+                          to="/admin/communities"
+                          className="no-print text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-strong"
+                        >
+                          Edit community budget
+                        </Link>
+                      ) : null}
+                    </span>
+                  ) : (
+                    num(budgetUnits)
+                  ),
+              },
               {
                 label: "Variance",
                 value: variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance),
