@@ -1269,9 +1269,9 @@ function personName(v: string | null | undefined) {
 
 function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
-    <div className="panel space-y-1 p-5">
+    <div className="kpi-card space-y-1 p-5">
       <p className="eyebrow">{label}</p>
-      <p className="font-display text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="font-display text-2xl font-semibold tracking-tight text-brand">{value}</p>
       {sub ? <p className="text-xs text-muted-foreground">{sub}</p> : null}
     </div>
   );

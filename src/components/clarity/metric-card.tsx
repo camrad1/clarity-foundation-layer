@@ -16,9 +16,9 @@ export function MetricCard({
 }) {
   const Icon = delta?.tone === "up" ? ArrowUpRight : delta?.tone === "down" ? ArrowDownRight : Minus;
   return (
-    <div className="panel space-y-2 p-5">
+    <div className="kpi-card space-y-2 p-5">
       <p className="eyebrow">{label}</p>
-      <p className="font-display text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+      <p className="font-display text-2xl font-semibold tracking-tight text-brand">{value}</p>
       <div className="flex items-center gap-2 text-xs">
         {delta ? (
           <span

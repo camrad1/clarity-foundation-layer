@@ -37,7 +37,7 @@ export function DataTable<T>({
     <div className="panel overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
+          <TableRow className="thead-brand hover:bg-brand-light">
             {columns.map((c) => (
               <TableHead
                 key={c.key}
@@ -50,7 +50,7 @@ export function DataTable<T>({
         </TableHeader>
         <TableBody>
           {rows.map((row, i) => (
-            <TableRow key={i}>
+            <TableRow key={i} className="odd:bg-brand-soft/60 hover:bg-brand-light/70">
               {columns.map((c) => (
                 <TableCell
                   key={c.key}
