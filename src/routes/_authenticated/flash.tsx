@@ -511,9 +511,10 @@ function FlashReportPage() {
               { label: "Pending Move-Outs", value: num(data?.month.pendingOut) },
               {
                 label: "Net",
-                value: data ? (data.month.pendingNet > 0 ? `+${data.month.pendingNet}` : String(data.month.pendingNet)) : "—",
-                tone: !data ? "neutral" : data.month.pendingNet > 0 ? "up" : data.month.pendingNet < 0 ? "down" : "neutral",
+                value: signed(data?.month.pendingNet ?? null),
+                tone: tone(data?.month.pendingNet ?? null),
               },
+
               {
                 label: "Projected Occupied Units",
                 value: num(data?.month.projectedOccupiedUnits ?? null),
