@@ -34,6 +34,7 @@ import {
   withheld,
   UNIT_EXCLUSION_LABELS,
   type WhProspectBucket,
+  type WhSalesSummary,
 } from "@/lib/wh/summary";
 
 import { resolveLabel, useWhContext, useWhLabelMaps } from "@/lib/wh/use-wh";
