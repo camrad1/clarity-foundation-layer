@@ -954,37 +954,34 @@ function CurrentSummaryPanel({
             <span className="ml-1 text-xs font-medium text-muted-foreground">OCC</span>
           </p>
 
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1.5">
-            <SecondaryStat
-              label="Budget"
-              value={
-                budgetUnits == null ? (
-                  <span className="text-xs font-medium text-muted-foreground">not set</span>
-                ) : (
-                  num(budgetUnits)
-                )
-              }
-            />
-            <SecondaryStat
-              label="Variance"
-              value={variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
-            />
-            <SecondaryStat label="Budget %" value={pct1(budgetPct)} />
-            <SecondaryStat label="On notice" value={num(occ?.noticeCount ?? null)} />
-          </div>
+          <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            <span className="font-medium uppercase tracking-wide">Budget</span>{" "}
+            {budgetUnits == null ? (
+              <span className="text-xs font-medium text-muted-foreground">not set</span>
+            ) : (
+              num(budgetUnits)
+            )}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">Variance</span>{" "}
+            {variance == null ? "—" : variance > 0 ? `+${variance}` : String(variance)}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">Budget %</span> {pct1(budgetPct)}
+            {"  ·  "}
+            <span className="font-medium uppercase tracking-wide">On notice</span>{" "}
+            {num(occ?.noticeCount ?? null)}
+          </p>
 
           {budgetUnits == null && isOrgAdmin ? (
             <Link
               to="/admin/communities"
-              className="no-print mt-3 inline-block text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
+              className="no-print mt-2 inline-block text-[10px] font-medium uppercase tracking-wide text-brand underline underline-offset-2 hover:text-brand-dark"
             >
               Edit community budget
             </Link>
           ) : null}
           {careTypes ? (
             <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-              <span className="font-medium uppercase tracking-wide">By care type</span>{" "}
-              {careTypes}
+              {occ!.byCareType.map((c) => `${c.careType} ${c.occupied}/${c.units}`).join("  ·  ")}
             </p>
           ) : null}
         </div>
