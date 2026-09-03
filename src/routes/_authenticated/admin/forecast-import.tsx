@@ -110,6 +110,7 @@ function ForecastImport() {
       });
       toast.success(
         `Imported ${result.imported} weekly forecast records (${result.notes} notes, ${result.stretch} stretch/goal values)` +
+          (result.alreadyPresent ? ` · ${result.alreadyPresent} already imported, left unchanged` : "") +
           (result.protectedManual ? ` · ${result.protectedManual} manual entries left untouched` : ""),
       );
       setPreview(null);

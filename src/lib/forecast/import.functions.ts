@@ -162,6 +162,7 @@ export const forecastImportRun = createServerFn({ method: "POST" })
     let stretch = 0;
     let skipped = 0;
     let protectedManual = 0;
+    let alreadyPresent = 0;
     const unmapped: string[] = [];
 
     for (const community of parsed.communities) {
@@ -183,10 +184,21 @@ export const forecastImportRun = createServerFn({ method: "POST" })
           .filter((e: any) => e.source_type && e.source_type !== SOURCE_TYPE)
           .map((e: any) => String(e.forecast_date)),
       );
+      const importedDates = new Set(
+        (existing ?? [])
+          .filter((e: any) => e.source_type === SOURCE_TYPE)
+          .map((e: any) => String(e.forecast_date)),
+      );
 
+      // Idempotency: a historical week already imported is left exactly as it
+      // is. Manually entered Monday-call forecasts are never overwritten.
       const importable = community.cells.filter((c) => {
         if (manualDates.has(c.forecastDate)) {
           protectedManual += 1;
+          return false;
+        }
+        if (importedDates.has(c.forecastDate)) {
+          alreadyPresent += 1;
           return false;
         }
         return true;
@@ -214,7 +226,10 @@ export const forecastImportRun = createServerFn({ method: "POST" })
         const chunk = rows.slice(i, i + 300);
         const { error } = await admin
           .from("forecast_weekly_entries")
-          .upsert(chunk, { onConflict: "organization_id,community_id,forecast_date" });
+          .upsert(chunk, {
+            onConflict: "organization_id,community_id,forecast_date",
+            ignoreDuplicates: true,
+          });
         if (error) throw new Error(`Import failed while writing forecasts: ${error.message}`);
         imported += chunk.length;
       }
@@ -234,7 +249,10 @@ export const forecastImportRun = createServerFn({ method: "POST" })
       if (eomRows.length) {
         const { error } = await admin
           .from("forecast_eom_source_values")
-          .upsert(eomRows, { onConflict: "organization_id,community_id,forecast_month" });
+          .upsert(eomRows, {
+            onConflict: "organization_id,community_id,forecast_month",
+            ignoreDuplicates: true,
+          });
         if (error) throw new Error(`Import failed while writing month-end reference values: ${error.message}`);
       }
 
@@ -274,6 +292,7 @@ export const forecastImportRun = createServerFn({ method: "POST" })
       notes,
       stretch,
       protectedManual,
+      alreadyPresent,
       skipped,
       unmapped,
       ambiguous: parsed.ambiguousRecords,
