@@ -406,6 +406,8 @@ function Overview() {
         organizationId={ctx.organizationId}
         period={{ start, end }}
         communities={perCommunity}
+        communityIds={ctx.communityIds}
+        communityFiltered={ctx.communityIds.length > 0 && communityScope.mode !== "all"}
         occupancyChangePoints={occupancyChangePoints(trend.data ?? [])}
         snapshotIssues={(snapshotHealth.data ?? []).filter((r) => r.snapshot_missing || r.source_stale)}
       />
@@ -431,6 +433,92 @@ function occupancyChangePoints(points: { occupancy_pct: number | null }[]): numb
   const last = Number(withValue[withValue.length - 1]!.occupancy_pct);
   return (last - first) * 100;
 }
+
+// ---------------------------------------------------------------------------
+// Data freshness
+// ---------------------------------------------------------------------------
+
+/** Freshest stored daily snapshot across the selected communities. */
+function latestSnapshotDate(rows: { last_snapshot_date: string | null }[]): string | null {
+  let latest: string | null = null;
+  for (const r of rows) {
+    if (r.last_snapshot_date && (!latest || r.last_snapshot_date > latest)) latest = r.last_snapshot_date;
+  }
+  return latest;
+}
+
+/**
+ * Compact freshness indicator. Every date comes from metadata Data Health
+ * already reports — the connection's data-through date, stored snapshots and
+ * active Search Console export coverage. Nothing is recomputed here, and the
+ * headline date reflects operational data only, so an older Search Console
+ * import can never make the portfolio look more current than it is.
+ */
+function DataThrough({
+  organizationId,
+  welcomeHomeDate,
+  snapshotDate,
+}: {
+  organizationId: string | null;
+  welcomeHomeDate: string | null;
+  snapshotDate: string | null;
+}) {
+  const coverage = useActiveGrainCoverage(organizationId);
+  const searchDate = useMemo(() => {
+    let latest: string | null = null;
+    for (const g of coverage.data ?? []) {
+      if (g.period_end && (!latest || g.period_end > latest)) latest = g.period_end;
+    }
+    return latest;
+  }, [coverage.data]);
+
+  const operational = [welcomeHomeDate, snapshotDate].filter(Boolean) as string[];
+  const headline = operational.length ? operational.sort().slice(-1)[0]! : null;
+
+  const sources = [
+    { label: "WelcomeHome", value: welcomeHomeDate },
+    { label: "Occupancy snapshot", value: snapshotDate },
+    { label: "Search Console", value: searchDate },
+  ].filter((s) => s.value);
+
+  if (!headline && !sources.length) return null;
+
+  const distinct = new Set(sources.map((s) => s.value)).size > 1;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-brand/40 hover:text-foreground"
+        >
+          <Clock className="size-3.5" />
+          Data through {headline ? formatDateOnly(headline) : "—"}
+          {distinct ? <span className="text-muted-foreground/70">· by source</span> : null}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-2">
+        <p className="text-xs font-medium text-foreground">Freshness by source</p>
+        <ul className="space-y-1">
+          {sources.map((s) => (
+            <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-muted-foreground">{s.label}</span>
+              <span className="font-medium text-foreground">{formatDateOnly(s.value)}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] leading-snug text-muted-foreground/80">
+          Search Console reflects the latest imported export period and may be older than
+          operational data.
+        </p>
+        <Link to="/data-health" className="block text-xs font-medium text-brand hover:underline">
+          Data Health
+        </Link>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 
 // ---------------------------------------------------------------------------
 // Marketing & Sales Pulse
