@@ -19,8 +19,16 @@ export type ImportPeriod = { start: string; end: string };
 
 export type ImportOutcome =
   | { status: "duplicate"; importId: string; fileName: string }
+  | {
+      status: "supplemented";
+      importId: string;
+      fileName: string;
+      rowCounts: Record<string, number>;
+      warnings: string[];
+    }
   | { status: "imported"; importId: string; rowCounts: Record<string, number>; warnings: string[] }
   | { status: "failed"; message: string; importId?: string };
+
 
 const CHUNK = 500;
 
