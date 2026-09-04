@@ -310,11 +310,11 @@ export function MetricTrendChart({
           height={28}
           iconType="plainline"
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
-          {...(multi ? { content: <FocusLegend series={series} focus={focus} iconType="line" /> } : {})}
+          content={<FocusLegend series={series} focus={viewFocus} iconType="line" />}
         />
         {series.map((s) => {
-          const isActive = focus.active === s.key;
-          const dimmed = focus.active != null && !isActive;
+          const isActive = viewFocus.active === s.key;
+          const dimmed = viewFocus.active != null && !isActive;
           return (
           <Line
             key={s.key}
