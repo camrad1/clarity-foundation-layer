@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
 import { Check, CalendarRange, Building2, GitCompareArrows } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -16,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+
 import { useAppState } from "@/state/app-state";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
 import {
@@ -63,6 +66,32 @@ export function GlobalFilterBar() {
           ? authorized.find((c) => c.id === (communityScope as { communityIds: string[] }).communityIds[0])?.name ??
             "1 community"
           : `${selectedCount} communities`;
+
+  const [communityQuery, setCommunityQuery] = useState("");
+
+  const selectedIds = useMemo(
+    () =>
+      new Set(
+        communityScope.mode === "communities" ? communityScope.communityIds : [],
+      ),
+    [communityScope],
+  );
+
+  const sorted = useMemo(
+    () => [...authorized].sort((a, b) => a.name.localeCompare(b.name)),
+    [authorized],
+  );
+
+  const matches = (name: string) =>
+    name.toLowerCase().includes(communityQuery.trim().toLowerCase());
+
+  const selectedCommunities = sorted.filter(
+    (c) => selectedIds.has(c.id) && matches(c.name),
+  );
+  const remainingCommunities = sorted.filter(
+    (c) => !selectedIds.has(c.id) && matches(c.name),
+  );
+
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -153,64 +182,89 @@ export function GlobalFilterBar() {
             {communityLabel}
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-80 p-2">
-          <button
-            type="button"
-            onClick={() => setCommunityScope({ mode: "all" })}
-            className={cn(
-              "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
-              communityScope.mode === "all" && "bg-muted font-medium",
-            )}
-          >
-            All authorized communities
-            {communityScope.mode === "all" ? <Check className="size-4" /> : null}
-          </button>
+        <PopoverContent
+          align="start"
+          className="flex max-h-[min(80vh,44rem)] w-80 flex-col p-2"
+        >
+          <Input
+            value={communityQuery}
+            onChange={(e) => setCommunityQuery(e.target.value)}
+            placeholder="Search communities"
+            className="mb-2 h-8"
+          />
 
-          {(regions.data ?? []).length ? (
-            <>
-              <Separator className="my-2" />
-              <p className="px-2.5 pb-1 eyebrow">Regions</p>
-              {(regions.data ?? []).map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setCommunityScope({ mode: "region", regionId: r.id })}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
-                    communityScope.mode === "region" &&
-                      communityScope.regionId === r.id &&
-                      "bg-muted font-medium",
-                  )}
-                >
-                  {r.name}
-                </button>
-              ))}
-            </>
-          ) : null}
-
-          <Separator className="my-2" />
-          <p className="px-2.5 pb-1 eyebrow">Communities</p>
-          <div className="max-h-64 overflow-y-auto">
-            {authorized.length ? (
-              authorized.map((c) => {
-                const checked =
-                  communityScope.mode === "communities" &&
-                  communityScope.communityIds.includes(c.id);
-                return (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {selectedCommunities.length ? (
+              <>
+                <p className="px-2.5 pb-1 eyebrow">Selected</p>
+                {selectedCommunities.map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     onClick={() => toggleCommunity(c.id)}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-muted",
-                      checked && "bg-muted font-medium",
-                    )}
+                    className="flex w-full items-center justify-between rounded-md bg-muted px-2.5 py-1.5 text-left text-sm font-medium hover:bg-muted"
                   >
                     <span className="truncate">{c.name}</span>
-                    {checked ? <Check className="size-4 shrink-0" /> : null}
+                    <Check className="size-4 shrink-0" />
                   </button>
-                );
-              })
+                ))}
+                <Separator className="my-2" />
+              </>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setCommunityScope({ mode: "all" })}
+              className={cn(
+                "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
+                communityScope.mode === "all" && "bg-muted font-medium",
+              )}
+            >
+              All authorized communities
+              {communityScope.mode === "all" ? <Check className="size-4" /> : null}
+            </button>
+
+            {(regions.data ?? []).length ? (
+              <>
+                <Separator className="my-2" />
+                <p className="px-2.5 pb-1 eyebrow">Regions</p>
+                {(regions.data ?? []).map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setCommunityScope({ mode: "region", regionId: r.id })}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm hover:bg-muted",
+                      communityScope.mode === "region" &&
+                        communityScope.regionId === r.id &&
+                        "bg-muted font-medium",
+                    )}
+                  >
+                    {r.name}
+                  </button>
+                ))}
+              </>
+            ) : null}
+
+            <Separator className="my-2" />
+            <p className="px-2.5 pb-1 eyebrow">Communities</p>
+            {authorized.length ? (
+              remainingCommunities.length ? (
+                remainingCommunities.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCommunity(c.id)}
+                    className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    <span className="truncate">{c.name}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-2.5 py-2 text-sm text-muted-foreground">
+                  No other communities match your search.
+                </p>
+              )
             ) : (
               <p className="px-2.5 py-2 text-sm text-muted-foreground">
                 No communities are authorized for your account yet.
@@ -219,6 +273,7 @@ export function GlobalFilterBar() {
           </div>
         </PopoverContent>
       </Popover>
+
     </div>
   );
 }
