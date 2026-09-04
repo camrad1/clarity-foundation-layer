@@ -103,8 +103,21 @@ export async function runGscImport(args: {
   if (parsed.errors.length) return { status: "failed", message: parsed.errors.join(" ") };
 
   const duplicate = await findDuplicateImport(connectionId, parsed.fileHash);
-  if (duplicate)
+  if (duplicate) {
+    // Re-uploading the same export stays idempotent for grains already stored.
+    // Grains the parser did not previously recognise (for example the daily
+    // "Chart.csv" report) are added to the existing import instead of being
+    // rejected, so no data is duplicated and no re-upload is wasted.
+    const supplement = await supplementImport({
+      organizationId,
+      importId: duplicate.id,
+      parsed,
+      period,
+    });
+    if (supplement) return { ...supplement, fileName: duplicate.file_name };
     return { status: "duplicate", importId: duplicate.id, fileName: duplicate.file_name };
+  }
+
 
   const { data: user } = await supabase.auth.getUser();
 
