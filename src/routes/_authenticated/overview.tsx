@@ -181,7 +181,9 @@ function KpiCard({
 
 function Overview() {
   const ctx = useWhContext();
-  const { comparisonMode, comparisonRange, dateRange, setCommunityScope } = useAppState();
+  const { comparisonMode, comparisonRange, communityScope, dateRange, setCommunityScope } =
+    useAppState();
+
   const navigate = useNavigate();
 
   const start = ctx.dateRange.start.slice(0, 10);
