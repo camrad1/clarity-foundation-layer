@@ -21,6 +21,7 @@ import {
   useOccupancyHistory,
 } from "@/lib/wh/reports";
 import { useOccupancyTrend } from "@/lib/wh/snapshots";
+import { occupancyAxis, visibleValues } from "@/lib/charts/occupancy-axis";
 
 /**
  * WelcomeHome standard operational reports rebuilt on ClarityIQ's canonical
