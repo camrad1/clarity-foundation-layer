@@ -191,6 +191,19 @@ export function resolvePreset(preset: DateRangePreset, today = new Date()): Date
   }
 }
 
+/**
+ * Format a SQL date-only value ("YYYY-MM-DD") as the literal calendar date.
+ * Never pass a timestamp here, and never build date-only values with
+ * `new Date("YYYY-MM-DD")` — that parses as UTC midnight and shifts a day in
+ * western timezones.
+ */
+export function formatDateOnly(value: string | null | undefined, pattern = "MMM d, yyyy") {
+  if (!value) return "—";
+  const day = String(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return "—";
+  return format(new Date(`${day}T00:00:00`), pattern);
+}
+
 export function formatRangeLabel(range: DateRangeValue) {
   const preset = DATE_RANGE_PRESETS.find((p) => p.value === range.preset);
   const start = new Date(`${range.start}T00:00:00`);

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { formatDateOnly } from "@/lib/date-ranges";
 import { GitCompareArrows } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
@@ -143,10 +144,7 @@ function Validation() {
             key: "period",
             header: "Period",
             render: (r) =>
-              `${format(new Date(r.period_start), "MMM d")} – ${format(
-                new Date(r.period_end),
-                "MMM d, yyyy",
-              )}`,
+              `${formatDateOnly(r.period_start, "MMM d")} – ${formatDateOnly(r.period_end)}`,
           },
           { key: "expected", header: "Source", align: "right", render: (r) => r.expected_value ?? "—" },
           {

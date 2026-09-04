@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Ruler } from "lucide-react";
 import { format } from "date-fns";
+import { formatDateOnly } from "@/lib/date-ranges";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
@@ -68,7 +69,7 @@ function Metrics() {
           {
             key: "effective",
             header: "Effective from",
-            render: (r) => format(new Date(r.effective_start), "MMM d, yyyy"),
+            render: (r) => formatDateOnly(r.effective_start),
           },
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
           {

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { formatDateOnly } from "@/lib/date-ranges";
 import { Database } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
@@ -103,7 +104,7 @@ function DataSources() {
           {
             key: "through",
             header: "Data through",
-            render: (r) => (r.data_through_date ? format(new Date(r.data_through_date), "MMM d, yyyy") : "—"),
+            render: (r) => formatDateOnly(r.data_through_date),
           },
         ]}
       />

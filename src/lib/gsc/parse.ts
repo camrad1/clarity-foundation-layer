@@ -110,32 +110,35 @@ function parsePosition(value: unknown): number | null {
 }
 
 /**
- * Dates arrive as ISO strings, as real Date cells, or — when a spreadsheet
- * engine has already coerced the column — as an Excel serial number. All three
- * are read as the exported calendar day, never shifted by a timezone.
+ * Report dates are calendar dates, never timestamps. They arrive as ISO
+ * strings, as real Date cells, or — commonly — as a spreadsheet serial number
+ * the CSV/XLSX reader derived in the machine's local timezone. Every path
+ * below yields the literal exported calendar day with no UTC/local shifting.
  */
 function parseDate(value: unknown): string | null {
+  const iso = (y: number, m: number, d: number) =>
+    `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   if (value instanceof Date) {
-    const utc = new Date(
-      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
-    );
-    return utc.toISOString().slice(0, 10);
+    return iso(value.getFullYear(), value.getMonth() + 1, value.getDate());
   }
   const s = String(value ?? "").trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // Excel serial day (1900 date system); the plausible window keeps this from
-  // swallowing years or other stray numbers.
+  // Spreadsheet serial day (1900 date system). Readers encode a midnight date
+  // as a whole day in UTC or as a fractional day equal to the local offset, so
+  // rounding to the nearest whole day recovers the intended calendar date.
   if (/^\d+(\.\d+)?$/.test(s)) {
     const serial = Number(s);
     if (serial >= 20000 && serial <= 80000) {
-      const ms = Math.round((serial - 25569) * 86400000);
-      return new Date(ms).toISOString().slice(0, 10);
+      const days = Math.round(serial);
+      const d = new Date((days - 25569) * 86400000);
+      return iso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
     }
     return null;
   }
   const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  return Number.isNaN(d.getTime()) ? null : iso(d.getFullYear(), d.getMonth() + 1, d.getDate());
 }
+
 
 type Sheet = { name: string; rows: Record<string, unknown>[] };
 
