@@ -36,6 +36,7 @@ import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminWelcomehomeRouteImport } from './routes/_authenticated/admin/welcomehome'
 import { Route as AuthenticatedAdminWhMappingsRouteImport } from './routes/_authenticated/admin/wh-mappings'
 import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
+import { Route as AuthenticatedMarketingInsightsRouteImport } from './routes/_authenticated/marketing/insights'
 import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './routes/_authenticated/marketing/opportunities'
 import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
@@ -191,6 +192,12 @@ const AuthenticatedMarketingIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingInsightsRoute =
+  AuthenticatedMarketingInsightsRouteImport.update({
+    id: '/insights',
+    path: '/insights',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 const AuthenticatedMarketingOpportunitiesRoute =
   AuthenticatedMarketingOpportunitiesRouteImport.update({
     id: '/opportunities',
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
+  '/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -279,6 +287,7 @@ export interface FileRoutesByTo {
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
+  '/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -314,6 +323,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/_authenticated/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/_authenticated/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
+  '/_authenticated/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/admin/validation'
     | '/admin/welcomehome'
     | '/admin/wh-mappings'
+    | '/marketing/insights'
     | '/marketing/opportunities'
     | '/marketing/pages'
     | '/marketing/queries'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/admin/validation'
     | '/admin/welcomehome'
     | '/admin/wh-mappings'
+    | '/marketing/insights'
     | '/marketing/opportunities'
     | '/marketing/pages'
     | '/marketing/queries'
@@ -415,6 +427,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/validation'
     | '/_authenticated/admin/welcomehome'
     | '/_authenticated/admin/wh-mappings'
+    | '/_authenticated/marketing/insights'
     | '/_authenticated/marketing/opportunities'
     | '/_authenticated/marketing/pages'
     | '/_authenticated/marketing/queries'
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/insights': {
+      id: '/_authenticated/marketing/insights'
+      path: '/insights'
+      fullPath: '/marketing/insights'
+      preLoaderRoute: typeof AuthenticatedMarketingInsightsRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
     '/_authenticated/marketing/opportunities': {
       id: '/_authenticated/marketing/opportunities'
       path: '/opportunities'
@@ -660,6 +680,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedMarketingRouteChildren {
+  AuthenticatedMarketingInsightsRoute: typeof AuthenticatedMarketingInsightsRoute
   AuthenticatedMarketingOpportunitiesRoute: typeof AuthenticatedMarketingOpportunitiesRoute
   AuthenticatedMarketingPagesRoute: typeof AuthenticatedMarketingPagesRoute
   AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
@@ -669,6 +690,7 @@ interface AuthenticatedMarketingRouteChildren {
 
 const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
+    AuthenticatedMarketingInsightsRoute: AuthenticatedMarketingInsightsRoute,
     AuthenticatedMarketingOpportunitiesRoute:
       AuthenticatedMarketingOpportunitiesRoute,
     AuthenticatedMarketingPagesRoute: AuthenticatedMarketingPagesRoute,

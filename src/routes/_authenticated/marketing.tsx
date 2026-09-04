@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/marketing")({
 });
 
 const TABS = [
+  { to: "/marketing/insights", label: "Insights" },
   { to: "/marketing", label: "Search Overview" },
   { to: "/marketing/queries", label: "Query Intelligence" },
   { to: "/marketing/pages", label: "Page Intelligence" },
