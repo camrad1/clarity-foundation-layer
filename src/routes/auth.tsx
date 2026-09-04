@@ -66,7 +66,7 @@ function AuthPage() {
           <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Signal className="size-4" />
           </div>
-          <span className="font-display text-base font-semibold">ClarityIQ</span>
+          <span className="font-display text-sm font-semibold leading-tight">ONELIFE Marketing Performance Hub</span>
         </div>
         <div className="max-w-md space-y-4">
           <h2 className="font-display text-3xl leading-tight font-semibold">
@@ -85,7 +85,7 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-1.5">
-            <h1 className="text-xl font-semibold">Sign in to ClarityIQ</h1>
+            <h1 className="text-xl font-semibold">Sign in to ONELIFE Marketing Performance Hub</h1>
             <p className="text-sm text-muted-foreground">Use your work email to continue.</p>
           </div>
 
@@ -127,7 +127,7 @@ function AuthPage() {
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Need access? Contact your ClarityIQ administrator.
+            Need access? Contact your ONELIFE administrator.
           </p>
           <p className="text-center text-xs text-muted-foreground">
             Signing in does not grant data access on its own — an administrator must add you to an
