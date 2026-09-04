@@ -21,6 +21,7 @@ import {
   useOccupancyHistory,
 } from "@/lib/wh/reports";
 import { useOccupancyTrend } from "@/lib/wh/snapshots";
+import { occupancyAxis, visibleValues } from "@/lib/charts/occupancy-axis";
 
 /**
  * WelcomeHome standard operational reports rebuilt on ClarityIQ's canonical
@@ -147,6 +148,40 @@ type RangeTabProps = {
 
 /* ============================================================ Occupancy */
 
+const tipPct = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : `${Number(v).toFixed(1)}%`);
+const tipNum = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toLocaleString());
+
+/** Exact stored values for the hovered period; nothing is derived beyond the budget variance. */
+function OccupancyHistoryTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  const variance =
+    p.ending_pct != null && p.budget_pct != null
+      ? `${p.ending_pct - p.budget_pct >= 0 ? "+" : ""}${(p.ending_pct - p.budget_pct).toFixed(1)} pts`
+      : "—";
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
+      <p className="mb-1 font-medium text-foreground">{p.label}</p>
+      <TipRow label="Beginning occupancy" value={`${tipNum(p.beginning_occupied)} · ${tipPct(p.beginning_pct)}`} />
+      <TipRow label="Ending occupancy" value={`${tipNum(p.ending_occupied)} · ${tipPct(p.ending_pct)}`} />
+      <TipRow label="Budget" value={tipPct(p.budget_pct)} />
+      <TipRow label="Variance to budget" value={variance} />
+    </div>
+  );
+}
+
+function TipRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="flex items-center justify-between gap-6">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums text-foreground">{value}</span>
+    </p>
+  );
+}
+
+
+
 export function OccupancyHistoryTab({ organizationId, communityIds, start, end }: RangeTabProps) {
   const q = useOccupancyHistory(organizationId, communityIds, start.slice(0, 10), end.slice(0, 10));
 
@@ -188,6 +223,11 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
 
   const hasHistory = rows.some((r) => r.ending_pct != null || r.beginning_pct != null);
   const columns = rows.map((r) => monthLabel(r.month));
+
+  // Axes follow the enabled series only, so toggling a series rescales immediately.
+  const pctAxis = occupancyAxis(visibleValues(chartData, pctVis.visible), "percent");
+  const unitAxis = occupancyAxis(visibleValues(chartData, unitVis.visible), "count");
+
 
   const exportCsv = () =>
     downloadCsv("clarityiq-occupancy-history.csv", [
@@ -235,6 +275,9 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           data={chartData}
           series={pctSeries.filter((s) => pctVis.visible.includes(s.key))}
           valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
+          yDomain={pctAxis.domain}
+          yTicks={pctAxis.ticks}
+          tooltip={<OccupancyHistoryTooltip />}
         />
       </ChartCard>
 
@@ -248,7 +291,14 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           <SeriesToggleChips series={unitSeries} visible={unitVis.visible} onToggle={unitVis.toggle} />
         }
       >
-        <MetricTrendChart data={chartData} series={unitSeries.filter((s) => unitVis.visible.includes(s.key))} />
+        <MetricTrendChart
+          data={chartData}
+          series={unitSeries.filter((s) => unitVis.visible.includes(s.key))}
+          yDomain={unitAxis.domain}
+          yTicks={unitAxis.ticks}
+          tooltip={<OccupancyHistoryTooltip />}
+        />
+
       </ChartCard>
 
       <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} start={start} end={end} />
@@ -273,13 +323,30 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
   );
 }
 
+/** Exact stored values for the hovered day or week. */
+function OccupancyDetailTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
+      <p className="mb-1 font-medium text-foreground">{p.label}</p>
+      <TipRow label="Occupancy" value={tipPct(p.occupancy_pct)} />
+      <TipRow label="Occupied units" value={tipNum(p.occupied)} />
+    </div>
+  );
+}
+
 /**
  * Daily / weekly occupancy detail, read from stored history only and bounded by
  * the global date filter. Nightly snapshots take precedence; the official
  * imported day-over-day history fills dates before snapshots began. Gaps stay gaps.
  */
+
 function OccupancyDailyDetail({ organizationId, communityIds, start, end }: RangeTabProps) {
   const [grain, setGrain] = useState<"daily" | "weekly">("weekly");
+  // Percentages and unit counts are incompatible units, so they never share one axis.
+  const [metric, setMetric] = useState<"pct" | "units">("pct");
   const q = useOccupancyTrend(organizationId, communityIds, start.slice(0, 10), end.slice(0, 10), grain);
 
   const points = (q.data ?? []).map((p) => ({
@@ -289,6 +356,15 @@ function OccupancyDailyDetail({ organizationId, communityIds, start, end }: Rang
   }));
   const backfillPeriods = (q.data ?? []).filter((p) => p.backfill_communities > 0).length;
   const snapshotPeriods = (q.data ?? []).filter((p) => p.snapshot_communities > 0).length;
+
+  const percent = metric === "pct";
+  const series = percent
+    ? [{ key: "occupancy_pct", label: "Occupancy %", color: CHART_TOKENS.primary }]
+    : [{ key: "occupied", label: "Occupied units", color: CHART_TOKENS.secondary }];
+  const axis = occupancyAxis(
+    visibleValues(points, series.map((s) => s.key)),
+    percent ? "percent" : "count",
+  );
 
   return (
     <ChartCard
@@ -302,28 +378,44 @@ function OccupancyDailyDetail({ organizationId, communityIds, start, end }: Rang
       empty={points.length === 0 ? "No stored daily occupancy history for this selection." : undefined}
       height={240}
       actions={
-        <div className="flex gap-1">
-          {(["weekly", "daily"] as const).map((g) => (
-            <Button
-              key={g}
-              size="sm"
-              variant={grain === g ? "default" : "outline"}
-              onClick={() => setGrain(g)}
-            >
-              {g === "weekly" ? "Weekly" : "Daily"}
-            </Button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          <div className="flex gap-1">
+            {(["pct", "units"] as const).map((m) => (
+              <Button
+                key={m}
+                size="sm"
+                variant={metric === m ? "default" : "outline"}
+                onClick={() => setMetric(m)}
+              >
+                {m === "pct" ? "Occupancy %" : "Units"}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {(["weekly", "daily"] as const).map((g) => (
+              <Button
+                key={g}
+                size="sm"
+                variant={grain === g ? "default" : "outline"}
+                onClick={() => setGrain(g)}
+              >
+                {g === "weekly" ? "Weekly" : "Daily"}
+              </Button>
+            ))}
+          </div>
         </div>
       }
     >
       <MetricTrendChart
         data={points}
-        series={[
-          { key: "occupancy_pct", label: "Occupancy %", color: CHART_TOKENS.primary },
-          { key: "occupied", label: "Occupied units", color: CHART_TOKENS.secondary },
-        ]}
+        series={series}
+        yDomain={axis.domain}
+        yTicks={axis.ticks}
+        {...(percent ? { valueFormatter: (v: number) => `${Number(v).toFixed(1)}%` } : {})}
+        tooltip={<OccupancyDetailTooltip />}
       />
     </ChartCard>
+
   );
 }
 

@@ -4,6 +4,7 @@ import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { CHART_TOKENS, ChartCard, MetricTrendChart, ProgressGauge } from "@/components/clarity/charts";
+import { occupancyAxis } from "@/lib/charts/occupancy-axis";
 import { useWhContext } from "@/lib/wh/use-wh";
 import { useOccupancyTrend } from "@/lib/wh/snapshots";
 import {
@@ -247,31 +248,11 @@ function defaultGrain(days: number): Grain {
   return "monthly";
 }
 
-/** Rounded axis bounds derived from the plotted values, with visual padding. */
-function niceDomain(values: number[], percent: boolean): { domain: [number, number]; ticks: number[] } {
-  const finite = values.filter((v) => Number.isFinite(v));
-  if (finite.length === 0) return { domain: [0, percent ? 100 : 10], ticks: [] };
-  let min = Math.min(...finite);
-  let max = Math.max(...finite);
-  const spread = max - min;
-  const pad = Math.max(spread * 0.15, percent ? 1 : 1);
-  min -= pad;
-  max += pad;
-  if (percent) {
-    min = Math.max(0, min);
-    max = Math.min(100, max);
-  } else {
-    min = Math.max(0, min);
-  }
-  const raw = (max - min) / 4;
-  const mag = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-6))));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? mag * 10;
-  const lo = Math.floor(min / step) * step;
-  const hi = Math.ceil(max / step) * step;
-  const ticks: number[] = [];
-  for (let t = lo; t <= hi + step / 2; t += step) ticks.push(Number(t.toFixed(4)));
-  return { domain: [lo, hi], ticks };
+/** Rounded axis bounds derived from the plotted values (shared occupancy helper). */
+function niceDomain(values: number[], percent: boolean) {
+  return occupancyAxis(values, percent ? "percent" : "count");
 }
+
 
 function OccupancyTooltip({ active, payload, percent, periodNoun }: any) {
   if (!active || !payload?.length) return null;
