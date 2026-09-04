@@ -306,10 +306,8 @@ function PageIntelligence() {
               title={`No pages are currently mapped to ${scopeLabel}`}
               description="Review Admin → URL Mapping Rules to add a deterministic rule for this community's page URLs. Unmapped pages stay visible in the All communities view."
             />
-          ) : (
+          ) : view === "communities" ? (
 
-
-          {view === "communities" ? (
             <div className="panel overflow-hidden">
               <Table>
                 <TableHeader>
