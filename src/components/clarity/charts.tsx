@@ -278,13 +278,13 @@ export function MetricTrendChart({
   const label = (v: any) => (v == null ? "" : valueFormatter ? valueFormatter(Number(v)) : fmtCount(Number(v)));
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 12, right: 28, bottom: 0, left: -18 }}>
+      <LineChart data={data} margin={{ top: 18, right: 28, bottom: 0, left: yDomain ? 4 : -18 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis
           allowDecimals={false}
           {...axisProps}
-          width={44}
+          width={yDomain ? 58 : 44}
           {...(yDomain ? { domain: yDomain, allowDataOverflow: false } : {})}
           {...(yTicks ? { ticks: yTicks } : {})}
           {...(valueFormatter ? { tickFormatter: (v: any) => valueFormatter(Number(v)) } : {})}
