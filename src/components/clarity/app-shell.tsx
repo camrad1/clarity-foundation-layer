@@ -3,6 +3,7 @@ import {
   Activity,
   Building2,
   CalendarRange,
+  ChevronDown,
   ChevronsUpDown,
   Compass,
   Database,
@@ -23,7 +24,7 @@ import {
   Zap,
 
 } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,16 +44,16 @@ type NavItem = { to: string; label: string; icon: typeof Compass };
 
 const INTELLIGENCE: NavItem[] = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
+  { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
   { to: "/flash", label: "Flash Report", icon: Zap },
   { to: "/forecast", label: "Forecast Tracker", icon: CalendarRange },
-
-
   { to: "/marketing", label: "Marketing Intelligence", icon: Globe },
   { to: "/sales", label: "Sales Intelligence", icon: TrendingUp },
-  { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
   { to: "/journey", label: "Performance Journey", icon: Compass },
   { to: "/data-health", label: "Data Health", icon: Activity },
 ];
+
+const ADMIN_OPEN_KEY = "mph-admin-nav-open";
 
 const ADMIN: NavItem[] = [
   { to: "/admin/communities", label: "Communities", icon: Building2 },
@@ -98,6 +99,25 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((m) => m.organizations)
     .filter((o): o is NonNullable<typeof o> => !!o)
     .filter((o, i, arr) => arr.findIndex((x) => x.id === o.id) === i);
+
+  // Collapsible Admin nav: persisted across sessions, auto-expands on Admin pages.
+  const onAdminPage = pathname.startsWith("/admin");
+  const [adminCollapsed, setAdminCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(ADMIN_OPEN_KEY) === "0";
+  });
+  const adminOpen = !adminCollapsed || onAdminPage;
+  const toggleAdmin = () => {
+    setAdminCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(ADMIN_OPEN_KEY, next ? "0" : "1");
+      } catch {
+        /* storage unavailable */
+      }
+      return next;
+    });
+  };
 
   const activeOrg = orgs.find((o) => o.id === organizationId) ?? orgs[0] ?? null;
 
@@ -155,49 +175,66 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </div>
 
-          {isOrgAdmin ? (
+          {isOrgAdmin || canManageImports ? (
             <div className="space-y-0.5">
-              <p className="px-2.5 pb-1 eyebrow">Admin</p>
-              {isPlatformAdmin ? (
-                <NavLink
-                  item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
-                  active={pathname === "/admin/organizations"}
+              <button
+                type="button"
+                onClick={toggleAdmin}
+                aria-expanded={adminOpen}
+                className="flex w-full items-center gap-1 rounded-md px-2.5 pb-1 pt-0.5 text-left hover:text-foreground"
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 text-muted-foreground transition-transform",
+                    adminOpen ? "" : "-rotate-90",
+                  )}
                 />
+                <span className="eyebrow">Admin</span>
+              </button>
+              {adminOpen ? (
+                isOrgAdmin ? (
+                  <>
+                    {isPlatformAdmin ? (
+                      <NavLink
+                        item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
+                        active={pathname === "/admin/organizations"}
+                      />
+                    ) : null}
+                    {ADMIN.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        item={item}
+                        active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
+                      />
+                    ))}
+                    <NavLink
+                      item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
+                      active={pathname === "/admin/access"}
+                    />
+                  </>
+                ) : (
+                  // Marketing users manage imports only — no other
+                  // organization administration is exposed to them.
+                  <>
+                    <NavLink
+                      item={{ to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload }}
+                      active={pathname === "/admin/gsc-imports"}
+                    />
+                    <NavLink
+                      item={{ to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap }}
+                      active={pathname === "/admin/welcomehome"}
+                    />
+                    <NavLink
+                      item={{ to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 }}
+                      active={pathname === "/admin/wh-mappings"}
+                    />
+                    <NavLink
+                      item={{ to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload }}
+                      active={pathname === "/admin/occupancy-history"}
+                    />
+                  </>
+                )
               ) : null}
-              {ADMIN.map((item) => (
-                <NavLink
-                key={item.to}
-                item={item}
-                active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
-              />
-              ))}
-              <NavLink
-                item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
-                active={pathname === "/admin/access"}
-              />
-            </div>
-          ) : canManageImports ? (
-            // Marketing users manage Search Console imports only — no other
-            // organization administration is exposed to them.
-            <div className="space-y-0.5">
-              <p className="px-2.5 pb-1 eyebrow">Admin</p>
-              <NavLink
-                item={{ to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload }}
-                active={pathname === "/admin/gsc-imports"}
-              />
-              <NavLink
-                item={{ to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap }}
-                active={pathname === "/admin/welcomehome"}
-              />
-              <NavLink
-                item={{ to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 }}
-                active={pathname === "/admin/wh-mappings"}
-              />
-              <NavLink
-                item={{ to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload }}
-                active={pathname === "/admin/occupancy-history"}
-              />
-
             </div>
           ) : null}
         </nav>
