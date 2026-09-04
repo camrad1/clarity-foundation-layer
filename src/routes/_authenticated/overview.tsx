@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Clock } from "lucide-react";
 import { PageHeader } from "@/components/clarity/page-header";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { DataTable, type Column } from "@/components/clarity/data-table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { useWhContext } from "@/lib/wh/use-wh";
 import {
   effectiveBudget,
@@ -15,10 +17,33 @@ import { useOccupancyTrend, useSnapshotHealth } from "@/lib/wh/snapshots";
 import { useWhSalesSummary } from "@/lib/wh/summary";
 import { useFlashReport, useFlashReportsByCommunity } from "@/lib/flash/queries";
 import { currentFlashWeek, monthStart, formatMonth, todayISO } from "@/lib/flash/period";
-import { useDailyTotals, useGrainImports, selectImportForPeriod, usePageReport } from "@/lib/gsc/queries";
-import { comparisonModeLabel, formatPeriodLabel, formatRangeLabel } from "@/lib/date-ranges";
+import {
+  useDailyTotals,
+  useGrainImports,
+  selectImportForPeriod,
+  usePageReport,
+  useQueryReport,
+  useActiveGrainCoverage,
+} from "@/lib/gsc/queries";
+import {
+  PRIORITY_LABELS,
+  ctrOpportunities,
+  isComparablePeriod,
+  nearPageOne,
+  pageOpportunities,
+  sortByPriority,
+  type PageRow,
+  type QueryRow,
+} from "@/lib/gsc/insights";
+import {
+  comparisonModeLabel,
+  formatDateOnly,
+  formatPeriodLabel,
+  formatRangeLabel,
+} from "@/lib/date-ranges";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
