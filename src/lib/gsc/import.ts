@@ -19,8 +19,16 @@ export type ImportPeriod = { start: string; end: string };
 
 export type ImportOutcome =
   | { status: "duplicate"; importId: string; fileName: string }
+  | {
+      status: "supplemented";
+      importId: string;
+      fileName: string;
+      rowCounts: Record<string, number>;
+      warnings: string[];
+    }
   | { status: "imported"; importId: string; rowCounts: Record<string, number>; warnings: string[] }
   | { status: "failed"; message: string; importId?: string };
+
 
 const CHUNK = 500;
 
@@ -83,6 +91,79 @@ export async function findDuplicateImport(connectionId: string, fileHash: string
   return data ?? null;
 }
 
+/**
+ * Adds only the grains an existing import does not already hold. Returns null
+ * when the export contributes nothing new (a true duplicate).
+ */
+async function supplementImport(args: {
+  organizationId: string;
+  connectionId: string;
+  importId: string;
+  parsed: ParsedFile;
+  period: ImportPeriod;
+}): Promise<{
+  status: "supplemented";
+  importId: string;
+  rowCounts: Record<string, number>;
+  warnings: string[];
+} | null> {
+  const { organizationId, connectionId, importId, parsed, period } = args;
+
+  const { data: existing, error } = await supabase
+    .from("gsc_import_grains")
+    .select("grain")
+    .eq("import_id", importId);
+  if (error) throw new Error(error.message);
+
+  const have = new Set((existing ?? []).map((g) => g.grain as GrainKey));
+  const missing = parsed.grains.filter((g) => !have.has(g.grain));
+  if (!missing.length) return null;
+
+  const rowCounts: Record<string, number> = {};
+  for (const grain of missing) {
+    const rows = factRows(grain.grain, grain.rows, {
+      organization_id: organizationId,
+      import_id: importId,
+    });
+    await insertChunks(TABLE_FOR_GRAIN[grain.grain], rows as Record<string, unknown>[]);
+    rowCounts[grain.grain] = rows.length;
+  }
+
+  if (missing.some((g) => g.grain === "page")) {
+    await supabase.rpc("gsc_apply_page_mappings", { _import_id: importId });
+  }
+
+  const grainRows = missing.map((g) => {
+    const dates = g.grain === "daily" ? g.rows.map((r) => r.key).sort() : null;
+    return {
+      organization_id: organizationId,
+      connection_id: connectionId,
+      import_id: importId,
+      grain: g.grain,
+      row_count: g.rows.length,
+      period_start: (dates ? dates[0] : period.start) ?? period.start,
+      period_end: (dates ? dates[dates.length - 1] : period.end) ?? period.end,
+      source_file: g.sourceFile,
+      is_active: false,
+    };
+  });
+  const { error: grainError } = await supabase.from("gsc_import_grains").insert(grainRows);
+  if (grainError) throw new Error(grainError.message);
+
+  const { error: completeError } = await supabase.rpc("gsc_complete_import", {
+    _import_id: importId,
+    _metadata: {
+      supplemented_reports: missing.map((g) => g.grain),
+      supplemented_row_counts: rowCounts,
+    },
+    _through: parsed.dataEndDate ?? period.end,
+  });
+  if (completeError) throw new Error(completeError.message);
+
+  return { status: "supplemented", importId, rowCounts, warnings: parsed.warnings };
+}
+
+
 export async function runGscImport(args: {
   organizationId: string;
   connectionId: string;
@@ -95,8 +176,22 @@ export async function runGscImport(args: {
   if (parsed.errors.length) return { status: "failed", message: parsed.errors.join(" ") };
 
   const duplicate = await findDuplicateImport(connectionId, parsed.fileHash);
-  if (duplicate)
+  if (duplicate) {
+    // Re-uploading the same export stays idempotent for grains already stored.
+    // Grains the parser did not previously recognise (for example the daily
+    // "Chart.csv" report) are added to the existing import instead of being
+    // rejected, so no data is duplicated and no re-upload is wasted.
+    const supplement = await supplementImport({
+      organizationId,
+      connectionId,
+      importId: duplicate.id,
+      parsed,
+      period,
+    });
+    if (supplement) return { ...supplement, fileName: duplicate.file_name };
     return { status: "duplicate", importId: duplicate.id, fileName: duplicate.file_name };
+  }
+
 
   const { data: user } = await supabase.auth.getUser();
 

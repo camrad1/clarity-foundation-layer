@@ -67,7 +67,14 @@ function SearchOverview() {
   const previous = prior.data as typeof current;
 
   const hasData = !!current && current.impressions + current.clicks > 0;
+  // Imports end on a fixed export date; a selected range can legitimately run
+  // past it, so partial coverage is shown rather than treated as "no data".
+  const partial =
+    hasData &&
+    !!current!.last_date &&
+    (current!.last_date < period.end || (current!.first_date ?? period.start) > period.start);
   const comparable = !!comparison && !!previous && previous.impressions + previous.clicks > 0;
+
 
   const clickDelta = comparable ? change(current!.clicks, previous!.clicks).percent : null;
   const imprDelta = comparable ? change(current!.impressions, previous!.impressions).percent : null;
@@ -162,6 +169,13 @@ function SearchOverview() {
               {current!.first_date ? format(parseISO(current!.first_date), "MMM d, yyyy") : "—"} –{" "}
               {current!.last_date ? format(parseISO(current!.last_date), "MMM d, yyyy") : "—"}
             </span>
+            {partial ? (
+              <span>
+                Selected {formatPeriodLabel(period)} — imported search data covers only part of it,
+                through {format(parseISO(current!.last_date!), "MMM d, yyyy")}. Totals below are for
+                the covered days only.
+              </span>
+            ) : null}
             <span>
               {comparison
                 ? `${comparisonModeLabel(comparisonMode)} · compared with ${formatPeriodLabel(comparison)}`
@@ -169,6 +183,7 @@ function SearchOverview() {
               {comparison && !comparable ? " — no imported data in that period" : ""}
             </span>
           </div>
+
 
           <div className="panel p-5">
             <p className="eyebrow pb-4">Clicks and impressions by day</p>
