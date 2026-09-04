@@ -48,50 +48,53 @@ export function useGrainImports(organizationId: string | null, grain: GrainKey) 
 export type ImportSelection = {
   current: GrainImport | null;
   comparison: GrainImport | null;
-  /** How well the active export matches the globally selected date range. */
-  coverage: "exact" | "fixed_period" | "none";
+  /**
+   * exact  — the export's own period equals the globally selected range
+   * manual — the user deliberately opened a different imported export
+   * none   — no export matches the selected range; nothing is shown by default
+   */
+  coverage: "exact" | "manual" | "none";
+  /** Every active export of this grain, newest first, for the period picker. */
+  options: GrainImport[];
 };
 
 /**
  * Aggregate exports (Queries, Pages, Devices, Countries, Search appearance)
- * represent a FIXED exported period. They are never prorated to a sub-range:
- * the export whose period best overlaps the requested range is selected and
- * its real period is displayed.
+ * carry no row level dates: each file is a single fixed-period total. They are
+ * therefore never prorated, split across dates or substituted for a different
+ * period. An export is used automatically ONLY when its exported period equals
+ * the globally selected range; otherwise the caller shows a "no matching
+ * export" state and the user can intentionally open an older export.
  */
 export function selectImportForPeriod(
   grains: GrainImport[],
   period: Period,
+  overrideImportId?: string | null,
 ): ImportSelection {
-  const active = grains.filter((g) => g.is_active && g.period_start && g.period_end);
-  const overlapping = active
-    .map((g) => {
-      const start = g.period_start!;
-      const end = g.period_end!;
-      const overlap =
-        start <= period.end && end >= period.start
-          ? Math.min(Date.parse(end), Date.parse(period.end)) -
-            Math.max(Date.parse(start), Date.parse(period.start))
-          : -1;
-      return { g, overlap };
-    })
-    .filter((x) => x.overlap >= 0)
-    .sort((a, b) => b.overlap - a.overlap);
+  const options = grains
+    .filter((g) => g.is_active && g.period_start && g.period_end)
+    .sort((a, b) => (a.period_end! < b.period_end! ? 1 : -1));
 
-  const current = overlapping[0]?.g ?? null;
-  if (!current) return { current: null, comparison: null, coverage: "none" };
+  const override = overrideImportId
+    ? (options.find((g) => g.import_id === overrideImportId) ?? null)
+    : null;
+  const exact =
+    options.find((g) => g.period_start === period.start && g.period_end === period.end) ?? null;
+
+  const current = override ?? exact;
+  if (!current) return { current: null, comparison: null, coverage: "none", options };
 
   const comparison =
-    active
-      .filter((g) => g.id !== current.id && g.period_end! < current.period_start!)
-      .sort((a, b) => (a.period_end! < b.period_end! ? 1 : -1))[0] ?? null;
+    options.find((g) => g.id !== current.id && g.period_end! < current.period_start!) ?? null;
 
-  const coverage =
-    current.period_start === period.start && current.period_end === period.end
-      ? "exact"
-      : "fixed_period";
-
-  return { current, comparison, coverage };
+  return {
+    current,
+    comparison,
+    coverage: current === exact ? "exact" : "manual",
+    options,
+  };
 }
+
 
 export function useDailyTotals(organizationId: string | null, period: Period | null) {
   return useQuery({
