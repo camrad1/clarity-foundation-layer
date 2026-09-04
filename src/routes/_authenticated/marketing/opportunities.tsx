@@ -199,15 +199,30 @@ function Opportunities() {
 
       {loading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.current ? (
+      ) : !selection.options.length ? (
         <EmptyState
           icon={<Target className="size-6" />}
           title="No report imported for this grain"
           description="Import a Search Console export containing the relevant report to see opportunities."
         />
+      ) : !selection.current ? (
+        <GscExportNotice
+          selection={selection}
+          grainLabel={dataset === "query" ? "Queries" : "Pages"}
+          period={period}
+          value={reportImportId}
+          onChange={setReportImportId}
+        />
       ) : (
         <>
-          <GscExportNotice selection={selection} grainLabel={dataset === "query" ? "Queries" : "Pages"} />
+          <GscExportNotice
+            selection={selection}
+            grainLabel={dataset === "query" ? "Queries" : "Pages"}
+            period={period}
+            value={reportImportId}
+            onChange={setReportImportId}
+          />
+
 
           <div className="grid gap-4 sm:grid-cols-3">
             <MetricCard label={OPPORTUNITY_LABELS.striking} value={fmtInt(counts.striking)} />
