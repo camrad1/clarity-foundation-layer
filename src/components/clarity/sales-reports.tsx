@@ -190,6 +190,11 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
   const hasHistory = rows.some((r) => r.ending_pct != null || r.beginning_pct != null);
   const columns = rows.map((r) => monthLabel(r.month));
 
+  // Axes follow the enabled series only, so toggling a series rescales immediately.
+  const pctAxis = occupancyAxis(visibleValues(chartData, pctVis.visible), "percent");
+  const unitAxis = occupancyAxis(visibleValues(chartData, unitVis.visible), "count");
+
+
   const exportCsv = () =>
     downloadCsv("clarityiq-occupancy-history.csv", [
       ["Metric", ...columns],
