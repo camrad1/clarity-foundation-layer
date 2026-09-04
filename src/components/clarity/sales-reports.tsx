@@ -236,6 +236,9 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           data={chartData}
           series={pctSeries.filter((s) => pctVis.visible.includes(s.key))}
           valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
+          yDomain={pctAxis.domain}
+          yTicks={pctAxis.ticks}
+          tooltip={<OccupancyHistoryTooltip />}
         />
       </ChartCard>
 
@@ -249,7 +252,14 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           <SeriesToggleChips series={unitSeries} visible={unitVis.visible} onToggle={unitVis.toggle} />
         }
       >
-        <MetricTrendChart data={chartData} series={unitSeries.filter((s) => unitVis.visible.includes(s.key))} />
+        <MetricTrendChart
+          data={chartData}
+          series={unitSeries.filter((s) => unitVis.visible.includes(s.key))}
+          yDomain={unitAxis.domain}
+          yTicks={unitAxis.ticks}
+          tooltip={<OccupancyHistoryTooltip />}
+        />
+
       </ChartCard>
 
       <OccupancyDailyDetail organizationId={organizationId} communityIds={communityIds} start={start} end={end} />
