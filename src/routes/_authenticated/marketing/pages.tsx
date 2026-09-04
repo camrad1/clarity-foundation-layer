@@ -158,6 +158,15 @@ function PageIntelligence() {
   const unmappedClicks = unmapped.reduce((s, r) => s + r.clicks, 0);
   const totalClicks = all.reduce((s, r) => s + r.clicks, 0);
   const mappedCoverage = totalClicks ? 1 - unmappedClicks / totalClicks : null;
+  const mappedPages = all.length - unmapped.length;
+  const scopedCommunityNames = (communities.data ?? [])
+    .filter((c) => scopedIds.has(c.id))
+    .map((c) => c.name);
+  const scopeLabel =
+    scopedCommunityNames.length === 1
+      ? scopedCommunityNames[0]
+      : `the ${scopedCommunityNames.length} selected communities`;
+
 
   return (
     <div className="space-y-6">
@@ -241,12 +250,17 @@ function PageIntelligence() {
 
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Pages in export" value={fmtInt(all.length)} />
+            <MetricCard
+              label="Mapped pages"
+              value={`${fmtInt(mappedPages)} / ${fmtInt(all.length)}`}
+              footnote={`${fmtInt(unmapped.length)} page(s) match no URL rule`}
+            />
             <MetricCard
               label="Mapped click coverage"
               value={fmtPercent(mappedCoverage, 1)}
-              footnote={`${fmtInt(unmapped.length)} unmapped page(s)`}
+              footnote={`${fmtInt(totalClicks - unmappedClicks)} of ${fmtInt(totalClicks)} clicks`}
             />
+
             <MetricCard label="Clicks in scope" value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))} />
             <MetricCard
               label="Impressions in scope"
@@ -286,7 +300,14 @@ function PageIntelligence() {
             ) : null}
           </div>
 
-          {view === "communities" ? (
+          {communityScope.mode !== "all" && !scoped.length ? (
+            <EmptyState
+              icon={<FileSearch className="size-6" />}
+              title={`No pages are currently mapped to ${scopeLabel}`}
+              description="Review Admin → URL Mapping Rules to add a deterministic rule for this community's page URLs. Unmapped pages stay visible in the All communities view."
+            />
+          ) : view === "communities" ? (
+
             <div className="panel overflow-hidden">
               <Table>
                 <TableHeader>
