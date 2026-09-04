@@ -43,16 +43,16 @@ type NavItem = { to: string; label: string; icon: typeof Compass };
 
 const INTELLIGENCE: NavItem[] = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
+  { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
   { to: "/flash", label: "Flash Report", icon: Zap },
   { to: "/forecast", label: "Forecast Tracker", icon: CalendarRange },
-
-
   { to: "/marketing", label: "Marketing Intelligence", icon: Globe },
   { to: "/sales", label: "Sales Intelligence", icon: TrendingUp },
-  { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
   { to: "/journey", label: "Performance Journey", icon: Compass },
   { to: "/data-health", label: "Data Health", icon: Activity },
 ];
+
+const ADMIN_OPEN_KEY = "mph-admin-nav-open";
 
 const ADMIN: NavItem[] = [
   { to: "/admin/communities", label: "Communities", icon: Building2 },
