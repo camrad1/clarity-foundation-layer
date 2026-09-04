@@ -28,7 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
 import { useFlashBudgets, useSaveFlashBudget } from "@/lib/flash/queries";
-import { effectiveBudget } from "@/lib/wh/occupancy";
+import { effectiveBudget, CAPACITY_BASIS_LABELS, type CapacityBasis } from "@/lib/wh/occupancy";
 
 type CommunityRow = {
   id: string;
