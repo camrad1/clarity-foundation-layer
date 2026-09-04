@@ -20,16 +20,34 @@ import { useFlashBudgets, type FlashBudgetRow } from "@/lib/flash/queries";
  * This is current state only. Historical as-of-date occupancy needs the nightly
  * snapshot system, which is deliberately not built yet.
  */
+export type CapacityBasis = "rooms" | "occupancy_points" | "configured_capacity";
+
+export const CAPACITY_BASIS_LABELS: Record<CapacityBasis, string> = {
+  rooms: "Physical rooms",
+  occupancy_points: "Occupancy points",
+  configured_capacity: "Configured capacity",
+};
+
 export type CommunityOccupancy = {
   id: string;
   name: string;
+  capacity_basis: CapacityBasis;
   configured_units: number | null;
   total_unit_records: number;
   excluded_units: number;
   off_census_units: number;
   pseudo_units: number;
   inactive_units: number;
+  /** Physical apartments/rooms eligible for census. */
+  census_rooms: number;
+  /** Occupancy-point capacity of those rooms (shared suites count > 1). */
+  census_capacity: number;
+  configured_capacity: number | null;
+  occupied_rooms: number;
+  occupied_capacity: number;
+  /** Canonical denominator selected by the community's capacity basis. */
   census_units: number;
+  /** Canonical numerator selected by the community's capacity basis. */
   occupied_units: number;
   vacant_units: number;
   notice_units: number;
@@ -37,7 +55,7 @@ export type CommunityOccupancy = {
   pending_move_ins: number;
   occupancy_pct: number | null;
   unit_count_discrepancy: boolean;
-  by_care_type: { careType: string; units: number; occupied: number }[];
+  by_care_type: { careType: string; units: number; occupied: number; rooms?: number; capacity?: number }[];
 };
 
 export type CurrentOccupancy = {
@@ -50,6 +68,10 @@ export type CurrentOccupancy = {
     offCensusUnits: number;
     pseudoUnits: number;
     inactiveUnits: number;
+    censusRooms: number;
+    censusCapacity: number;
+    occupiedRooms: number;
+    occupiedCapacity: number;
     censusUnits: number;
     occupiedUnits: number;
     vacantUnits: number;
@@ -60,6 +82,7 @@ export type CurrentOccupancy = {
     occupancyPct: number | null;
   };
 };
+
 
 export function useCurrentOccupancy(organizationId: string | null, communityIds: string[]) {
   return useQuery({

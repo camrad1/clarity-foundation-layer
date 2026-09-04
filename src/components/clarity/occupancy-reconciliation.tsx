@@ -1,7 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { useWhContext } from "@/lib/wh/use-wh";
-import { useCurrentOccupancy, type CommunityOccupancy } from "@/lib/wh/occupancy";
+import { useCurrentOccupancy, CAPACITY_BASIS_LABELS, type CommunityOccupancy } from "@/lib/wh/occupancy";
 
 /**
  * Occupancy reconciliation diagnostic.
@@ -45,9 +45,28 @@ export function OccupancyReconciliationPanel() {
           { key: "name", header: "Community", render: (r: CommunityOccupancy) => r.name },
           {
             key: "cfg",
-            header: "Configured units",
+            header: "Configured",
             align: "right",
-            render: (r: CommunityOccupancy) => r.configured_units ?? "—",
+            render: (r: CommunityOccupancy) => r.configured_capacity ?? r.configured_units ?? "—",
+          },
+          {
+            key: "rooms",
+            header: "Rooms",
+            align: "right",
+            render: (r: CommunityOccupancy) => r.census_rooms,
+          },
+          {
+            key: "points",
+            header: "Occupancy points",
+            align: "right",
+            render: (r: CommunityOccupancy) => r.census_capacity,
+          },
+          {
+            key: "basis",
+            header: "Canonical basis",
+            render: (r: CommunityOccupancy) => (
+              <span className="text-xs">{CAPACITY_BASIS_LABELS[r.capacity_basis] ?? r.capacity_basis}</span>
+            ),
           },
           {
             key: "src",
@@ -57,15 +76,22 @@ export function OccupancyReconciliationPanel() {
           },
           {
             key: "census",
-            header: "Census-eligible",
+            header: "Canonical capacity",
             align: "right",
             render: (r: CommunityOccupancy) => r.census_units,
           },
           {
             key: "occ",
-            header: "Occupied",
+            header: "Occupied (canonical)",
             align: "right",
-            render: (r: CommunityOccupancy) => r.occupied_units,
+            render: (r: CommunityOccupancy) => (
+              <span>
+                {r.occupied_units}
+                <span className="ml-1 text-xs text-muted-foreground">
+                  ({r.occupied_rooms}/{r.census_rooms} rooms)
+                </span>
+              </span>
+            ),
           },
           {
             key: "pct",
@@ -84,14 +110,19 @@ export function OccupancyReconciliationPanel() {
                 </span>
               ) : r.unit_count_discrepancy ? (
                 <span className="inline-flex items-center gap-1 text-xs text-warning">
-                  <AlertTriangle className="size-3.5" /> Configured {r.configured_units} ≠ census{" "}
-                  {r.census_units}
+                  <AlertTriangle className="size-3.5" /> Configured {r.configured_units} ≠ canonical{" "}
+                  {r.census_units} — review capacity basis
+                </span>
+              ) : r.census_rooms !== r.census_capacity ? (
+                <span className="text-xs text-muted-foreground">
+                  Reconciled · shared suites ({r.census_rooms} rooms / {r.census_capacity} points)
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">Reconciled</span>
               ),
           },
         ]}
+
       />
     </section>
   );

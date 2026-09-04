@@ -10,7 +10,9 @@ import { CommunityEditDialog } from "@/components/clarity/community-edit-dialog"
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
 import { COMMON_TIMEZONES, isValidTimezone, timezoneLabel } from "@/lib/timezones";
+import { CAPACITY_BASIS_LABELS, type CapacityBasis } from "@/lib/wh/occupancy";
 import { useAppState } from "@/state/app-state";
+
 
 export const Route = createFileRoute("/_authenticated/admin/communities")({
   head: () => ({
@@ -157,6 +159,16 @@ function Communities() {
             ),
           },
           { key: "units", header: "Units", align: "right", render: (r) => r.unit_count ?? "—" },
+          {
+            key: "basis",
+            header: "Capacity basis",
+            render: (r) =>
+              CAPACITY_BASIS_LABELS[
+                ((r as { occupancy_capacity_basis?: CapacityBasis }).occupancy_capacity_basis ??
+                  "rooms") as CapacityBasis
+              ],
+          },
+
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
           {
             key: "edit",

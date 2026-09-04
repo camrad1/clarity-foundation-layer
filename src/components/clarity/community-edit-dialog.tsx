@@ -28,7 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/lib/clarity-queries";
 import { useAppState } from "@/state/app-state";
 import { useFlashBudgets, useSaveFlashBudget } from "@/lib/flash/queries";
-import { effectiveBudget } from "@/lib/wh/occupancy";
+import { effectiveBudget, CAPACITY_BASIS_LABELS, type CapacityBasis } from "@/lib/wh/occupancy";
 
 type CommunityRow = {
   id: string;
@@ -39,7 +39,9 @@ type CommunityRow = {
   region_id: string | null;
   timezone: string;
   unit_count: number | null;
+  occupancy_capacity_basis?: CapacityBasis | null;
 };
+
 
 /**
  * Edits the ClarityIQ-owned community profile. Source identifiers and community
@@ -71,6 +73,8 @@ export function CommunityEditDialog({
     region_id: community.region_id ?? "none",
     timezone: community.timezone,
     unit_count: community.unit_count == null ? "" : String(community.unit_count),
+    occupancy_capacity_basis: (community.occupancy_capacity_basis ?? "rooms") as CapacityBasis,
+
     budget_units: "",
     budget_start: new Date().toISOString().slice(0, 10),
     budget_notes: "",
@@ -101,6 +105,8 @@ export function CommunityEditDialog({
           region_id: v.region_id === "none" ? null : v.region_id,
           timezone: v.timezone,
           unit_count: v.unit_count ? Number(v.unit_count) : null,
+          occupancy_capacity_basis: v.occupancy_capacity_basis,
+
         } as never)
         .eq("id", community.id);
       if (error) throw error;
@@ -187,6 +193,27 @@ export function CommunityEditDialog({
               onChange={(e) => set("unit_count", e.target.value)}
             />
           </Field>
+          <Field
+            label="Occupancy capacity basis"
+            help="Canonical denominator for this community's occupancy. Physical rooms counts apartments; occupancy points counts shared/companion suite capacity; configured capacity uses the operational unit count above. Applies everywhere — Flash, Occupancy and Sales Intelligence, snapshots and exports."
+          >
+            <Select
+              value={v.occupancy_capacity_basis}
+              onValueChange={(x) => set("occupancy_capacity_basis", x)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(CAPACITY_BASIS_LABELS) as CapacityBasis[]).map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {CAPACITY_BASIS_LABELS[k]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
 
           <div className="rounded-lg border border-border p-3">
             <p className="text-sm font-medium">Budgeted occupancy</p>
