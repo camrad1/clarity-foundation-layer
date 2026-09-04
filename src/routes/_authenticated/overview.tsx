@@ -185,7 +185,7 @@ function Overview() {
     ctx.communityIds,
     comparisonRange?.start ?? start,
     comparisonRange?.end ?? end,
-    !!comparisonRange && !!sales.data,
+    !!comparisonRange && sales.isFetched,
   );
   const trend = useOccupancyTrend(ctx.organizationId, ctx.communityIds, start, end, "daily");
   const snapshotHealth = useSnapshotHealth(ctx.organizationId, ctx.communityIds);
@@ -329,7 +329,8 @@ function Overview() {
 
       {/* 4 — Marketing & Sales Pulse -------------------------------------- */}
       <MarketingSalesPulse
-        loading={!sales.data}
+        loading={sales.isLoading}
+        failed={sales.isError}
         summary={sales.data ?? null}
         gsc={(gsc.data as GscTotals | null | undefined) ?? null}
         gscLoading={gsc.isLoading}
@@ -344,7 +345,7 @@ function Overview() {
         loading={occupancy.isLoading}
         month={month}
         week={week}
-        ready={!!sales.data && !priorSales.isFetching}
+        ready={sales.isFetched && !priorSales.isFetching}
         onOpen={(id) => {
           setCommunityScope({ mode: "communities", communityIds: [id] });
           void navigate({ to: "/occupancy" });
@@ -400,6 +401,7 @@ function occupancyChangePoints(points: { occupancy_pct: number | null }[]): numb
 
 function MarketingSalesPulse({
   loading,
+  failed,
   summary,
   gsc,
   gscLoading,
@@ -407,6 +409,8 @@ function MarketingSalesPulse({
   period,
 }: {
   loading: boolean;
+  /** The sales aggregate did not return; values render as "—" rather than 0. */
+  failed: boolean;
   summary: { inquiries: number; tours: number; reTours: number; deposits: number } | null;
   gsc: GscTotals | null;
   gscLoading: boolean;
@@ -422,6 +426,12 @@ function MarketingSalesPulse({
   return (
     <section className="space-y-3">
       <SectionHeading title="Marketing & sales pulse" hint={`Period events for ${rangeLabel}.`} />
+      {failed ? (
+        <p className="panel px-4 py-3 text-xs text-muted-foreground">
+          The sales aggregate did not return in time for this selection. Narrow the community or
+          date filter, or open Sales Intelligence directly. No values are estimated.
+        </p>
+      ) : null}
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
