@@ -31,6 +31,11 @@ import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/marketing/queries")({
+  // Drill-through from Insights arrives with the query pre-filtered.
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search["q"] === "string" ? search["q"] : "",
+    classification: typeof search["classification"] === "string" ? search["classification"] : "all",
+  }),
   head: () => ({
     meta: [
       { title: "Query Intelligence — ONELIFE Marketing Performance Hub" },
@@ -68,6 +73,7 @@ type Row = {
 type SortKey = "clicks" | "impressions" | "ctr" | "position_value";
 
 function QueryIntelligence() {
+  const initial = Route.useSearch();
   const { organizationId, dateRange, communityScope } = useAppState();
   const grains = useGrainImports(organizationId, "query");
   const period = { start: dateRange.start, end: dateRange.end };
@@ -84,8 +90,8 @@ function QueryIntelligence() {
     selection.comparison?.import_id ?? null,
   );
 
-  const [search, setSearch] = useState("");
-  const [classification, setClassification] = useState<string>("all");
+  const [search, setSearch] = useState(initial.q);
+  const [classification, setClassification] = useState<string>(initial.classification);
   const [sort, setSort] = useState<SortKey>("clicks");
 
   const all = (report.data ?? []) as Row[];

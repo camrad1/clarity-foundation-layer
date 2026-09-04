@@ -32,6 +32,11 @@ import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/marketing/pages")({
+  // Drill-through from Insights arrives with a page or the community view.
+  validateSearch: (search: Record<string, unknown>) => ({
+    url: typeof search["url"] === "string" ? search["url"] : "",
+    view: search["view"] === "communities" ? ("communities" as const) : ("pages" as const),
+  }),
   head: () => ({
     meta: [
       { title: "Page Intelligence — ONELIFE Marketing Performance Hub" },
@@ -72,6 +77,7 @@ type Row = {
 };
 
 function PageIntelligence() {
+  const initial = Route.useSearch();
   const { organizationId, dateRange, communityScope } = useAppState();
   const communities = useCommunities(organizationId);
   const grains = useGrainImports(organizationId, "page");
@@ -89,8 +95,8 @@ function PageIntelligence() {
     selection.comparison?.import_id ?? null,
   );
 
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState<"pages" | "communities">("pages");
+  const [search, setSearch] = useState(initial.url);
+  const [view, setView] = useState<"pages" | "communities">(initial.view);
   const [mapping, setMapping] = useState<"all" | "mapped" | "unmapped">("all");
 
   const scopedIds = useMemo(
