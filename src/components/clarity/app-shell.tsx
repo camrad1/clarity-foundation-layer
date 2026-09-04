@@ -99,6 +99,25 @@ export function AppShell({ children }: { children: ReactNode }) {
     .filter((o): o is NonNullable<typeof o> => !!o)
     .filter((o, i, arr) => arr.findIndex((x) => x.id === o.id) === i);
 
+  // Collapsible Admin nav: persisted across sessions, auto-expands on Admin pages.
+  const onAdminPage = pathname.startsWith("/admin");
+  const [adminCollapsed, setAdminCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(ADMIN_OPEN_KEY) === "0";
+  });
+  const adminOpen = !adminCollapsed || onAdminPage;
+  const toggleAdmin = () => {
+    setAdminCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(ADMIN_OPEN_KEY, next ? "0" : "1");
+      } catch {
+        /* storage unavailable */
+      }
+      return next;
+    });
+  };
+
   const activeOrg = orgs.find((o) => o.id === organizationId) ?? orgs[0] ?? null;
 
   useEffect(() => {
