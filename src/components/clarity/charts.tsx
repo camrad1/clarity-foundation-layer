@@ -324,7 +324,7 @@ export function MetricTrendChart({
                 position="top"
                 offset={8}
                 style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
-                formatter={(v: any) => (v == null ? "" : fmtCount(Number(v)))}
+                formatter={label}
               />
             ) : showLabels && !dimmed ? (
               <LabelList
@@ -332,7 +332,7 @@ export function MetricTrendChart({
                 position="top"
                 offset={8}
                 style={{ ...LABEL_STYLE, fill: s.color }}
-                formatter={(v: any) => (v == null ? "" : fmtCount(Number(v)))}
+                formatter={label}
                 content={(props: any) => {
                   if (props.index !== lastIndex) return null;
                   const v = props.value;
@@ -347,7 +347,7 @@ export function MetricTrendChart({
                       paintOrder="stroke"
                       style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
                     >
-                      {fmtCount(Number(v))}
+                      {label(v)}
                     </text>
                   );
                 }}
