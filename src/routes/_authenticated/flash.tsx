@@ -282,7 +282,7 @@ function FlashReportPage() {
       data?.starting?.asOfDate ?? "",
       ...(so
         ? [
-            so.totalUnits,
+            so.censusUnits,
             so.occupiedUnits,
             sb ?? "—",
             sVar ?? "—",
@@ -297,7 +297,7 @@ function FlashReportPage() {
       ...Array(15).fill(""),
     ];
     const rowsOut = [...(data?.weeks ?? []), ...(data ? [data.month] : [])].map((w) =>
-      gridRow(w, occ?.totalUnits ?? null, careTypes),
+      gridRow(w, occ?.censusUnits ?? null, careTypes),
     );
     // Trackers are exported with the same server-resolved labels shown on screen.
     const trackerRows: (string | number | null | undefined)[][] = [
@@ -1125,7 +1125,7 @@ function projectedEomNet(p: FlashPeriod | null | undefined): number | null {
   return (mi ?? 0) - (mo ?? 0);
 }
 
-function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[]) {
+function gridRow(w: FlashPeriod, censusUnits: number | null, careTypes: string[]) {
   const o = w.occupancy ?? null;
   const b = w.budget?.units ?? null;
   const occupied = o?.occupiedUnits ?? null;
@@ -1133,7 +1133,7 @@ function gridRow(w: FlashPeriod, totalUnits: number | null, careTypes: string[])
   return [
     w.label,
     `${w.start} → ${w.end}`,
-    o ? o.totalUnits : (totalUnits ?? ""),
+    o ? o.censusUnits : (censusUnits ?? ""),
     occupied ?? "—",
     b ?? "",
     variance ?? "",
@@ -1230,10 +1230,10 @@ function WeekByWeekGrid({
               backfilled here. */}
           <StartingRow careTypes={careTypes} totalCols={totalCols} starting={data?.starting ?? null} />
           {(data?.weeks ?? []).map((w, i) => (
-            <GridRow key={w.start} w={w} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} index={i} />
+            <GridRow key={w.start} w={w} censusUnits={occ?.censusUnits ?? null} careTypes={careTypes} index={i} />
           ))}
           {data ? (
-            <GridRow w={data.month} totalUnits={occ?.totalUnits ?? null} careTypes={careTypes} emphasis />
+            <GridRow w={data.month} censusUnits={occ?.censusUnits ?? null} careTypes={careTypes} emphasis />
           ) : null}
           {!data && !loading ? (
             <tr>
@@ -1270,7 +1270,7 @@ function StartingRow({
   const variance = occupied != null && b != null ? occupied - b : null;
   const cells: (string | number)[] = o
     ? [
-        o.totalUnits,
+        o.censusUnits,
         occupied ?? "—",
         b ?? "—",
         variance == null ? "—" : variance > 0 ? `+${variance}` : variance,
@@ -1317,13 +1317,13 @@ function StartingRow({
 
 function GridRow({
   w,
-  totalUnits,
+  censusUnits,
   careTypes,
   emphasis,
   index = 0,
 }: {
   w: FlashPeriod;
-  totalUnits: number | null;
+  censusUnits: number | null;
   careTypes: string[];
   emphasis?: boolean;
   index?: number;
@@ -1359,7 +1359,7 @@ function GridRow({
           {formatDay(w.start)} – {formatDay(w.end)}
         </span>
       </td>
-      <td className={cn(cell, GROUP_BORDER)}>{o ? o.totalUnits : (totalUnits ?? "—")}</td>
+      <td className={cn(cell, GROUP_BORDER)}>{o ? o.censusUnits : (censusUnits ?? "—")}</td>
       <td className={cell}>{occupied ?? na}</td>
       <td className={cell}>{b ?? "—"}</td>
       <td className={cn(cell, variance != null && (variance >= 0 ? "text-success" : "text-destructive"))}>
