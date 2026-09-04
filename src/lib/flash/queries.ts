@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -113,10 +113,11 @@ export function useFlashReport(
   start: string,
   end: string,
   month: string,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: ["wh_flash_report", organizationId, communityIds.join(","), start, end, month],
-    enabled: !!organizationId,
+    enabled: !!organizationId && enabled,
     queryFn: async (): Promise<FlashReport> => {
       const { data, error } = await db.rpc("wh_flash_report", {
         _org_id: organizationId,
@@ -543,5 +544,46 @@ export function useSaveFlashNote(organizationId: string | null) {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["flash_notes"] }),
+  });
+}
+
+/**
+ * Per-community Flash reports.
+ *
+ * Same canonical `wh_flash_report` aggregate as the Flash Report page, called
+ * once per community so a community-level projected month-end occupancy is
+ * read from the validated projection rather than re-derived in the browser.
+ * Callers keep the list short (Overview requests only the watchlist rows).
+ */
+export function useFlashReportsByCommunity(
+  organizationId: string | null,
+  communityIds: string[],
+  start: string,
+  end: string,
+  month: string,
+  enabled = true,
+) {
+  return useQueries({
+    queries: communityIds.map((id) => ({
+      queryKey: ["wh_flash_report", organizationId, id, start, end, month],
+      enabled: !!organizationId && enabled,
+      queryFn: async (): Promise<FlashReport> => {
+        const { data, error } = await db.rpc("wh_flash_report", {
+          _org_id: organizationId,
+          _start: start,
+          _end: end,
+          _month: month,
+          _community_ids: [id],
+        });
+        if (error) throw error;
+        return data as FlashReport;
+      },
+    })),
+    combine: (results) => ({
+      byCommunity: Object.fromEntries(
+        communityIds.map((id, i) => [id, (results[i]?.data as FlashReport | undefined) ?? null]),
+      ) as Record<string, FlashReport | null>,
+      isLoading: results.some((r) => r.isLoading),
+    }),
   });
 }

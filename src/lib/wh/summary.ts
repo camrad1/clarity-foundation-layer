@@ -111,10 +111,11 @@ export function useWhSalesSummary(
   communityIds: string[],
   start: string,
   end: string,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: ["wh_sales_summary", organizationId, communityIds.join(","), start, end],
-    enabled: !!organizationId,
+    enabled: !!organizationId && enabled,
     queryFn: async (): Promise<WhSalesSummary> => {
       const { data, error } = await (supabase as any).rpc("wh_sales_summary", {
         _org_id: organizationId,
