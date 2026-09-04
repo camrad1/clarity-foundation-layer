@@ -250,12 +250,17 @@ function PageIntelligence() {
 
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Pages in export" value={fmtInt(all.length)} />
+            <MetricCard
+              label="Mapped pages"
+              value={`${fmtInt(mappedPages)} / ${fmtInt(all.length)}`}
+              footnote={`${fmtInt(unmapped.length)} page(s) match no URL rule`}
+            />
             <MetricCard
               label="Mapped click coverage"
               value={fmtPercent(mappedCoverage, 1)}
-              footnote={`${fmtInt(unmapped.length)} unmapped page(s)`}
+              footnote={`${fmtInt(totalClicks - unmappedClicks)} of ${fmtInt(totalClicks)} clicks`}
             />
+
             <MetricCard label="Clicks in scope" value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))} />
             <MetricCard
               label="Impressions in scope"
