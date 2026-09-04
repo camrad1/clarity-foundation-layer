@@ -249,6 +249,18 @@ function Overview() {
         description="Marketing, CRM, sales and occupancy in one place — so you can see where the portfolio stands right now, what changed, and where leadership should pay attention."
       />
 
+      <DataThrough
+        organizationId={ctx.organizationId}
+        welcomeHomeDate={
+          ctx.connection?.data_through_date ??
+          (ctx.connection?.last_successful_sync_at
+            ? ctx.connection.last_successful_sync_at.slice(0, 10)
+            : null)
+        }
+        snapshotDate={latestSnapshotDate(snapshotHealth.data ?? [])}
+      />
+
+
       <section className="space-y-3">
         <SectionHeading title="The performance journey" />
         <div className="panel overflow-x-auto p-6">
