@@ -201,6 +201,10 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
     ["ending_occupied"],
   );
 
+  // Hovering a series chip labels every point on that line (presentation only).
+  const [pctHover, setPctHover] = useState<string | null>(null);
+  const [unitHover, setUnitHover] = useState<string | null>(null);
+
   const hasHistory = rows.some((r) => r.ending_pct != null || r.beginning_pct != null);
   const columns = rows.map((r) => monthLabel(r.month));
 
@@ -248,7 +252,7 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
         loading={q.isLoading}
         empty={!hasHistory ? "No stored occupancy history for the selected period." : undefined}
         actions={
-          <SeriesToggleChips series={pctSeries} visible={pctVis.visible} onToggle={pctVis.toggle} />
+          <SeriesToggleChips series={pctSeries} visible={pctVis.visible} onToggle={pctVis.toggle} onHover={setPctHover} />
         }
       >
         <MetricTrendChart
@@ -257,6 +261,7 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
           yDomain={pctAxis.domain}
           yTicks={pctAxis.ticks}
+          focusedKey={pctHover && pctVis.visible.includes(pctHover) ? pctHover : null}
         />
       </ChartCard>
 
@@ -267,7 +272,7 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
         empty={!hasHistory ? "No stored occupied unit counts for the selected period." : undefined}
         height={240}
         actions={
-          <SeriesToggleChips series={unitSeries} visible={unitVis.visible} onToggle={unitVis.toggle} />
+          <SeriesToggleChips series={unitSeries} visible={unitVis.visible} onToggle={unitVis.toggle} onHover={setUnitHover} />
         }
       >
         <MetricTrendChart
@@ -275,6 +280,7 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           series={unitSeries.filter((s) => unitVis.visible.includes(s.key))}
           yDomain={unitAxis.domain}
           yTicks={unitAxis.ticks}
+          focusedKey={unitHover && unitVis.visible.includes(unitHover) ? unitHover : null}
         />
 
       </ChartCard>
