@@ -323,11 +323,26 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
   );
 }
 
+/** Exact stored values for the hovered day or week. */
+function OccupancyDetailTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
+      <p className="mb-1 font-medium text-foreground">{p.label}</p>
+      <TipRow label="Occupancy" value={tipPct(p.occupancy_pct)} />
+      <TipRow label="Occupied units" value={tipNum(p.occupied)} />
+    </div>
+  );
+}
+
 /**
  * Daily / weekly occupancy detail, read from stored history only and bounded by
  * the global date filter. Nightly snapshots take precedence; the official
  * imported day-over-day history fills dates before snapshots began. Gaps stay gaps.
  */
+
 function OccupancyDailyDetail({ organizationId, communityIds, start, end }: RangeTabProps) {
   const [grain, setGrain] = useState<"daily" | "weekly">("weekly");
   // Percentages and unit counts are incompatible units, so they never share one axis.
