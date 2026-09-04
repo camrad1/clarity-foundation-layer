@@ -53,24 +53,40 @@ function SegmentTable({
 }) {
   const { organizationId, dateRange } = useAppState();
   const grains = useGrainImports(organizationId, grain);
+  const period = { start: dateRange.start, end: dateRange.end };
+  // null = follow the global date filter; set = the user opened an older export.
+  const [reportImportId, setReportImportId] = useState<string | null>(null);
   const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], { start: dateRange.start, end: dateRange.end }),
-    [grains.data, dateRange.start, dateRange.end],
+    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
+    [grains.data, period.start, period.end, reportImportId],
   );
   const rows = useSimpleGrain(table, dimension, selection.current?.import_id ?? null);
   const data = (rows.data ?? []) as (Metrics & Record<string, unknown>)[];
 
+  const notice = (
+    <GscExportNotice
+      selection={selection}
+      grainLabel={label}
+      period={period}
+      value={reportImportId}
+      onChange={setReportImportId}
+    />
+  );
+
   return (
     <section className="space-y-3">
       <h2 className="text-base font-semibold text-foreground">{label}</h2>
-      {!selection.current ? (
+      {!selection.options.length ? (
         <p className="panel px-4 py-6 text-sm text-muted-foreground">
           No {label} report has been imported. This grain stays empty until an export containing it
           is uploaded.
         </p>
+      ) : !selection.current ? (
+        notice
       ) : (
         <>
-          <GscExportNotice selection={selection} grainLabel={label} />
+          {notice}
+
           <div className="panel overflow-hidden">
             <Table>
               <TableHeader>
