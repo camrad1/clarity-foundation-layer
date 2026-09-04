@@ -105,6 +105,8 @@ export function CommunityEditDialog({
           region_id: v.region_id === "none" ? null : v.region_id,
           timezone: v.timezone,
           unit_count: v.unit_count ? Number(v.unit_count) : null,
+          occupancy_capacity_basis: v.occupancy_capacity_basis,
+
         } as never)
         .eq("id", community.id);
       if (error) throw error;
