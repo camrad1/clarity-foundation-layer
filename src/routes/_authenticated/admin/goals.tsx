@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { formatDateOnly } from "@/lib/date-ranges";
 import { Goal } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
@@ -113,8 +114,8 @@ function Goals() {
             key: "period",
             header: "Effective",
             render: (r) =>
-              `${format(new Date(r.effective_start), "MMM d, yyyy")} – ${
-                r.effective_end ? format(new Date(r.effective_end), "MMM d, yyyy") : "ongoing"
+              `${formatDateOnly(r.effective_start)} – ${
+                r.effective_end ? formatDateOnly(r.effective_end) : "ongoing"
               }`,
           },
         ]}
