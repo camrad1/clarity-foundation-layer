@@ -862,41 +862,77 @@ function Opportunities({
   organizationId,
   period,
   communities,
+  communityIds,
+  communityFiltered,
   occupancyChangePoints: occChange,
   snapshotIssues,
 }: {
   organizationId: string | null;
   period: { start: string; end: string };
   communities: CommunityEntry[];
+  communityIds: string[];
+  communityFiltered: boolean;
   occupancyChangePoints: number | null;
   snapshotIssues: { community_name: string }[];
 }) {
-  // SEO opportunity uses the Pages export only when its exported period equals
-  // the selected range — aggregate exports are never prorated.
-  const grains = useGrainImports(organizationId, "page");
-  const selection = selectImportForPeriod(grains.data ?? [], period);
-  const pages = usePageReport(
-    organizationId,
-    selection.coverage === "exact" ? (selection.current?.import_id ?? null) : null,
-    null,
+  // The SEO signal is not recalculated here: it is the same ranked insight the
+  // Marketing Intelligence → Insights engine produces, from the same exports
+  // and the same priority rules. Aggregate exports are only used when their
+  // exported period equals the selected range.
+  const pageGrains = useGrainImports(organizationId, "page");
+  const queryGrains = useGrainImports(organizationId, "query");
+  const pageSelection = selectImportForPeriod(pageGrains.data ?? [], period);
+  const querySelection = selectImportForPeriod(queryGrains.data ?? [], period);
+
+  const periodOf = (g: { period_start: string | null; period_end: string | null } | null) =>
+    g?.period_start && g.period_end ? { start: g.period_start, end: g.period_end } : null;
+
+  const pageImportId = pageSelection.coverage === "exact" ? (pageSelection.current?.import_id ?? null) : null;
+  const queryImportId =
+    querySelection.coverage === "exact" ? (querySelection.current?.import_id ?? null) : null;
+
+  const pageComparable = isComparablePeriod(
+    periodOf(pageSelection.current),
+    periodOf(pageSelection.comparison),
+  );
+  const queryComparable = isComparablePeriod(
+    periodOf(querySelection.current),
+    periodOf(querySelection.comparison),
   );
 
-  const pageRows = (pages.data ?? []) as {
-    page_url: string;
-    clicks: number;
-    impressions: number;
-    ctr: number | null;
-  }[];
-  const totalClicks = pageRows.reduce((s, r) => s + r.clicks, 0);
-  const totalImpr = pageRows.reduce((s, r) => s + r.impressions, 0);
-  const siteCtr = totalImpr ? totalClicks / totalImpr : null;
-  const seoOpportunities =
-    siteCtr == null
-      ? []
-      : pageRows
-          .filter((r) => r.impressions >= 100 && (r.ctr ?? 0) < siteCtr / 2)
-          .sort((a, b) => b.impressions - a.impressions)
-          .slice(0, 3);
+  const pages = usePageReport(
+    organizationId,
+    pageImportId,
+    pageComparable ? (pageSelection.comparison?.import_id ?? null) : null,
+  );
+  const queries = useQueryReport(
+    organizationId,
+    communityFiltered ? null : queryImportId,
+    queryComparable ? (querySelection.comparison?.import_id ?? null) : null,
+  );
+
+  const allPages = (pages.data ?? []) as PageRow[];
+  const allQueries = (queries.data ?? []) as QueryRow[];
+
+  // With a community filter active only mapped pages qualify; query exports
+  // carry no URL and can never be attributed to a community.
+  const scopedPages = useMemo(() => {
+    if (!communityFiltered) return allPages;
+    const ids = new Set(communityIds);
+    return allPages.filter((r) => r.mapped_community_id && ids.has(r.mapped_community_id));
+  }, [allPages, communityFiltered, communityIds]);
+
+  const topSeoInsight = useMemo(
+    () =>
+      sortByPriority([
+        ...ctrOpportunities(communityFiltered ? [] : allQueries, scopedPages, 4),
+        ...(communityFiltered ? [] : nearPageOne(allQueries, 3)),
+        ...pageOpportunities(scopedPages, 3),
+      ])[0] ?? null,
+    [allQueries, scopedPages, communityFiltered],
+  );
+
+
 
   const belowBudget = communities
     .filter((c) => c.budget.variancePoints != null && c.budget.variancePoints < -2)
