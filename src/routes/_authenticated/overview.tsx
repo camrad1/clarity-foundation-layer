@@ -938,7 +938,16 @@ function Opportunities({
     .filter((c) => c.budget.variancePoints != null && c.budget.variancePoints < -2)
     .sort((a, b) => a.budget.variancePoints! - b.budget.variancePoints!);
 
-  const items: { tone: "attention" | "positive" | "neutral"; title: string; body: string }[] = [];
+  type Item = {
+    tone: "attention" | "positive" | "neutral";
+    title: string;
+    body: string;
+    label?: string;
+    priority?: string;
+    evidence?: string;
+    link?: { label: string; to: string; search?: Record<string, string> };
+  };
+  const items: Item[] = [];
 
   if (belowBudget.length) {
     items.push({
@@ -957,11 +966,21 @@ function Opportunities({
       body: "Measured from the first to the last stored daily snapshot in the range.",
     });
   }
-  for (const p of seoOpportunities) {
+  if (topSeoInsight) {
     items.push({
       tone: "neutral",
-      title: "High impressions, low click-through",
-      body: `${p.page_url} — ${num(p.impressions)} impressions at ${p.ctr == null ? na : `${(p.ctr * 100).toFixed(1)}%`} CTR (site ${((siteCtr ?? 0) * 100).toFixed(1)}%).`,
+      title: "SEO opportunity",
+      label: topSeoInsight.subject,
+      body: topSeoInsight.signal,
+      priority: PRIORITY_LABELS[topSeoInsight.priority],
+      evidence: topSeoInsight.evidence.map((e) => `${e.label}: ${e.value}`).join(" · "),
+      link: topSeoInsight.link
+        ? {
+            label: topSeoInsight.link.label,
+            to: topSeoInsight.link.to,
+            ...(topSeoInsight.link.search ? { search: topSeoInsight.link.search } : {}),
+          }
+        : { label: "Search Insights", to: "/marketing/insights" },
     });
   }
   if (snapshotIssues.length) {
@@ -1002,14 +1021,37 @@ function Opportunities({
                   i.tone === "neutral" && "bg-brand",
                 )}
               />
-              <div>
-                <p className="text-sm font-medium text-foreground">{i.title}</p>
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">{i.title}</p>
+                  {i.priority ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      {i.priority} priority
+                    </Badge>
+                  ) : null}
+                </div>
+                {i.label ? (
+                  <p className="break-all text-xs font-medium text-foreground/90">{i.label}</p>
+                ) : null}
                 <p className="text-xs leading-snug text-muted-foreground">{i.body}</p>
+                {i.evidence ? (
+                  <p className="text-[11px] leading-snug text-muted-foreground/80">{i.evidence}</p>
+                ) : null}
+                {i.link ? (
+                  <Link
+                    to={i.link.to}
+                    search={i.link.search ?? {}}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
+                  >
+                    {i.link.label} <ArrowUpRight className="size-3" />
+                  </Link>
+                ) : null}
               </div>
             </li>
           ))}
         </ul>
       )}
+
     </section>
   );
 }
