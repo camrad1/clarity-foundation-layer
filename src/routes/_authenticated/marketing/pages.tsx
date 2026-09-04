@@ -158,6 +158,15 @@ function PageIntelligence() {
   const unmappedClicks = unmapped.reduce((s, r) => s + r.clicks, 0);
   const totalClicks = all.reduce((s, r) => s + r.clicks, 0);
   const mappedCoverage = totalClicks ? 1 - unmappedClicks / totalClicks : null;
+  const mappedPages = all.length - unmapped.length;
+  const scopedCommunityNames = (communities.data ?? [])
+    .filter((c) => scopedIds.has(c.id))
+    .map((c) => c.name);
+  const scopeLabel =
+    scopedCommunityNames.length === 1
+      ? scopedCommunityNames[0]
+      : `the ${scopedCommunityNames.length} selected communities`;
+
 
   return (
     <div className="space-y-6">
