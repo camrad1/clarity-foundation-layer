@@ -53,13 +53,13 @@ function formatNet(n: number): string {
 export const Route = createFileRoute("/_authenticated/forecast")({
   head: () => ({
     meta: [
-      { title: "Forecast Tracker — ClarityIQ" },
+      { title: "Forecast Tracker — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Weekly community move-in and move-out projections preserved as point-in-time records and compared with validated month-end results.",
       },
-      { property: "og:title", content: "Forecast Tracker — ClarityIQ" },
+      { property: "og:title", content: "Forecast Tracker — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Weekly community projections compared with final month-end results.",

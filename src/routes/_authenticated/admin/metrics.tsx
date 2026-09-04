@@ -10,13 +10,13 @@ import { useMetricDefinitions } from "@/lib/clarity-queries";
 export const Route = createFileRoute("/_authenticated/admin/metrics")({
   head: () => ({
     meta: [
-      { title: "Metric Registry — ClarityIQ Admin" },
+      { title: "Metric Registry — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Every ClarityIQ metric is versioned, dated and defined against a source table before it can be displayed.",
       },
-      { property: "og:title", content: "Metric Registry — ClarityIQ Admin" },
+      { property: "og:title", content: "Metric Registry — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Versioned, auditable metric definitions powering ClarityIQ calculations.",

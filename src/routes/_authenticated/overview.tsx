@@ -5,13 +5,13 @@ import { PageHeader } from "@/components/clarity/page-header";
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
     meta: [
-      { title: "Overview — ClarityIQ" },
+      { title: "Overview — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "ClarityIQ brings your performance data together so you can see what is driving results.",
       },
-      { property: "og:title", content: "Overview — ClarityIQ" },
+      { property: "og:title", content: "Overview — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "The connected performance journey from visibility through occupancy.",
@@ -36,9 +36,9 @@ function Overview() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="ClarityIQ"
+        eyebrow="ONELIFE Marketing Performance Hub"
         title="Performance intelligence, end to end"
-        description="ClarityIQ brings your marketing, CRM, sales and occupancy data together so you can see what is actually driving results — without manually connecting the dots."
+        description="ONELIFE Marketing Performance Hub brings your marketing, CRM, sales and occupancy data together so you can see what is actually driving results — without manually connecting the dots."
       />
 
       <section className="space-y-4">
@@ -85,7 +85,7 @@ function Overview() {
       <p className="text-sm text-muted-foreground">
         Dashboards are not yet enabled. Phase 0 establishes the tenancy model, canonical
         communities, source connections, metric registry and validation tooling that every future
-        ClarityIQ dashboard will be built on.
+        ONELIFE dashboard will be built on.
       </p>
     </div>
   );

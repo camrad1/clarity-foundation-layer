@@ -23,13 +23,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/marketing/")({
   head: () => ({
     meta: [
-      { title: "Search Overview — ClarityIQ" },
+      { title: "Search Overview — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Daily organic clicks, impressions, click-through rate and average position from Search Console imports.",
       },
-      { property: "og:title", content: "Search Overview — ClarityIQ" },
+      { property: "og:title", content: "Search Overview — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Trustworthy daily search totals with honest period comparisons.",

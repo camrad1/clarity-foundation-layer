@@ -14,12 +14,12 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/data-sources")({
   head: () => ({
     meta: [
-      { title: "Data Sources — ClarityIQ Admin" },
+      { title: "Data Sources — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content: "Register and monitor the marketing, CRM and occupancy connections feeding ClarityIQ.",
       },
-      { property: "og:title", content: "Data Sources — ClarityIQ Admin" },
+      { property: "og:title", content: "Data Sources — ONELIFE Marketing Performance Hub Admin" },
       { property: "og:description", content: "Connection registry and freshness for every ClarityIQ source." },
     ],
   }),

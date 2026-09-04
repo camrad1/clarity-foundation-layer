@@ -4,13 +4,13 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "ClarityIQ — Senior Living Performance Intelligence" },
+      { title: "ONELIFE Marketing Performance Hub — Senior Living Performance Intelligence" },
       {
         name: "description",
         content:
           "ClarityIQ connects marketing, CRM, sales and occupancy data so operators can see what is actually driving performance.",
       },
-      { property: "og:title", content: "ClarityIQ — Performance Intelligence" },
+      { property: "og:title", content: "ONELIFE Marketing Performance Hub — Performance Intelligence" },
       {
         property: "og:description",
         content:

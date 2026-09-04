@@ -36,13 +36,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/gsc-imports")({
   head: () => ({
     meta: [
-      { title: "Search Console Imports — ClarityIQ Admin" },
+      { title: "Search Console Imports — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Upload, review and audit Google Search Console exports powering ClarityIQ Search Intelligence.",
       },
-      { property: "og:title", content: "Search Console Imports — ClarityIQ Admin" },
+      { property: "og:title", content: "Search Console Imports — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Duplicate-safe Search Console file imports with a complete audit trail.",

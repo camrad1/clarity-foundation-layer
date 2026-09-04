@@ -13,12 +13,12 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/goals")({
   head: () => ({
     meta: [
-      { title: "Goals — ClarityIQ Admin" },
+      { title: "Goals — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content: "Effective-dated performance targets per metric and community, used for variance reporting.",
       },
-      { property: "og:title", content: "Goals — ClarityIQ Admin" },
+      { property: "og:title", content: "Goals — ONELIFE Marketing Performance Hub Admin" },
       { property: "og:description", content: "Set ClarityIQ metric targets by community and period." },
     ],
   }),

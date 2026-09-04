@@ -15,12 +15,12 @@ import {
 export const Route = createFileRoute("/_authenticated/occupancy")({
   head: () => ({
     meta: [
-      { title: "Occupancy Intelligence — ClarityIQ" },
+      { title: "Occupancy Intelligence — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content: "Current occupancy, vacancy, notices and budget variance by community and care type.",
       },
-      { property: "og:title", content: "Occupancy Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Occupancy Intelligence — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Current-state occupancy versus budget for every community.",

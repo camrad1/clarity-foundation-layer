@@ -17,12 +17,12 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/communities")({
   head: () => ({
     meta: [
-      { title: "Communities — ClarityIQ Admin" },
+      { title: "Communities — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content: "Canonical community records that every external data source resolves to.",
       },
-      { property: "og:title", content: "Communities — ClarityIQ Admin" },
+      { property: "og:title", content: "Communities — ONELIFE Marketing Performance Hub Admin" },
       { property: "og:description", content: "Manage canonical ClarityIQ communities and regions." },
     ],
   }),

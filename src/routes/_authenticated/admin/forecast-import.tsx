@@ -22,13 +22,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/forecast-import")({
   head: () => ({
     meta: [
-      { title: "Forecast Import — ClarityIQ Admin" },
+      { title: "Forecast Import — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Import historical weekly move-in and move-out forecast workbooks into the ClarityIQ Forecast Tracker.",
       },
-      { property: "og:title", content: "Forecast Import — ClarityIQ Admin" },
+      { property: "og:title", content: "Forecast Import — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Audited, idempotent import of historical weekly forecast snapshots.",

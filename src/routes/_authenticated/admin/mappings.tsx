@@ -12,13 +12,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/mappings")({
   head: () => ({
     meta: [
-      { title: "Community Mappings — ClarityIQ Admin" },
+      { title: "Community Mappings — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Map external system identifiers to canonical ClarityIQ communities so every source resolves consistently.",
       },
-      { property: "og:title", content: "Community Mappings — ClarityIQ Admin" },
+      { property: "og:title", content: "Community Mappings — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Resolve WelcomeHome, Further and Search Console identifiers to one community ID.",

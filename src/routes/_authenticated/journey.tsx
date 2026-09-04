@@ -4,13 +4,13 @@ import { SectionPlaceholder } from "@/components/clarity/section-placeholder";
 export const Route = createFileRoute("/_authenticated/journey")({
   head: () => ({
     meta: [
-      { title: "Performance Journey — ClarityIQ" },
+      { title: "Performance Journey — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "The end-to-end journey from search visibility through occupancy, in one connected view.",
       },
-      { property: "og:title", content: "Performance Journey — ClarityIQ" },
+      { property: "og:title", content: "Performance Journey — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Visibility to occupancy, connected stage by stage.",

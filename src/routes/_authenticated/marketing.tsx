@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/marketing")({
   head: () => ({
     meta: [
-      { title: "Search Intelligence — ClarityIQ" },
+      { title: "Search Intelligence — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Google Search Console visibility, query intent and page performance for your communities.",
       },
-      { property: "og:title", content: "Search Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Search Intelligence — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Organic visibility, query intelligence and page performance across your portfolio.",

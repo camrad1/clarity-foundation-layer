@@ -54,13 +54,13 @@ import { useOccupancyTrend } from "@/lib/wh/snapshots";
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
     meta: [
-      { title: "Sales Intelligence — ClarityIQ" },
+      { title: "Sales Intelligence — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Inquiry, tour, deposit and move-in performance calculated deterministically from WelcomeHome CRM records.",
       },
-      { property: "og:title", content: "Sales Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Sales Intelligence — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Funnel, trends, pipeline health, counselor activity and occupancy from CRM data.",
