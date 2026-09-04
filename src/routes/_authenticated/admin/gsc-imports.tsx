@@ -126,8 +126,18 @@ function GscImports() {
       });
       if (outcome.status === "duplicate") {
         toast.warning(`Already imported as "${outcome.fileName}". Nothing was written.`);
+      } else if (outcome.status === "supplemented") {
+        toast.success(
+          `Added missing ${Object.entries(outcome.rowCounts)
+            .map(([g, n]) => `${fmtInt(n)} ${GRAIN_LABELS[g as keyof typeof GRAIN_LABELS]}`)
+            .join(", ")} rows to the existing import "${outcome.fileName}". Reports already stored were left untouched.`,
+        );
+        setParsed(null);
+        if (fileRef.current) fileRef.current.value = "";
+        await qc.invalidateQueries();
       } else if (outcome.status === "failed") {
         toast.error(outcome.message);
+
       } else {
         toast.success(
           `Imported ${Object.entries(outcome.rowCounts)
