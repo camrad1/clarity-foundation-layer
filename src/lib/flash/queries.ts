@@ -113,10 +113,11 @@ export function useFlashReport(
   start: string,
   end: string,
   month: string,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: ["wh_flash_report", organizationId, communityIds.join(","), start, end, month],
-    enabled: !!organizationId,
+    enabled: !!organizationId && enabled,
     queryFn: async (): Promise<FlashReport> => {
       const { data, error } = await db.rpc("wh_flash_report", {
         _org_id: organizationId,

@@ -168,13 +168,24 @@ function Overview() {
   // Canonical sources — identical to Occupancy Intelligence, Flash Report,
   // Sales Intelligence and Marketing Intelligence. No KPI is redefined here.
   const { occupancy, budgetRows } = useOccupancyWithBudget(ctx.organizationId, ctx.communityIds);
-  const flash = useFlashReport(ctx.organizationId, ctx.communityIds, week.start, week.end, month);
-  const sales = useWhSalesSummary(ctx.organizationId, ctx.communityIds, start, end);
+  // These portfolio aggregates are individually heavy, and running them
+  // concurrently pushes the database past its statement timeout. They are
+  // therefore chained: each one starts when the previous has landed.
+  const flash = useFlashReport(
+    ctx.organizationId,
+    ctx.communityIds,
+    week.start,
+    week.end,
+    month,
+    !!occupancy.data,
+  );
+  const sales = useWhSalesSummary(ctx.organizationId, ctx.communityIds, start, end, !!flash.data);
   const priorSales = useWhSalesSummary(
     ctx.organizationId,
     ctx.communityIds,
     comparisonRange?.start ?? start,
     comparisonRange?.end ?? end,
+    !!comparisonRange && !!sales.data,
   );
   const trend = useOccupancyTrend(ctx.organizationId, ctx.communityIds, start, end, "daily");
   const snapshotHealth = useSnapshotHealth(ctx.organizationId, ctx.communityIds);
@@ -238,7 +249,7 @@ function Overview() {
           title="Portfolio snapshot"
           hint={`Occupancy and move activity are current state as of ${occupancy.data?.asOf ?? "today"} — not affected by the selected date range.`}
         />
-        {occupancy.isLoading || flash.isLoading ? (
+        {occupancy.isLoading || !flash.data ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="kpi-card h-32 animate-pulse" />
@@ -318,7 +329,7 @@ function Overview() {
 
       {/* 4 — Marketing & Sales Pulse -------------------------------------- */}
       <MarketingSalesPulse
-        loading={sales.isLoading}
+        loading={!sales.data}
         summary={sales.data ?? null}
         gsc={(gsc.data as GscTotals | null | undefined) ?? null}
         gscLoading={gsc.isLoading}
@@ -333,7 +344,7 @@ function Overview() {
         loading={occupancy.isLoading}
         month={month}
         week={week}
-        ready={!occupancy.isFetching && !flash.isFetching && !sales.isFetching}
+        ready={!!sales.data && !priorSales.isFetching}
         onOpen={(id) => {
           setCommunityScope({ mode: "communities", communityIds: [id] });
           void navigate({ to: "/occupancy" });
