@@ -369,7 +369,8 @@ function OccupancyHistory({
 
   const points = (trend.data ?? []).map((p) => {
     const pct = p.occupancy_pct == null ? null : Number(p.occupancy_pct) * 100;
-    const budgetPct = p.budget_pct == null ? null : Number(p.budget_pct) * 100;
+    // wh_occupancy_trend returns occupancy_pct as a fraction and budget_pct already on a 0-100 scale.
+    const budgetPct = p.budget_pct == null ? null : Number(p.budget_pct);
     return {
       label: grain === "monthly" ? p.snapshot_date.slice(0, 7) : p.snapshot_date.slice(5),
       full: p.snapshot_date,
