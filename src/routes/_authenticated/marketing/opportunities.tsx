@@ -74,14 +74,18 @@ function Opportunities() {
   const queryGrains = useGrainImports(organizationId, "query");
   const pageGrains = useGrainImports(organizationId, "page");
 
+  // null = follow the global date filter; set = the user opened an older export.
+  const [reportImportId, setReportImportId] = useState<string | null>(null);
   const selection = useMemo(
     () =>
       selectImportForPeriod(
         (dataset === "query" ? queryGrains.data : pageGrains.data) ?? [],
         period,
+        reportImportId,
       ),
-    [dataset, queryGrains.data, pageGrains.data, period.start, period.end],
+    [dataset, queryGrains.data, pageGrains.data, period.start, period.end, reportImportId],
   );
+
 
   const queryReport = useQueryReport(
     organizationId,
