@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Clock } from "lucide-react";
 import { PageHeader } from "@/components/clarity/page-header";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { DataTable, type Column } from "@/components/clarity/data-table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { useWhContext } from "@/lib/wh/use-wh";
 import {
   effectiveBudget,
@@ -15,10 +17,33 @@ import { useOccupancyTrend, useSnapshotHealth } from "@/lib/wh/snapshots";
 import { useWhSalesSummary } from "@/lib/wh/summary";
 import { useFlashReport, useFlashReportsByCommunity } from "@/lib/flash/queries";
 import { currentFlashWeek, monthStart, formatMonth, todayISO } from "@/lib/flash/period";
-import { useDailyTotals, useGrainImports, selectImportForPeriod, usePageReport } from "@/lib/gsc/queries";
-import { comparisonModeLabel, formatPeriodLabel, formatRangeLabel } from "@/lib/date-ranges";
+import {
+  useDailyTotals,
+  useGrainImports,
+  selectImportForPeriod,
+  usePageReport,
+  useQueryReport,
+  useActiveGrainCoverage,
+} from "@/lib/gsc/queries";
+import {
+  PRIORITY_LABELS,
+  ctrOpportunities,
+  isComparablePeriod,
+  nearPageOne,
+  pageOpportunities,
+  sortByPriority,
+  type PageRow,
+  type QueryRow,
+} from "@/lib/gsc/insights";
+import {
+  comparisonModeLabel,
+  formatDateOnly,
+  formatPeriodLabel,
+  formatRangeLabel,
+} from "@/lib/date-ranges";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
@@ -156,7 +181,9 @@ function KpiCard({
 
 function Overview() {
   const ctx = useWhContext();
-  const { comparisonMode, comparisonRange, dateRange, setCommunityScope } = useAppState();
+  const { comparisonMode, comparisonRange, communityScope, dateRange, setCommunityScope } =
+    useAppState();
+
   const navigate = useNavigate();
 
   const start = ctx.dateRange.start.slice(0, 10);
@@ -223,6 +250,18 @@ function Overview() {
         title="Performance intelligence, end to end"
         description="Marketing, CRM, sales and occupancy in one place — so you can see where the portfolio stands right now, what changed, and where leadership should pay attention."
       />
+
+      <DataThrough
+        organizationId={ctx.organizationId}
+        welcomeHomeDate={
+          ctx.connection?.data_through_date ??
+          (ctx.connection?.last_successful_sync_at
+            ? ctx.connection.last_successful_sync_at.slice(0, 10)
+            : null)
+        }
+        snapshotDate={latestSnapshotDate(snapshotHealth.data ?? [])}
+      />
+
 
       <section className="space-y-3">
         <SectionHeading title="The performance journey" />
@@ -369,6 +408,8 @@ function Overview() {
         organizationId={ctx.organizationId}
         period={{ start, end }}
         communities={perCommunity}
+        communityIds={ctx.communityIds}
+        communityFiltered={ctx.communityIds.length > 0 && communityScope.mode !== "all"}
         occupancyChangePoints={occupancyChangePoints(trend.data ?? [])}
         snapshotIssues={(snapshotHealth.data ?? []).filter((r) => r.snapshot_missing || r.source_stale)}
       />
@@ -394,6 +435,92 @@ function occupancyChangePoints(points: { occupancy_pct: number | null }[]): numb
   const last = Number(withValue[withValue.length - 1]!.occupancy_pct);
   return (last - first) * 100;
 }
+
+// ---------------------------------------------------------------------------
+// Data freshness
+// ---------------------------------------------------------------------------
+
+/** Freshest stored daily snapshot across the selected communities. */
+function latestSnapshotDate(rows: { last_snapshot_date: string | null }[]): string | null {
+  let latest: string | null = null;
+  for (const r of rows) {
+    if (r.last_snapshot_date && (!latest || r.last_snapshot_date > latest)) latest = r.last_snapshot_date;
+  }
+  return latest;
+}
+
+/**
+ * Compact freshness indicator. Every date comes from metadata Data Health
+ * already reports — the connection's data-through date, stored snapshots and
+ * active Search Console export coverage. Nothing is recomputed here, and the
+ * headline date reflects operational data only, so an older Search Console
+ * import can never make the portfolio look more current than it is.
+ */
+function DataThrough({
+  organizationId,
+  welcomeHomeDate,
+  snapshotDate,
+}: {
+  organizationId: string | null;
+  welcomeHomeDate: string | null;
+  snapshotDate: string | null;
+}) {
+  const coverage = useActiveGrainCoverage(organizationId);
+  const searchDate = useMemo(() => {
+    let latest: string | null = null;
+    for (const g of coverage.data ?? []) {
+      if (g.period_end && (!latest || g.period_end > latest)) latest = g.period_end;
+    }
+    return latest;
+  }, [coverage.data]);
+
+  const operational = [welcomeHomeDate, snapshotDate].filter(Boolean) as string[];
+  const headline = operational.length ? operational.sort().slice(-1)[0]! : null;
+
+  const sources = [
+    { label: "WelcomeHome", value: welcomeHomeDate },
+    { label: "Occupancy snapshot", value: snapshotDate },
+    { label: "Search Console", value: searchDate },
+  ].filter((s) => s.value);
+
+  if (!headline && !sources.length) return null;
+
+  const distinct = new Set(sources.map((s) => s.value)).size > 1;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-brand/40 hover:text-foreground"
+        >
+          <Clock className="size-3.5" />
+          Data through {headline ? formatDateOnly(headline) : "—"}
+          {distinct ? <span className="text-muted-foreground/70">· by source</span> : null}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-2">
+        <p className="text-xs font-medium text-foreground">Freshness by source</p>
+        <ul className="space-y-1">
+          {sources.map((s) => (
+            <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-muted-foreground">{s.label}</span>
+              <span className="font-medium text-foreground">{formatDateOnly(s.value)}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] leading-snug text-muted-foreground/80">
+          Search Console reflects the latest imported export period and may be older than
+          operational data.
+        </p>
+        <Link to="/data-health" className="block text-xs font-medium text-brand hover:underline">
+          Data Health
+        </Link>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 
 // ---------------------------------------------------------------------------
 // Marketing & Sales Pulse
@@ -735,47 +862,92 @@ function Opportunities({
   organizationId,
   period,
   communities,
+  communityIds,
+  communityFiltered,
   occupancyChangePoints: occChange,
   snapshotIssues,
 }: {
   organizationId: string | null;
   period: { start: string; end: string };
   communities: CommunityEntry[];
+  communityIds: string[];
+  communityFiltered: boolean;
   occupancyChangePoints: number | null;
   snapshotIssues: { community_name: string }[];
 }) {
-  // SEO opportunity uses the Pages export only when its exported period equals
-  // the selected range — aggregate exports are never prorated.
-  const grains = useGrainImports(organizationId, "page");
-  const selection = selectImportForPeriod(grains.data ?? [], period);
-  const pages = usePageReport(
-    organizationId,
-    selection.coverage === "exact" ? (selection.current?.import_id ?? null) : null,
-    null,
+  // The SEO signal is not recalculated here: it is the same ranked insight the
+  // Marketing Intelligence → Insights engine produces, from the same exports
+  // and the same priority rules. Aggregate exports are only used when their
+  // exported period equals the selected range.
+  const pageGrains = useGrainImports(organizationId, "page");
+  const queryGrains = useGrainImports(organizationId, "query");
+  const pageSelection = selectImportForPeriod(pageGrains.data ?? [], period);
+  const querySelection = selectImportForPeriod(queryGrains.data ?? [], period);
+
+  const periodOf = (g: { period_start: string | null; period_end: string | null } | null) =>
+    g?.period_start && g.period_end ? { start: g.period_start, end: g.period_end } : null;
+
+  const pageImportId = pageSelection.coverage === "exact" ? (pageSelection.current?.import_id ?? null) : null;
+  const queryImportId =
+    querySelection.coverage === "exact" ? (querySelection.current?.import_id ?? null) : null;
+
+  const pageComparable = isComparablePeriod(
+    periodOf(pageSelection.current),
+    periodOf(pageSelection.comparison),
+  );
+  const queryComparable = isComparablePeriod(
+    periodOf(querySelection.current),
+    periodOf(querySelection.comparison),
   );
 
-  const pageRows = (pages.data ?? []) as {
-    page_url: string;
-    clicks: number;
-    impressions: number;
-    ctr: number | null;
-  }[];
-  const totalClicks = pageRows.reduce((s, r) => s + r.clicks, 0);
-  const totalImpr = pageRows.reduce((s, r) => s + r.impressions, 0);
-  const siteCtr = totalImpr ? totalClicks / totalImpr : null;
-  const seoOpportunities =
-    siteCtr == null
-      ? []
-      : pageRows
-          .filter((r) => r.impressions >= 100 && (r.ctr ?? 0) < siteCtr / 2)
-          .sort((a, b) => b.impressions - a.impressions)
-          .slice(0, 3);
+  const pages = usePageReport(
+    organizationId,
+    pageImportId,
+    pageComparable ? (pageSelection.comparison?.import_id ?? null) : null,
+  );
+  const queries = useQueryReport(
+    organizationId,
+    communityFiltered ? null : queryImportId,
+    queryComparable ? (querySelection.comparison?.import_id ?? null) : null,
+  );
+
+  const allPages = (pages.data ?? []) as PageRow[];
+  const allQueries = (queries.data ?? []) as QueryRow[];
+
+  // With a community filter active only mapped pages qualify; query exports
+  // carry no URL and can never be attributed to a community.
+  const scopedPages = useMemo(() => {
+    if (!communityFiltered) return allPages;
+    const ids = new Set(communityIds);
+    return allPages.filter((r) => r.mapped_community_id && ids.has(r.mapped_community_id));
+  }, [allPages, communityFiltered, communityIds]);
+
+  const topSeoInsight = useMemo(
+    () =>
+      sortByPriority([
+        ...ctrOpportunities(communityFiltered ? [] : allQueries, scopedPages, 4),
+        ...(communityFiltered ? [] : nearPageOne(allQueries, 3)),
+        ...pageOpportunities(scopedPages, 3),
+      ])[0] ?? null,
+    [allQueries, scopedPages, communityFiltered],
+  );
+
+
 
   const belowBudget = communities
     .filter((c) => c.budget.variancePoints != null && c.budget.variancePoints < -2)
     .sort((a, b) => a.budget.variancePoints! - b.budget.variancePoints!);
 
-  const items: { tone: "attention" | "positive" | "neutral"; title: string; body: string }[] = [];
+  type Item = {
+    tone: "attention" | "positive" | "neutral";
+    title: string;
+    body: string;
+    label?: string;
+    priority?: string;
+    evidence?: string;
+    link?: { label: string; to: string; search?: Record<string, string> };
+  };
+  const items: Item[] = [];
 
   if (belowBudget.length) {
     items.push({
@@ -794,11 +966,21 @@ function Opportunities({
       body: "Measured from the first to the last stored daily snapshot in the range.",
     });
   }
-  for (const p of seoOpportunities) {
+  if (topSeoInsight) {
     items.push({
       tone: "neutral",
-      title: "High impressions, low click-through",
-      body: `${p.page_url} — ${num(p.impressions)} impressions at ${p.ctr == null ? na : `${(p.ctr * 100).toFixed(1)}%`} CTR (site ${((siteCtr ?? 0) * 100).toFixed(1)}%).`,
+      title: "SEO opportunity",
+      label: topSeoInsight.subject,
+      body: topSeoInsight.signal,
+      priority: PRIORITY_LABELS[topSeoInsight.priority],
+      evidence: topSeoInsight.evidence.map((e) => `${e.label}: ${e.value}`).join(" · "),
+      link: topSeoInsight.link
+        ? {
+            label: topSeoInsight.link.label,
+            to: topSeoInsight.link.to,
+            ...(topSeoInsight.link.search ? { search: topSeoInsight.link.search } : {}),
+          }
+        : { label: "Search Insights", to: "/marketing/insights" },
     });
   }
   if (snapshotIssues.length) {
@@ -839,14 +1021,37 @@ function Opportunities({
                   i.tone === "neutral" && "bg-brand",
                 )}
               />
-              <div>
-                <p className="text-sm font-medium text-foreground">{i.title}</p>
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">{i.title}</p>
+                  {i.priority ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      {i.priority} priority
+                    </Badge>
+                  ) : null}
+                </div>
+                {i.label ? (
+                  <p className="break-all text-xs font-medium text-foreground/90">{i.label}</p>
+                ) : null}
                 <p className="text-xs leading-snug text-muted-foreground">{i.body}</p>
+                {i.evidence ? (
+                  <p className="text-[11px] leading-snug text-muted-foreground/80">{i.evidence}</p>
+                ) : null}
+                {i.link ? (
+                  <Link
+                    to={i.link.to}
+                    search={i.link.search ?? {}}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
+                  >
+                    {i.link.label} <ArrowUpRight className="size-3" />
+                  </Link>
+                ) : null}
               </div>
             </li>
           ))}
         </ul>
       )}
+
     </section>
   );
 }
