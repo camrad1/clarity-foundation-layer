@@ -37,13 +37,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/wh-mappings")({
   head: () => ({
     meta: [
-      { title: "WelcomeHome Mapping — ClarityIQ Admin" },
+      { title: "WelcomeHome Mapping — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Map WelcomeHome communities, activity types and scores onto ClarityIQ's canonical model.",
       },
-      { property: "og:title", content: "WelcomeHome Mapping — ClarityIQ Admin" },
+      { property: "og:title", content: "WelcomeHome Mapping — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Community, activity type and score mapping plus provisional metric configuration.",

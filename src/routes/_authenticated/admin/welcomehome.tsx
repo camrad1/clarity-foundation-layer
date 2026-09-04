@@ -52,13 +52,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
   head: () => ({
     meta: [
-      { title: "WelcomeHome Connection — ClarityIQ Admin" },
+      { title: "WelcomeHome Connection — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Securely connect ClarityIQ to WelcomeHome CRM, discover communities and run read-only synchronization.",
       },
-      { property: "og:title", content: "WelcomeHome Connection — ClarityIQ Admin" },
+      { property: "og:title", content: "WelcomeHome Connection — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Server-side WelcomeHome credential storage, connection tests and sync monitoring.",

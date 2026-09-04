@@ -16,13 +16,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/validation")({
   head: () => ({
     meta: [
-      { title: "Validation Center — ClarityIQ Admin" },
+      { title: "Validation Center — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Compare ClarityIQ calculated metrics against source-system values before a metric is trusted.",
       },
-      { property: "og:title", content: "Validation Center — ClarityIQ Admin" },
+      { property: "og:title", content: "Validation Center — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Side-by-side metric validation against source-of-truth reporting.",

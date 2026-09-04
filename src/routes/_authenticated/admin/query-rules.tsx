@@ -23,13 +23,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/query-rules")({
   head: () => ({
     meta: [
-      { title: "Query Classification Rules — ClarityIQ Admin" },
+      { title: "Query Classification Rules — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Define the deterministic rules that classify search queries as branded, local, cost or care-type intent.",
       },
-      { property: "og:title", content: "Query Classification Rules — ClarityIQ Admin" },
+      { property: "og:title", content: "Query Classification Rules — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Rule-driven query intent segmentation — nothing is inferred automatically.",

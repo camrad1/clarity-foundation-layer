@@ -32,13 +32,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/occupancy-history")({
   head: () => ({
     meta: [
-      { title: "Occupancy History Import — ClarityIQ Admin" },
+      { title: "Occupancy History Import — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content:
           "Import the official day-over-day occupancy workbooks that provide ClarityIQ's historical occupancy before nightly snapshots began.",
       },
-      { property: "og:title", content: "Occupancy History Import — ClarityIQ Admin" },
+      { property: "og:title", content: "Occupancy History Import — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Audited, idempotent backfill of official daily occupancy history.",

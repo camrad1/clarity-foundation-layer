@@ -5,13 +5,13 @@ import { PageHeader } from "@/components/clarity/page-header";
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
     meta: [
-      { title: "Overview — ClarityIQ" },
+      { title: "Overview — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "ClarityIQ brings your performance data together so you can see what is driving results.",
       },
-      { property: "og:title", content: "Overview — ClarityIQ" },
+      { property: "og:title", content: "Overview — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "The connected performance journey from visibility through occupancy.",

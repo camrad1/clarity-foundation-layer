@@ -33,13 +33,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/marketing/queries")({
   head: () => ({
     meta: [
-      { title: "Query Intelligence — ClarityIQ" },
+      { title: "Query Intelligence — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Search Console query performance with rule-based branded, local and care-type intent segmentation.",
       },
-      { property: "og:title", content: "Query Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Query Intelligence — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "What people search before they find your communities, segmented by intent rules.",

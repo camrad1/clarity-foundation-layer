@@ -11,9 +11,9 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — ClarityIQ" },
+      { title: "Sign in — ONELIFE Marketing Performance Hub" },
       { name: "description", content: "Sign in to your ClarityIQ performance intelligence workspace." },
-      { property: "og:title", content: "Sign in — ClarityIQ" },
+      { property: "og:title", content: "Sign in — ONELIFE Marketing Performance Hub" },
       { property: "og:description", content: "Access your ClarityIQ workspace." },
       { name: "robots", content: "noindex" },
     ],

@@ -20,12 +20,12 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/access")({
   head: () => ({
     meta: [
-      { title: "Users & Access — ClarityIQ Admin" },
+      { title: "Users & Access — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content: "Roles and community-level access scopes controlling what each ClarityIQ user can see.",
       },
-      { property: "og:title", content: "Users & Access — ClarityIQ Admin" },
+      { property: "og:title", content: "Users & Access — ONELIFE Marketing Performance Hub Admin" },
       { property: "og:description", content: "Manage ClarityIQ roles and per-community data scopes." },
     ],
   }),

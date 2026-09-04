@@ -62,13 +62,13 @@ import {
 export const Route = createFileRoute("/_authenticated/flash")({
   head: () => ({
     meta: [
-      { title: "Flash Report — ClarityIQ" },
+      { title: "Flash Report — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "The Sunday–Saturday operational Flash: occupancy versus budget, move-ins and move-outs, weekly sales activity and the monthly trackers leadership already knows.",
       },
-      { property: "og:title", content: "Flash Report — ClarityIQ" },
+      { property: "og:title", content: "Flash Report — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Automated Sunday–Saturday Flash reporting built on validated WelcomeHome metrics.",

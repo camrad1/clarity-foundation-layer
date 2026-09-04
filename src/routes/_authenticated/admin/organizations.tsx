@@ -14,9 +14,9 @@ import { useIsPlatformAdmin, useOrganizations } from "@/lib/clarity-queries";
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
   head: () => ({
     meta: [
-      { title: "Organizations — ClarityIQ Admin" },
+      { title: "Organizations — ONELIFE Marketing Performance Hub Admin" },
       { name: "description", content: "Platform administration of ClarityIQ customer organizations." },
-      { property: "og:title", content: "Organizations — ClarityIQ Admin" },
+      { property: "og:title", content: "Organizations — ONELIFE Marketing Performance Hub Admin" },
       { property: "og:description", content: "Manage tenant organizations on the ClarityIQ platform." },
     ],
   }),

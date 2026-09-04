@@ -19,13 +19,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/data-health")({
   head: () => ({
     meta: [
-      { title: "Data Health — ClarityIQ" },
+      { title: "Data Health — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Connection status, sync freshness and import results for every ClarityIQ data source.",
       },
-      { property: "og:title", content: "Data Health — ClarityIQ" },
+      { property: "og:title", content: "Data Health — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Know exactly how fresh and how complete your performance data is.",

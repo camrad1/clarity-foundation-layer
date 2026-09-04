@@ -20,13 +20,13 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/marketing/segments")({
   head: () => ({
     meta: [
-      { title: "Search Segments — ClarityIQ" },
+      { title: "Search Segments — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Device, country and search appearance breakdowns from your Google Search Console exports.",
       },
-      { property: "og:title", content: "Search Segments — ClarityIQ" },
+      { property: "og:title", content: "Search Segments — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Independent Search Console report grains, kept separate and never combined.",

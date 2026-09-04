@@ -34,13 +34,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/marketing/pages")({
   head: () => ({
     meta: [
-      { title: "Page Intelligence — ClarityIQ" },
+      { title: "Page Intelligence — ONELIFE Marketing Performance Hub" },
       {
         name: "description",
         content:
           "Search Console page performance resolved to canonical communities through your URL mapping rules.",
       },
-      { property: "og:title", content: "Page Intelligence — ClarityIQ" },
+      { property: "og:title", content: "Page Intelligence — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
         content: "Which pages earn organic visibility, and which community they belong to.",

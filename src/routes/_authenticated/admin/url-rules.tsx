@@ -12,12 +12,12 @@ import { useAppState } from "@/state/app-state";
 export const Route = createFileRoute("/_authenticated/admin/url-rules")({
   head: () => ({
     meta: [
-      { title: "URL Mapping Rules — ClarityIQ Admin" },
+      { title: "URL Mapping Rules — ONELIFE Marketing Performance Hub Admin" },
       {
         name: "description",
         content: "Associate website URLs and content types with canonical ClarityIQ communities.",
       },
-      { property: "og:title", content: "URL Mapping Rules — ClarityIQ Admin" },
+      { property: "og:title", content: "URL Mapping Rules — ONELIFE Marketing Performance Hub Admin" },
       {
         property: "og:description",
         content: "Rules that resolve page URLs to communities, content types and intent.",
