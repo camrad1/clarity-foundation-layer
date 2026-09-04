@@ -39,7 +39,9 @@ type CommunityRow = {
   region_id: string | null;
   timezone: string;
   unit_count: number | null;
+  occupancy_capacity_basis?: CapacityBasis | null;
 };
+
 
 /**
  * Edits the ClarityIQ-owned community profile. Source identifiers and community
