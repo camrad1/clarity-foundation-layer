@@ -97,6 +97,7 @@ export async function findDuplicateImport(connectionId: string, fileHash: string
  */
 async function supplementImport(args: {
   organizationId: string;
+  connectionId: string;
   importId: string;
   parsed: ParsedFile;
   period: ImportPeriod;
@@ -106,7 +107,7 @@ async function supplementImport(args: {
   rowCounts: Record<string, number>;
   warnings: string[];
 } | null> {
-  const { organizationId, importId, parsed, period } = args;
+  const { organizationId, connectionId, importId, parsed, period } = args;
 
   const { data: existing, error } = await supabase
     .from("gsc_import_grains")
@@ -136,6 +137,7 @@ async function supplementImport(args: {
     const dates = g.grain === "daily" ? g.rows.map((r) => r.key).sort() : null;
     return {
       organization_id: organizationId,
+      connection_id: connectionId,
       import_id: importId,
       grain: g.grain,
       row_count: g.rows.length,
@@ -181,6 +183,7 @@ export async function runGscImport(args: {
     // rejected, so no data is duplicated and no re-upload is wasted.
     const supplement = await supplementImport({
       organizationId,
+      connectionId,
       importId: duplicate.id,
       parsed,
       period,
