@@ -67,7 +67,14 @@ function SearchOverview() {
   const previous = prior.data as typeof current;
 
   const hasData = !!current && current.impressions + current.clicks > 0;
+  // Imports end on a fixed export date; a selected range can legitimately run
+  // past it, so partial coverage is shown rather than treated as "no data".
+  const partial =
+    hasData &&
+    !!current!.last_date &&
+    (current!.last_date < period.end || (current!.first_date ?? period.start) > period.start);
   const comparable = !!comparison && !!previous && previous.impressions + previous.clicks > 0;
+
 
   const clickDelta = comparable ? change(current!.clicks, previous!.clicks).percent : null;
   const imprDelta = comparable ? change(current!.impressions, previous!.impressions).percent : null;
