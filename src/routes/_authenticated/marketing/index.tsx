@@ -162,6 +162,13 @@ function SearchOverview() {
               {current!.first_date ? format(parseISO(current!.first_date), "MMM d, yyyy") : "—"} –{" "}
               {current!.last_date ? format(parseISO(current!.last_date), "MMM d, yyyy") : "—"}
             </span>
+            {partial ? (
+              <span>
+                Selected {formatPeriodLabel(period)} — imported search data covers only part of it,
+                through {format(parseISO(current!.last_date!), "MMM d, yyyy")}. Totals below are for
+                the covered days only.
+              </span>
+            ) : null}
             <span>
               {comparison
                 ? `${comparisonModeLabel(comparisonMode)} · compared with ${formatPeriodLabel(comparison)}`
@@ -169,6 +176,7 @@ function SearchOverview() {
               {comparison && !comparable ? " — no imported data in that period" : ""}
             </span>
           </div>
+
 
           <div className="panel p-5">
             <p className="eyebrow pb-4">Clicks and impressions by day</p>
