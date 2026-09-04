@@ -1,49 +1,54 @@
-# Withhold occupancy when a community's unit inventory is incomplete
+# Sonnet Hill 52 vs 78: capacity is measured in units, not beds
 
-## What's actually wrong
+## What the data shows
 
-Sonnet Hill Senior Living is configured in Admin → Communities with **78 units**, but the WelcomeHome sync returns only **52 unit records** (22 Memory Care, rooms 201–222; 30 Assisted Living, rooms 301–330). The Units sync ran full, received 52 rows, and reported 0 failures and 0 unmapped rows, and only one WelcomeHome community (id 20636) is mapped. So roughly 26 units — most likely a whole floor or wing — are missing from WelcomeHome itself, not from the sync.
+WelcomeHome's Units export for Sonnet Hill returns exactly 52 records, and every one of them synced successfully (0 failed, 0 unmapped, all 52 contract unit references resolve). Nothing is missing.
 
-Because Flash uses the WelcomeHome census as the denominator, Sonnet Hill's occupancy percentage is currently computed against 52 instead of the true 78, which overstates occupancy for that community and quietly distorts portfolio totals.
+The 52 are **physical apartments**. Sonnet Hill sells several of them as double-occupancy:
 
-Confirmed decisions: 78 is correct, and Flash should withhold occupancy for a community whose inventory is materially incomplete rather than report a wrong percentage.
+| Care type | Floor plan | Rooms | Occupancy points |
+|---|---|---|---|
+| Assisted Living | AL Private Studio | 21 | 21 |
+| Assisted Living | AL-Neighborly Suite | 9 | 18 |
+| Memory Care | MC Private Studio | 5 | 5 |
+| Memory Care | MC-Companion Suite | 17 | 34 |
+| **Total** | | **52** | **78** |
 
-## Approach
+52 rooms = **78 occupancy points**, which is exactly the 78 configured in Admin and the 78 total_units in the imported occupancy history.
 
-Introduce a single canonical "inventory incomplete" rule in the database occupancy layer, and have Flash (and current-occupancy consumers) withhold occupancy for any community that trips it.
+The same split shows on the occupied side: 59 current/notice contracts occupying 46 distinct rooms. WelcomeHome and the Monday spreadsheet report ~60/78 (residents over beds); ClarityIQ reports 46/52 (rooms over rooms). Both are internally consistent — they are two different denominators.
 
-Rule: a community's inventory is incomplete when it has a configured unit count and
-`configured_units - census_units` exceeds a tolerance. Tolerance is a percentage of the configured count, stored in org settings, defaulting to 5%.
+So the discrepancy is a **capacity-basis mismatch**, not a data loss. Every ClarityIQ occupancy calculation currently counts distinct units and ignores `floor_plan_occupancy_points`.
 
-Against today's data this withholds only Sonnet Hill (26 units short, 33%). The other three small variances stay reported: The Rawlin +3 (4.2%), The Esther +1 (1%), Vineyard −1 (1.6%).
+Portfolio check (configured vs rooms vs points):
 
-Community-level effect when withheld:
-- Occupied units, census units, OCC %, budget variance, budget %, projected occupied units and projected OCC % all render as `—`.
-- Move-in / move-out / notice / inquiry / tour counts are unaffected — those are event metrics and stay accurate.
-- The row carries a clear reason: "Occupancy withheld — unit inventory incomplete (52 of 78 units in WelcomeHome)".
+- Sonnet Hill: 78 configured, 52 rooms, 78 points — points match
+- Belmare: 120 configured, 120 rooms, 127 points — rooms match
+- The Esther: 103 configured, 104 rooms, 103 points
+- The Rawlin: 72 configured, 75 rooms, 73 points
+- Vineyard Henderson: 64 configured, 63 rooms, 64 points
+- All others: configured = rooms = points
 
-Portfolio-level effect:
-- Withheld communities are excluded from the portfolio occupancy numerator and denominator, so the total stays internally consistent rather than being silently understated.
-- The portfolio occupancy figure is labeled as covering N of M communities, with the excluded community named in a tooltip, matching the existing "communities covered / complete" pattern already carried in the Flash occupancy payload.
+Sonnet Hill is the only community where the two bases differ materially; the others are small mapping/config drifts worth a separate pass.
 
-## Where it surfaces
+## Proposed fix
 
-- **Flash Report** — Current Summary occupancy block, week-by-week occupancy and projected month-end columns, and the coverage note. CSV / print / PDF exports carry the same `—` and the same coverage caveat.
-- **Occupancy reconciliation panel** (Data Health) — upgrade the existing discrepancy warning so a withheld community is visually distinct from a tolerated minor variance, and state the withheld reason.
-- **Admin → Communities** — show the source unit-record count next to the configured count so the gap is visible where the configured number is edited.
+Make capacity basis explicit and bed-aware, without changing any validated KPI definition.
+
+1. Add an occupancy-basis concept to the census layer: `census_units` (rooms) and `census_capacity` (sum of occupancy points, defaulting to 1 per unit). Occupied gets the same treatment: occupied rooms vs occupied beds (distinct current/notice contracts).
+2. Set the canonical reporting basis to **capacity/beds**, so Sonnet Hill reads 59/78 and matches WelcomeHome, the imported history, and the Monday call. Every community whose points equal its room count is unaffected.
+3. Surface the drift instead of hiding it: Data Health flags any community where configured `unit_count`, room count, and point capacity disagree (Belmare, The Esther, The Rawlin, Vineyard Henderson today), with both numbers shown.
+4. Show rooms and beds side by side on the community detail/Data Health view so the double-occupancy structure is visible rather than surprising.
 
 ## Technical notes
 
-- Database migration updating `wh_current_occupancy`, `wh_snapshot_asof` / `wh_flash_occupancy`, and `wh_flash_report` to compute an `inventory_incomplete` flag per community, null out occupancy fields for flagged communities, and exclude them from the aggregate roll-up while reporting `communities_covered` / `communities_requested`.
-- Add `occupancy_inventory_tolerance_pct` to `wh_settings` (default `0.05`), so the threshold is data-driven rather than hard-coded.
-- Projected month-end occupancy follows the same gate — no projection is produced from an incomplete denominator.
-- Extend `FlashOccupancy` / `CommunityOccupancy` types in `src/lib/flash/queries.ts` and `src/lib/wh/occupancy.ts` with the flag plus counts, then render the withheld state in `src/routes/_authenticated/flash.tsx` and `src/components/clarity/occupancy-reconciliation.tsx`.
-- No validated KPI definitions change; move-in/move-out/notice/deposit predicates are untouched.
+- `wh_units.floor_plan_occupancy_points` already carries the multiplier and is populated; `occupancy_point_factor` is 1 per unit and is not the bed count.
+- `wh_current_occupancy` and `wh_unit_census_exclusion` currently `SELECT DISTINCT community_id, unit_source_id`; the change is to aggregate `SUM(COALESCE(floor_plan_occupancy_points, 1))` for capacity and count qualifying contracts for occupied beds, keeping the existing exclusion rules (off-census, discarded, pseudo/waitlist units) intact.
+- Downstream consumers to keep consistent: `wh_flash_occupancy`, `wh_flash_report`, `wh_occupancy_asof`, `wh_write_daily_snapshot`, and the Occupancy Intelligence queries.
+- Snapshots already written on the room basis stay as they are; the change applies going forward, with the historical occupancy import (already bed-based at 78) becoming the aligned comparison rather than the conflicting one.
 
 ## Verification
 
-- Sonnet Hill shows `—` for all occupancy and projected-occupancy fields on Flash, with the withheld reason visible.
-- The Rawlin, The Esther and Vineyard continue to report occupancy normally.
-- Portfolio occupancy recomputed excluding Sonnet Hill, with a "11 of 12 communities" coverage note.
-- CSV, print and PDF match the on-screen values.
-- Once WelcomeHome contains all 78 Sonnet Hill units, the community reports normally again with no further code change.
+- Sonnet Hill Flash shows 59/78 (~75.6%) instead of 46/52, matching WelcomeHome and the imported history for the same date.
+- Battle Creek, Shadow Mountain, Waterhouse Ridge, Woodlake, Middlefield, Laurel, Reserve are numerically unchanged.
+- Data Health lists the four capacity-drift communities with configured vs rooms vs beds.
