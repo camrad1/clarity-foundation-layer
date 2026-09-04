@@ -282,7 +282,7 @@ export function MetricTrendChart({
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis
-          allowDecimals={false}
+          allowDecimals={!!yDomain}
           {...axisProps}
           width={yDomain ? 58 : 44}
           {...(yDomain ? { domain: yDomain, allowDataOverflow: false } : {})}
