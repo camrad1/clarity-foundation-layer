@@ -110,10 +110,10 @@ function KpiCard({
 }: {
   label: string;
   value: string;
-  context?: string;
-  tone?: "neutral" | "up" | "down";
-  to?: string;
-  badge?: string;
+  context?: string | undefined;
+  tone?: "neutral" | "up" | "down" | undefined;
+  to?: string | undefined;
+  badge?: string | undefined;
 }) {
   const body = (
     <div className="kpi-card h-full space-y-1.5 p-5 transition-colors hover:border-brand/40">
