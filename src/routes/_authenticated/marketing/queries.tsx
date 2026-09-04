@@ -70,10 +70,14 @@ type SortKey = "clicks" | "impressions" | "ctr" | "position_value";
 function QueryIntelligence() {
   const { organizationId, dateRange, communityScope } = useAppState();
   const grains = useGrainImports(organizationId, "query");
+  const period = { start: dateRange.start, end: dateRange.end };
+  // null = follow the global date filter; set = the user opened an older export.
+  const [reportImportId, setReportImportId] = useState<string | null>(null);
   const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], { start: dateRange.start, end: dateRange.end }),
-    [grains.data, dateRange.start, dateRange.end],
+    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
+    [grains.data, period.start, period.end, reportImportId],
   );
+
   const report = useQueryReport(
     organizationId,
     selection.current?.import_id ?? null,
