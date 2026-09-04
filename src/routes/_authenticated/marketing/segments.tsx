@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Layers } from "lucide-react";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { GscExportNotice } from "@/components/clarity/gsc-export-notice";
