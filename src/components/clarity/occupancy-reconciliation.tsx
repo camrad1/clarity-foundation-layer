@@ -1,7 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
 import { useWhContext } from "@/lib/wh/use-wh";
-import { useCurrentOccupancy, type CommunityOccupancy } from "@/lib/wh/occupancy";
+import { useCurrentOccupancy, CAPACITY_BASIS_LABELS, type CommunityOccupancy } from "@/lib/wh/occupancy";
 
 /**
  * Occupancy reconciliation diagnostic.
