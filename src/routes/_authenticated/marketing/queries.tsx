@@ -187,15 +187,30 @@ function QueryIntelligence() {
 
       {grains.isLoading || report.isLoading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.current ? (
+      ) : !selection.options.length ? (
         <EmptyState
           icon={<Search className="size-6" />}
           title="No Queries report imported"
           description="Upload a Search Console export containing the Queries report from Admin → Search Console Imports."
         />
+      ) : !selection.current ? (
+        <GscExportNotice
+          selection={selection}
+          grainLabel="Queries"
+          period={period}
+          value={reportImportId}
+          onChange={setReportImportId}
+        />
       ) : (
         <>
-          <GscExportNotice selection={selection} grainLabel="Queries" />
+          <GscExportNotice
+            selection={selection}
+            grainLabel="Queries"
+            period={period}
+            value={reportImportId}
+            onChange={setReportImportId}
+          />
+
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Clicks (filtered)" value={fmtInt(totals.clicks)} />
