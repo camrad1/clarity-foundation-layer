@@ -92,7 +92,20 @@ export type CommunityTarget = {
   timezone: string | null;
 };
 
-const CHUNK = 500;
+const CHUNK = 250;
+
+/** Smallest slice we still try as a batch before isolating rows one by one. */
+const MIN_CHUNK = 25;
+
+/**
+ * A Postgres statement timeout is a *capacity* signal, not a data defect: the
+ * same rows succeed in a smaller batch. Sonnet Hill Activities failed exactly
+ * this way — a 500-row upsert into a 372k-row table (each row firing the
+ * activity-result BEFORE trigger) exceeded the 8s API statement timeout while
+ * other syncs competed for the database. So timeouts split, they do not
+ * quarantine.
+ */
+const TIMEOUT_RE = /statement timeout|57014|canceling statement/i;
 
 /**
  * Decides the outcome of a table from what actually landed in the warehouse.
@@ -109,13 +122,22 @@ function classify(result: TableResult): TableStatus {
 }
 
 
+/**
+ * Upserts a slice, adaptively splitting it when the database pushes back.
+ *
+ * - statement timeout  -> halve and retry; a single row that still times out is
+ *   a real infrastructure fault and is rethrown.
+ * - any other error    -> halve to isolate the offending record, then report
+ *   that single row as rejected so the caller can quarantine it with its
+ *   source id and the exact error. Nothing is ever silently skipped.
+ */
 async function upsertChunk(
   admin: Admin,
   destination: string,
   connectionId: string,
   rows: Record<string, unknown>[],
-): Promise<{ inserted: number; updated: number }> {
-  if (!rows.length) return { inserted: 0, updated: 0 };
+): Promise<{ inserted: number; updated: number; rejected: { sourceId: string; reason: string }[] }> {
+  if (!rows.length) return { inserted: 0, updated: 0, rejected: [] };
   const ids = rows.map((r) => String(r["source_id"]));
   const { data: existing, error: exErr } = await admin
     .from(destination)
@@ -127,10 +149,40 @@ async function upsertChunk(
   const { error } = await admin
     .from(destination)
     .upsert(rows, { onConflict: "connection_id,source_id" });
-  if (error) throw new Error(`${destination}: ${error.message}`);
+
+  if (error) {
+    const message = `${destination}: ${error.message}`;
+    if (rows.length === 1) {
+      if (TIMEOUT_RE.test(error.message)) throw new Error(message);
+      return { inserted: 0, updated: 0, rejected: [{ sourceId: ids[0]!, reason: message }] };
+    }
+    if (rows.length <= MIN_CHUNK && !TIMEOUT_RE.test(error.message)) {
+      // Isolate the bad record without re-batching noise around it.
+      let inserted = 0;
+      let updated = 0;
+      const rejected: { sourceId: string; reason: string }[] = [];
+      for (const row of rows) {
+        const one = await upsertChunk(admin, destination, connectionId, [row]);
+        inserted += one.inserted;
+        updated += one.updated;
+        rejected.push(...one.rejected);
+      }
+      return { inserted, updated, rejected };
+    }
+    const mid = Math.ceil(rows.length / 2);
+    const a = await upsertChunk(admin, destination, connectionId, rows.slice(0, mid));
+    const b = await upsertChunk(admin, destination, connectionId, rows.slice(mid));
+    return {
+      inserted: a.inserted + b.inserted,
+      updated: a.updated + b.updated,
+      rejected: [...a.rejected, ...b.rejected],
+    };
+  }
+
   const updated = ids.filter((id) => known.has(id)).length;
-  return { inserted: ids.length - updated, updated };
+  return { inserted: ids.length - updated, updated, rejected: [] };
 }
+
 
 async function storeRaw(
   admin: Admin,
@@ -143,6 +195,8 @@ async function storeRaw(
     sourceCommunityId: string | null;
   },
   records: Rec[],
+  /** Why the record could not be normalized or persisted. */
+  reason?: string | ((rec: Rec) => string),
 ) {
   if (!records.length) return 0;
   const rows = records.map((rec) => ({
@@ -155,12 +209,18 @@ async function storeRaw(
     source_community_external_id: ctx.sourceCommunityId,
     community_id: ctx.communityId,
     contains_pii: true,
+    quarantine_reason: typeof reason === "function" ? reason(rec) : (reason ?? null),
     payload: rec,
   }));
-  const { error } = await admin.from("source_records_raw").insert(rows);
+  // Upsert, not insert: a retry re-quarantines the same source id and must
+  // refresh the reason rather than fail on the uniqueness constraint.
+  const { error } = await admin
+    .from("source_records_raw")
+    .upsert(rows, { onConflict: "organization_id,source_type,record_type,source_record_id" });
   if (error) return 0;
   return rows.length;
 }
+
 
 async function syncLookupTable(
   admin: Admin,
@@ -296,8 +356,12 @@ async function syncCoreTable(
     targets: CommunityTarget[];
     updatedAfter: string | null;
     beat?: Heartbeat | undefined;
-
+    /** Checkpoint from a previous interrupted attempt of this same unit. */
+    resume?: { cursorUrl: string; pages: number; rows: number } | null;
+    /** Persists the cursor for the page that was just fully written. */
+    checkpoint?: (p: { cursorUrl: string | null; pages: number; rows: number }) => Promise<void>;
   },
+
 ): Promise<TableResult> {
   const started = Date.now();
   const destination = WH_CORE_DESTINATION[args.table];
@@ -322,21 +386,51 @@ async function syncCoreTable(
   try {
     for (const scope of args.targets) {
       // Exports ignore page/per_page; the Link cursor is the only way forward.
-      let cursorUrl: string | null = null;
-      let pages = 0;
+      // RESUME: a checkpoint from an interrupted attempt of this exact unit
+      // (same table, same community, same updated_after window) lets the retry
+      // continue at the first unwritten page. Safe because every page is
+      // upserted on (connection_id, source_id) before its cursor is saved.
+      const canResume = args.targets.length === 1 && !!args.resume?.cursorUrl;
+      let cursorUrl: string | null = canResume ? args.resume!.cursorUrl : null;
+      let pages = canResume ? args.resume!.pages : 0;
+      let resumedFrom = canResume ? args.resume!.pages : 0;
+      if (canResume) {
+        result.pagesFetched = args.resume!.pages;
+        result.warnings.push(
+          `${args.table}: resumed after page ${args.resume!.pages} (${args.resume!.rows} row(s) already persisted)`,
+        );
+      }
       for (;;) {
-        const { records, nextUrl } = await whExportPage(auth, {
-          table: args.table,
-          communitySourceId: scope.sourceCommunityId,
-          cursorUrl,
-          updatedAfter: args.updatedAfter,
-        });
+        let page: { records: Rec[]; nextUrl: string | null };
+        try {
+          page = await whExportPage(auth, {
+            table: args.table,
+            communitySourceId: scope.sourceCommunityId,
+            cursorUrl,
+            updatedAfter: args.updatedAfter,
+          });
+        } catch (err) {
+          // A stale/expired resume cursor must never strand the unit: fall back
+          // to a clean pass from page 1. Re-reading is idempotent.
+          if (!cursorUrl || pages !== resumedFrom || resumedFrom === 0) throw err;
+          result.warnings.push(
+            `${args.table}: resume cursor no longer valid (${safeError(err)}); restarted from the first page`,
+          );
+          cursorUrl = null;
+          pages = 0;
+          resumedFrom = 0;
+          result.pagesFetched = 0;
+          continue;
+        }
+        const { records, nextUrl } = page;
         pages += 1;
         result.pagesFetched += 1;
         result.rowsReceived += records.length;
 
+
         const good: Record<string, unknown>[] = [];
-        const bad: Rec[] = [];
+        const bad: { rec: Rec; reason: string }[] = [];
+        const byId = new Map<string, Rec>();
         for (const rec of records) {
           try {
             const row = normalize(rec, {
@@ -346,14 +440,15 @@ async function syncCoreTable(
               timezone: scope.timezone,
             }) as Record<string, unknown>;
             if (!row["source_id"]) {
-              bad.push(rec);
+              bad.push({ rec, reason: "normalize: source record has no usable source id" });
               result.rowsFailed += 1;
             } else {
               good.push(row);
+              byId.set(String(row["source_id"]), rec);
               if (!row["community_id"]) result.rowsUnmapped += 1;
             }
-          } catch {
-            bad.push(rec);
+          } catch (err) {
+            bad.push({ rec, reason: `normalize: ${safeError(err)}` });
             result.rowsFailed += 1;
           }
           const u = updatedAt(rec);
@@ -362,24 +457,28 @@ async function syncCoreTable(
           }
         }
 
+        const rawCtx = {
+          organizationId: args.organizationId,
+          connectionId: args.connectionId,
+          syncRunId: args.syncRunId,
+          table: args.table,
+          communityId: scope.communityId,
+          sourceCommunityId: scope.sourceCommunityId,
+        };
+
         if (bad.length) {
+          const reasons = new Map(bad.map((b) => [b.rec, b.reason]));
           result.rawRowsStored += await storeRaw(
             admin,
-            {
-              organizationId: args.organizationId,
-              connectionId: args.connectionId,
-              syncRunId: args.syncRunId,
-              table: args.table,
-              communityId: scope.communityId,
-              sourceCommunityId: scope.sourceCommunityId,
-            },
-            bad,
+            rawCtx,
+            bad.map((b) => b.rec),
+            (rec) => reasons.get(rec) ?? "normalize failed",
           );
           result.warnings.push(`${bad.length} row(s) from ${scope.sourceCommunityId} kept as raw`);
         }
 
         for (let i = 0; i < good.length; i += CHUNK) {
-          const { inserted, updated } = await upsertChunk(
+          const { inserted, updated, rejected } = await upsertChunk(
             admin,
             destination,
             args.connectionId,
@@ -387,13 +486,36 @@ async function syncCoreTable(
           );
           result.rowsInserted += inserted;
           result.rowsUpdated += updated;
+          if (rejected.length) {
+            // Persistence-level rejects are quarantined with their source id and
+            // the exact database error — never skipped silently.
+            const recs = rejected
+              .map((r) => byId.get(r.sourceId))
+              .filter((r): r is Rec => Boolean(r));
+            const reasonById = new Map(rejected.map((r) => [r.sourceId, r.reason]));
+            result.rawRowsStored += await storeRaw(
+              admin,
+              rawCtx,
+              recs,
+              (rec) => `persist: ${reasonById.get(String(sourceId(rec) ?? "")) ?? "upsert rejected"}`,
+            );
+            result.rowsFailed += rejected.length;
+            for (const r of rejected) {
+              result.warnings.push(`${args.table} ${r.sourceId} quarantined: ${r.reason}`);
+            }
+          }
         }
 
         // Heartbeat AFTER the page has been persisted: progress means data
         // landed, not merely that a request was issued.
         await args.beat?.({ page: pages, pages: result.pagesFetched, rows: result.rowsReceived });
-
-
+        // Checkpoint the cursor for the NEXT page only once this page is fully
+        // written, so a resume can never skip unpersisted rows.
+        await args.checkpoint?.({
+          cursorUrl: nextUrl,
+          pages: result.pagesFetched,
+          rows: result.rowsReceived,
+        });
 
         if (!nextUrl || records.length === 0) break;
         if (pages >= WH_MAX_PAGES) {
@@ -404,6 +526,7 @@ async function syncCoreTable(
           break;
         }
         cursorUrl = nextUrl;
+
       }
     }
   } catch (err) {
@@ -447,19 +570,35 @@ export async function runWelcomeHomeSyncUnit(
   const supportsIncremental = (WH_INCREMENTAL_TABLES as string[]).includes(args.table);
 
   let updatedAfter: string | null = null;
+  const { data: state } = await admin
+    .from("wh_sync_state")
+    .select(
+      "watermark, source_max_updated_at, resume_cursor_url, resume_pages, resume_rows, resume_updated_after",
+    )
+    .eq("connection_id", args.connectionId)
+    .eq("source_table", args.table)
+    .eq("community_scope", scopeKey)
+    .maybeSingle();
+
   if (args.mode === "incremental" && supportsIncremental) {
-    const { data: state } = await admin
-      .from("wh_sync_state")
-      .select("watermark, source_max_updated_at")
-      .eq("connection_id", args.connectionId)
-      .eq("source_table", args.table)
-      .eq("community_scope", scopeKey)
-      .maybeSingle();
     const base = state?.source_max_updated_at ?? state?.watermark ?? null;
     if (base) {
       updatedAfter = new Date(new Date(base).getTime() - args.overlapMinutes * 60_000).toISOString();
     }
   }
+
+  // A checkpoint is only reusable when the retry reads the SAME window as the
+  // attempt that wrote it; otherwise the cursor would skip unread rows.
+  const sameWindow = (state?.resume_updated_after ?? null) === updatedAfter;
+  const resume =
+    state?.resume_cursor_url && sameWindow && args.target
+      ? {
+          cursorUrl: state.resume_cursor_url as string,
+          pages: (state.resume_pages as number | null) ?? 0,
+          rows: (state.resume_rows as number | null) ?? 0,
+        }
+      : null;
+
 
   await admin.from("wh_sync_state").upsert(
     {
@@ -529,6 +668,21 @@ export async function runWelcomeHomeSyncUnit(
       }
     : undefined;
 
+  const checkpoint = async (p: { cursorUrl: string | null; pages: number; rows: number }) => {
+    await admin
+      .from("wh_sync_state")
+      .update({
+        resume_cursor_url: p.cursorUrl,
+        resume_pages: p.cursorUrl ? p.pages : 0,
+        resume_rows: p.cursorUrl ? p.rows : 0,
+        resume_updated_after: p.cursorUrl ? updatedAfter : null,
+        resume_saved_at: new Date().toISOString(),
+      })
+      .eq("connection_id", args.connectionId)
+      .eq("source_table", args.table)
+      .eq("community_scope", scopeKey);
+  };
+
   const result = isCoreTable(args.table)
     ? await syncCoreTable(admin, auth, {
         organizationId: args.organizationId,
@@ -538,7 +692,10 @@ export async function runWelcomeHomeSyncUnit(
         targets,
         updatedAfter,
         beat,
+        resume,
+        checkpoint,
       })
+
     : await syncLookupTable(admin, auth, {
         organizationId: args.organizationId,
         connectionId: args.connectionId,
