@@ -254,6 +254,9 @@ export function MetricTrendChart({
   xKey = "label",
   labelLatest = true,
   valueFormatter,
+  yDomain,
+  yTicks,
+  tooltip,
 }: {
   data: Record<string, any>[];
   series: TrendSeries[];
@@ -261,19 +264,36 @@ export function MetricTrendChart({
   labelLatest?: boolean;
   /** Tooltip-only value formatting (e.g. percent series); plotted values are unchanged. */
   valueFormatter?: (value: number) => string;
+  /** Explicit Y-axis bounds; omit to let Recharts pick. */
+  yDomain?: [number, number];
+  yTicks?: number[];
+  /** Custom tooltip element; replaces the default TooltipBox. */
+  tooltip?: React.ReactElement;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();
   const lastIndex = data.length - 1;
   const showLabels = labelLatest && !isMobile && lastIndex >= 0;
   const multi = series.length > 1;
+  const label = (v: any) => (v == null ? "" : valueFormatter ? valueFormatter(Number(v)) : fmtCount(Number(v)));
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 12, right: 28, bottom: 0, left: -18 }}>
+      <LineChart data={data} margin={{ top: 18, right: 28, bottom: 0, left: yDomain ? 4 : -18 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis allowDecimals={false} {...axisProps} width={44} />
-        <Tooltip content={<TooltipBox formatter={valueFormatter} />} cursor={{ stroke: "var(--border)" }} />
+        <YAxis
+          allowDecimals={!!yDomain}
+          {...axisProps}
+          width={yDomain ? 58 : 44}
+          {...(yDomain ? { domain: yDomain, allowDataOverflow: false } : {})}
+          {...(yTicks ? { ticks: yTicks } : {})}
+          {...(valueFormatter ? { tickFormatter: (v: any) => valueFormatter(Number(v)) } : {})}
+        />
+        <Tooltip
+          content={tooltip ?? <TooltipBox formatter={valueFormatter} />}
+          cursor={{ stroke: "var(--border)" }}
+        />
+
         <Legend
           verticalAlign="bottom"
           height={28}
@@ -304,7 +324,7 @@ export function MetricTrendChart({
                 position="top"
                 offset={8}
                 style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
-                formatter={(v: any) => (v == null ? "" : fmtCount(Number(v)))}
+                formatter={label}
               />
             ) : showLabels && !dimmed ? (
               <LabelList
@@ -312,7 +332,7 @@ export function MetricTrendChart({
                 position="top"
                 offset={8}
                 style={{ ...LABEL_STYLE, fill: s.color }}
-                formatter={(v: any) => (v == null ? "" : fmtCount(Number(v)))}
+                formatter={label}
                 content={(props: any) => {
                   if (props.index !== lastIndex) return null;
                   const v = props.value;
@@ -327,7 +347,7 @@ export function MetricTrendChart({
                       paintOrder="stroke"
                       style={{ ...LABEL_STYLE, fill: s.color, fontWeight: 600 }}
                     >
-                      {fmtCount(Number(v))}
+                      {label(v)}
                     </text>
                   );
                 }}
