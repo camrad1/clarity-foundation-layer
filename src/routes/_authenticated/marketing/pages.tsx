@@ -215,15 +215,30 @@ function PageIntelligence() {
 
       {grains.isLoading || report.isLoading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.current ? (
+      ) : !selection.options.length ? (
         <EmptyState
           icon={<FileSearch className="size-6" />}
           title="No Pages report imported"
           description="Upload a Search Console export containing the Pages report from Admin → Search Console Imports."
         />
+      ) : !selection.current ? (
+        <GscExportNotice
+          selection={selection}
+          grainLabel="Pages"
+          period={period}
+          value={reportImportId}
+          onChange={setReportImportId}
+        />
       ) : (
         <>
-          <GscExportNotice selection={selection} grainLabel="Pages" />
+          <GscExportNotice
+            selection={selection}
+            grainLabel="Pages"
+            period={period}
+            value={reportImportId}
+            onChange={setReportImportId}
+          />
+
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Pages in export" value={fmtInt(all.length)} />
