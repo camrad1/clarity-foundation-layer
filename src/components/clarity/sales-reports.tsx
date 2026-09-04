@@ -151,26 +151,6 @@ type RangeTabProps = {
 const tipPct = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : `${Number(v).toFixed(1)}%`);
 const tipNum = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toLocaleString());
 
-/** Exact stored values for the hovered period; nothing is derived beyond the budget variance. */
-function OccupancyHistoryTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null;
-  const p = payload[0]?.payload;
-  if (!p) return null;
-  const variance =
-    p.ending_pct != null && p.budget_pct != null
-      ? `${p.ending_pct - p.budget_pct >= 0 ? "+" : ""}${(p.ending_pct - p.budget_pct).toFixed(1)} pts`
-      : "—";
-  return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
-      <p className="mb-1 font-medium text-foreground">{p.label}</p>
-      <TipRow label="Beginning occupancy" value={`${tipNum(p.beginning_occupied)} · ${tipPct(p.beginning_pct)}`} />
-      <TipRow label="Ending occupancy" value={`${tipNum(p.ending_occupied)} · ${tipPct(p.ending_pct)}`} />
-      <TipRow label="Budget" value={tipPct(p.budget_pct)} />
-      <TipRow label="Variance to budget" value={variance} />
-    </div>
-  );
-}
-
 function TipRow({ label, value }: { label: string; value: string }) {
   return (
     <p className="flex items-center justify-between gap-6">
@@ -277,7 +257,6 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           valueFormatter={(v) => `${Number(v).toFixed(1)}%`}
           yDomain={pctAxis.domain}
           yTicks={pctAxis.ticks}
-          tooltip={<OccupancyHistoryTooltip />}
         />
       </ChartCard>
 
@@ -296,7 +275,6 @@ export function OccupancyHistoryTab({ organizationId, communityIds, start, end }
           series={unitSeries.filter((s) => unitVis.visible.includes(s.key))}
           yDomain={unitAxis.domain}
           yTicks={unitAxis.ticks}
-          tooltip={<OccupancyHistoryTooltip />}
         />
 
       </ChartCard>
