@@ -148,6 +148,40 @@ type RangeTabProps = {
 
 /* ============================================================ Occupancy */
 
+const tipPct = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : `${Number(v).toFixed(1)}%`);
+const tipNum = (v: any) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toLocaleString());
+
+/** Exact stored values for the hovered period; nothing is derived beyond the budget variance. */
+function OccupancyHistoryTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  const variance =
+    p.ending_pct != null && p.budget_pct != null
+      ? `${p.ending_pct - p.budget_pct >= 0 ? "+" : ""}${(p.ending_pct - p.budget_pct).toFixed(1)} pts`
+      : "—";
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
+      <p className="mb-1 font-medium text-foreground">{p.label}</p>
+      <TipRow label="Beginning occupancy" value={`${tipNum(p.beginning_occupied)} · ${tipPct(p.beginning_pct)}`} />
+      <TipRow label="Ending occupancy" value={`${tipNum(p.ending_occupied)} · ${tipPct(p.ending_pct)}`} />
+      <TipRow label="Budget" value={tipPct(p.budget_pct)} />
+      <TipRow label="Variance to budget" value={variance} />
+    </div>
+  );
+}
+
+function TipRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="flex items-center justify-between gap-6">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums text-foreground">{value}</span>
+    </p>
+  );
+}
+
+
+
 export function OccupancyHistoryTab({ organizationId, communityIds, start, end }: RangeTabProps) {
   const q = useOccupancyHistory(organizationId, communityIds, start.slice(0, 10), end.slice(0, 10));
 
