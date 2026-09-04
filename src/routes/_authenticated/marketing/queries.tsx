@@ -70,10 +70,14 @@ type SortKey = "clicks" | "impressions" | "ctr" | "position_value";
 function QueryIntelligence() {
   const { organizationId, dateRange, communityScope } = useAppState();
   const grains = useGrainImports(organizationId, "query");
+  const period = { start: dateRange.start, end: dateRange.end };
+  // null = follow the global date filter; set = the user opened an older export.
+  const [reportImportId, setReportImportId] = useState<string | null>(null);
   const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], { start: dateRange.start, end: dateRange.end }),
-    [grains.data, dateRange.start, dateRange.end],
+    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
+    [grains.data, period.start, period.end, reportImportId],
   );
+
   const report = useQueryReport(
     organizationId,
     selection.current?.import_id ?? null,
@@ -187,15 +191,30 @@ function QueryIntelligence() {
 
       {grains.isLoading || report.isLoading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.current ? (
+      ) : !selection.options.length ? (
         <EmptyState
           icon={<Search className="size-6" />}
           title="No Queries report imported"
           description="Upload a Search Console export containing the Queries report from Admin → Search Console Imports."
         />
+      ) : !selection.current ? (
+        <GscExportNotice
+          selection={selection}
+          grainLabel="Queries"
+          period={period}
+          value={reportImportId}
+          onChange={setReportImportId}
+        />
       ) : (
         <>
-          <GscExportNotice selection={selection} grainLabel="Queries" />
+          <GscExportNotice
+            selection={selection}
+            grainLabel="Queries"
+            period={period}
+            value={reportImportId}
+            onChange={setReportImportId}
+          />
+
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Clicks (filtered)" value={fmtInt(totals.clicks)} />
