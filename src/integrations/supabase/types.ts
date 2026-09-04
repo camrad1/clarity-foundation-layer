@@ -108,6 +108,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          occupancy_capacity_basis: string
           organization_id: string
           primary_domain: string | null
           region_id: string | null
@@ -125,6 +126,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          occupancy_capacity_basis?: string
           organization_id: string
           primary_domain?: string | null
           region_id?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          occupancy_capacity_basis?: string
           organization_id?: string
           primary_domain?: string | null
           region_id?: string | null
@@ -382,6 +385,10 @@ export type Database = {
         Row: {
           budget_pct: number | null
           budget_units: number | null
+          canonical_for_trend: boolean
+          capacity_basis: string | null
+          census_capacity: number | null
+          census_rooms: number | null
           census_units: number | null
           community_id: string
           configured_operational_units: number | null
@@ -393,10 +400,13 @@ export type Database = {
           inactive_units: number | null
           local_timezone: string | null
           metric_version: string
+          noncanonical_reason: string | null
           notice_count: number | null
           occupancy_pct: number | null
           occupancy_variance_pct: number | null
           occupancy_variance_units: number | null
+          occupied_capacity: number | null
+          occupied_rooms: number | null
           occupied_units: number | null
           off_census_units: number | null
           open_pipeline: number | null
@@ -419,6 +429,10 @@ export type Database = {
         Insert: {
           budget_pct?: number | null
           budget_units?: number | null
+          canonical_for_trend?: boolean
+          capacity_basis?: string | null
+          census_capacity?: number | null
+          census_rooms?: number | null
           census_units?: number | null
           community_id: string
           configured_operational_units?: number | null
@@ -430,10 +444,13 @@ export type Database = {
           inactive_units?: number | null
           local_timezone?: string | null
           metric_version?: string
+          noncanonical_reason?: string | null
           notice_count?: number | null
           occupancy_pct?: number | null
           occupancy_variance_pct?: number | null
           occupancy_variance_units?: number | null
+          occupied_capacity?: number | null
+          occupied_rooms?: number | null
           occupied_units?: number | null
           off_census_units?: number | null
           open_pipeline?: number | null
@@ -456,6 +473,10 @@ export type Database = {
         Update: {
           budget_pct?: number | null
           budget_units?: number | null
+          canonical_for_trend?: boolean
+          capacity_basis?: string | null
+          census_capacity?: number | null
+          census_rooms?: number | null
           census_units?: number | null
           community_id?: string
           configured_operational_units?: number | null
@@ -467,10 +488,13 @@ export type Database = {
           inactive_units?: number | null
           local_timezone?: string | null
           metric_version?: string
+          noncanonical_reason?: string | null
           notice_count?: number | null
           occupancy_pct?: number | null
           occupancy_variance_pct?: number | null
           occupancy_variance_units?: number | null
+          occupied_capacity?: number | null
+          occupied_rooms?: number | null
           occupied_units?: number | null
           off_census_units?: number | null
           open_pipeline?: number | null
@@ -4466,6 +4490,30 @@ export type Database = {
           category: string
         }[]
       }
+      wh_community_capacity: {
+        Args: { _org_id: string; _scope: string[] }
+        Returns: {
+          canonical_census: number
+          canonical_occupied: number
+          capacity_basis: string
+          census_capacity: number
+          census_rooms: number
+          community_id: string
+          configured_capacity: number
+          excluded_units: number
+          inactive_units: number
+          name: string
+          notice_capacity: number
+          notice_rooms: number
+          occupied_capacity: number
+          occupied_rooms: number
+          off_census_units: number
+          pseudo_units: number
+          reserved_capacity: number
+          reserved_rooms: number
+          total_unit_records: number
+        }[]
+      }
       wh_current_occupancy: {
         Args: { _community_ids?: string[]; _org_id: string }
         Returns: Json
@@ -4982,6 +5030,22 @@ export type Database = {
           source_id: string
           unit_name: string
           unit_number: string
+        }[]
+      }
+      wh_unit_census_rows: {
+        Args: { _org_id: string; _scope: string[] }
+        Returns: {
+          care_type: string
+          community_id: string
+          exclusion_reason: string
+          notice_capacity: number
+          notice_room: number
+          occupied_capacity: number
+          occupied_room: number
+          points: number
+          reserved_capacity: number
+          reserved_room: number
+          source_id: string
         }[]
       }
       wh_user_label: {
