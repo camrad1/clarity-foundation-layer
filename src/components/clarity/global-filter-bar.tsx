@@ -67,6 +67,32 @@ export function GlobalFilterBar() {
             "1 community"
           : `${selectedCount} communities`;
 
+  const [communityQuery, setCommunityQuery] = useState("");
+
+  const selectedIds = useMemo(
+    () =>
+      new Set(
+        communityScope.mode === "communities" ? communityScope.communityIds : [],
+      ),
+    [communityScope],
+  );
+
+  const sorted = useMemo(
+    () => [...authorized].sort((a, b) => a.name.localeCompare(b.name)),
+    [authorized],
+  );
+
+  const matches = (name: string) =>
+    name.toLowerCase().includes(communityQuery.trim().toLowerCase());
+
+  const selectedCommunities = sorted.filter(
+    (c) => selectedIds.has(c.id) && matches(c.name),
+  );
+  const remainingCommunities = sorted.filter(
+    (c) => !selectedIds.has(c.id) && matches(c.name),
+  );
+
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Popover>
