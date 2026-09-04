@@ -73,6 +73,8 @@ export function CommunityEditDialog({
     region_id: community.region_id ?? "none",
     timezone: community.timezone,
     unit_count: community.unit_count == null ? "" : String(community.unit_count),
+    occupancy_capacity_basis: (community.occupancy_capacity_basis ?? "rooms") as CapacityBasis,
+
     budget_units: "",
     budget_start: new Date().toISOString().slice(0, 10),
     budget_notes: "",
