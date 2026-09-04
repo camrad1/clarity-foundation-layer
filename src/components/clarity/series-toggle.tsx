@@ -63,10 +63,17 @@ export function SeriesToggleChips({
   series,
   visible,
   onToggle,
+  onHover,
 }: {
   series: { key: string; label: string; color: string; provisional?: boolean }[];
   visible: string[];
   onToggle: (key: string) => void;
+  /**
+   * Optional hover/focus callback. While a chip is hovered (or keyboard
+   * focused) the chart can emphasise that series and label all of its points.
+   * Called with the series key on enter and null on leave.
+   */
+  onHover?: ((key: string | null) => void) | undefined;
 }) {
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Toggle chart series">
@@ -78,6 +85,10 @@ export function SeriesToggleChips({
             type="button"
             aria-pressed={active}
             onClick={() => onToggle(s.key)}
+            onMouseEnter={onHover ? () => onHover(s.key) : undefined}
+            onMouseLeave={onHover ? () => onHover(null) : undefined}
+            onFocus={onHover ? () => onHover(s.key) : undefined}
+            onBlur={onHover ? () => onHover(null) : undefined}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
               active

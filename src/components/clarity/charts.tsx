@@ -257,6 +257,7 @@ export function MetricTrendChart({
   yDomain,
   yTicks,
   tooltip,
+  focusedKey,
 }: {
   data: Record<string, any>[];
   series: TrendSeries[];
@@ -269,12 +270,22 @@ export function MetricTrendChart({
   yTicks?: number[];
   /** Custom tooltip element; replaces the default TooltipBox. */
   tooltip?: React.ReactElement;
+  /**
+   * Optional external focus (e.g. hovering a series-toggle chip above the
+   * chart). While set, that series is emphasised and every one of its points
+   * is labelled. When undefined the chart uses its own internal legend focus.
+   */
+  focusedKey?: string | null;
 }) {
   const isMobile = useIsMobile();
   const focus = useSeriesFocus();
+  // External focus (chip hover) wins; otherwise legend hover/lock applies.
+  const viewFocus =
+    focusedKey !== undefined && focusedKey !== null
+      ? { ...focus, active: focusedKey }
+      : focus;
   const lastIndex = data.length - 1;
   const showLabels = labelLatest && !isMobile && lastIndex >= 0;
-  const multi = series.length > 1;
   const label = (v: any) => (v == null ? "" : valueFormatter ? valueFormatter(Number(v)) : fmtCount(Number(v)));
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -299,11 +310,11 @@ export function MetricTrendChart({
           height={28}
           iconType="plainline"
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
-          {...(multi ? { content: <FocusLegend series={series} focus={focus} iconType="line" /> } : {})}
+          content={<FocusLegend series={series} focus={viewFocus} iconType="line" />}
         />
         {series.map((s) => {
-          const isActive = focus.active === s.key;
-          const dimmed = focus.active != null && !isActive;
+          const isActive = viewFocus.active === s.key;
+          const dimmed = viewFocus.active != null && !isActive;
           return (
           <Line
             key={s.key}
