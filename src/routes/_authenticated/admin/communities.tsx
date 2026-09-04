@@ -157,6 +157,16 @@ function Communities() {
             ),
           },
           { key: "units", header: "Units", align: "right", render: (r) => r.unit_count ?? "—" },
+          {
+            key: "basis",
+            header: "Capacity basis",
+            render: (r) =>
+              CAPACITY_BASIS_LABELS[
+                ((r as { occupancy_capacity_basis?: CapacityBasis }).occupancy_capacity_basis ??
+                  "rooms") as CapacityBasis
+              ],
+          },
+
           { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
           {
             key: "edit",
