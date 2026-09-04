@@ -45,7 +45,7 @@ export function GscExportNotice({
         value={value ?? "auto"}
         onValueChange={(v) => onChange(v === "auto" ? null : v)}
       >
-        <SelectTrigger size="sm" className="h-8 w-[19rem] text-xs">
+        <SelectTrigger className="h-8 w-[19rem] text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
