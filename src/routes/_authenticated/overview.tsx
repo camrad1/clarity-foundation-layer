@@ -333,6 +333,7 @@ function Overview() {
         loading={occupancy.isLoading}
         month={month}
         week={week}
+        ready={!occupancy.isFetching && !flash.isFetching && !sales.isFetching}
         onOpen={(id) => {
           setCommunityScope({ mode: "communities", communityIds: [id] });
           void navigate({ to: "/occupancy" });
@@ -499,6 +500,7 @@ function CommunityWatchlist({
   loading,
   month,
   week,
+  ready,
   onOpen,
 }: {
   organizationId: string | null;
@@ -506,6 +508,9 @@ function CommunityWatchlist({
   loading: boolean;
   month: string;
   week: { start: string; end: string };
+  /** Per-community projections wait for the portfolio reads so the shared
+   * database aggregates are not run all at once (they time out under load). */
+  ready: boolean;
   onOpen: (communityId: string) => void;
 }) {
   // Deterministic ranking: worst budget variance first; communities with no
@@ -521,7 +526,7 @@ function CommunityWatchlist({
   }, [communities]);
 
   const ids = ranked.map((c) => c.row.id);
-  const { byCommunity } = useFlashReportsByCommunity(organizationId, ids, week.start, week.end, month);
+  const { byCommunity } = useFlashReportsByCommunity(organizationId, ids, week.start, week.end, month, ready);
 
   const columns: Column<CommunityEntry>[] = [
     {

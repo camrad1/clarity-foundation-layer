@@ -560,11 +560,12 @@ export function useFlashReportsByCommunity(
   start: string,
   end: string,
   month: string,
+  enabled = true,
 ) {
   return useQueries({
     queries: communityIds.map((id) => ({
       queryKey: ["wh_flash_report", organizationId, id, start, end, month],
-      enabled: !!organizationId,
+      enabled: !!organizationId && enabled,
       queryFn: async (): Promise<FlashReport> => {
         const { data, error } = await db.rpc("wh_flash_report", {
           _org_id: organizationId,
