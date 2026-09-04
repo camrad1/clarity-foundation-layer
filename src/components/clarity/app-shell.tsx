@@ -3,6 +3,7 @@ import {
   Activity,
   Building2,
   CalendarRange,
+  ChevronDown,
   ChevronsUpDown,
   Compass,
   Database,
