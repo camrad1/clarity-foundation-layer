@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
 import { Check, CalendarRange, Building2, GitCompareArrows } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -16,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+
 import { useAppState } from "@/state/app-state";
 import { useCommunities, useRegions } from "@/lib/clarity-queries";
 import {
