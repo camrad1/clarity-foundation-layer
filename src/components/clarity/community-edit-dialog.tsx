@@ -193,6 +193,27 @@ export function CommunityEditDialog({
               onChange={(e) => set("unit_count", e.target.value)}
             />
           </Field>
+          <Field
+            label="Occupancy capacity basis"
+            help="Canonical denominator for this community's occupancy. Physical rooms counts apartments; occupancy points counts shared/companion suite capacity; configured capacity uses the operational unit count above. Applies everywhere — Flash, Occupancy and Sales Intelligence, snapshots and exports."
+          >
+            <Select
+              value={v.occupancy_capacity_basis}
+              onValueChange={(x) => set("occupancy_capacity_basis", x)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(CAPACITY_BASIS_LABELS) as CapacityBasis[]).map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {CAPACITY_BASIS_LABELS[k]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
 
           <div className="rounded-lg border border-border p-3">
             <p className="text-sm font-medium">Budgeted occupancy</p>
