@@ -57,10 +57,17 @@ export type ParsedFile = {
   dataEndDate: string | null;
 };
 
-/** Maps an export file/sheet name onto a grain. Unknown names are ignored. */
+/**
+ * Maps an export file/sheet name onto a grain. Unknown names are ignored.
+ *
+ * Google's Performance export names the daily time series "Chart.csv" (the
+ * chart drawn above the table), not "Dates.csv", so both map to the canonical
+ * daily grain. "Filters.csv" carries no metrics and stays unrecognised.
+ */
 export function detectGrain(name: string): GrainKey | null {
   const n = name.toLowerCase().replace(/\.(csv|tsv|xlsx)$/, "").trim();
   if (/^dates?$/.test(n) || n.includes("date")) return "daily";
+  if (n.includes("chart")) return "daily";
   if (n.includes("quer")) return "query";
   if (n.includes("page")) return "page";
   if (n.includes("device")) return "device";
@@ -68,6 +75,7 @@ export function detectGrain(name: string): GrainKey | null {
   if (n.includes("appearance")) return "search_appearance";
   return null;
 }
+
 
 const DIMENSION_HEADERS: Record<GrainKey, RegExp> = {
   daily: /^date$/i,
