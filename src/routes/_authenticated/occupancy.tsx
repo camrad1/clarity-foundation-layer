@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DataTable } from "@/components/clarity/data-table";
 import { EmptyState } from "@/components/clarity/empty-state";
@@ -108,7 +109,12 @@ function Occupancy() {
             </p>
           </section>
 
-          <OccupancyHistory organizationId={ctx.organizationId} communityIds={ctx.communityIds} />
+          <OccupancyHistory
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            start={ctx.dateRange.start.slice(0, 10)}
+            end={ctx.dateRange.end.slice(0, 10)}
+          />
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">By community</h2>
@@ -447,7 +453,7 @@ function OccupancyHistory({
             series={series}
             yDomain={axis.domain}
             yTicks={axis.ticks}
-            valueFormatter={percent ? (v) => `${Number(v).toFixed(1)}%` : undefined}
+            {...(percent ? { valueFormatter: (v: number) => `${Number(v).toFixed(1)}%` } : {})}
             tooltip={<OccupancyTooltip percent={percent} periodNoun={periodNoun} />}
           />
         </ChartCard>
