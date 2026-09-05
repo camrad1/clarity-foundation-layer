@@ -178,27 +178,53 @@ export function useFurtherFreshness(organizationId: string | null) {
   });
 }
 
+/**
+ * Match rollup. Counts come from exact head counts (never a capped page) and
+ * the deterministic coverage function, so the totals are the real ones.
+ */
 export function useFurtherMatchSummary(organizationId: string | null) {
   return useQuery({
     queryKey: ["further_match_summary", organizationId],
     enabled: !!organizationId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("further_wh_matches")
-        .select("wh_field, evidence_type, is_active, matched_at")
-        .eq("organization_id", organizationId!)
-        .order("matched_at", { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      const rows = data ?? [];
-      const active = rows.filter((r: any) => r.is_active);
+      const count = async (build: (q: any) => any) => {
+        const { count: n, error } = await build(
+          supabase
+            .from("further_wh_matches")
+            .select("id", { count: "exact", head: true })
+            .eq("organization_id", organizationId!),
+        );
+        if (error) throw error;
+        return n ?? 0;
+      };
+      const [active, conflicts, latest, coverage] = await Promise.all([
+        count((q: any) => q.eq("is_active", true)),
+        count((q: any) => q.eq("evidence_type", "exact_external_id_conflict")),
+        supabase
+          .from("further_wh_matches")
+          .select("wh_field, evidence_type, matched_at")
+          .eq("organization_id", organizationId!)
+          .eq("is_active", true)
+          .order("matched_at", { ascending: false })
+          .limit(1),
+        supabase.rpc("further_match_coverage", { _org_id: organizationId! }),
+      ]);
+      const head = (latest.data ?? [])[0] as any;
+      const rows = (coverage.data ?? []) as any[];
+      const all = rows.find((r) => r.bucket === "all");
       return {
-        total: rows.length,
-        active: active.length,
-        field: (active[0] as any)?.wh_field ?? null,
-        evidenceType: (active[0] as any)?.evidence_type ?? null,
-        matchedAt: (active[0] as any)?.matched_at ?? null,
+        total: active + conflicts,
+        active,
+        conflicts,
+        withExternalId: Number(all?.with_external_id ?? 0),
+        unmatched: Number(all?.unmatched ?? 0),
+        matchRate: all?.match_rate == null ? null : Number(all.match_rate),
+        byYear: rows.filter((r) => r.bucket !== "all"),
+        field: head?.wh_field ?? null,
+        evidenceType: head?.evidence_type ?? null,
+        matchedAt: head?.matched_at ?? null,
       };
     },
   });
 }
+
