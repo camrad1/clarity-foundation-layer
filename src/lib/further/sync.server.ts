@@ -698,104 +698,59 @@ export async function runFurtherSlice(
 export type MatchReport = {
   candidatesExamined: number;
   externalIdsPresent: number;
-  fieldCounts: Record<string, number>;
-  provenField: string | null;
   activeMatches: number;
+  conflicts: number;
+  needsReview: number;
   unmatched: number;
+  coverage: {
+    bucket: string;
+    leads: number;
+    with_external_id: number;
+    active: number;
+    conflicts: number;
+    unmatched: number;
+    match_rate: number | null;
+  }[];
   note: string;
 };
 
 /**
- * FURTHER <-> WELCOMEHOME JOIN VALIDATION + MATCH WRITING.
+ * FURTHER <-> WELCOMEHOME JOIN ACTIVATION.
  *
- * The Further `external_lead_id` is the only deterministic candidate. Which
- * WelcomeHome field it corresponds to is NOT assumed: every candidate field is
- * counted against live data first, and match rows are only marked active for
- * the single field that actually reconciles. Name/email/phone are never used as
- * attribution evidence.
+ * The join is proven: `further_leads.external_lead_id` is a WelcomeHome
+ * prospect ID. Activation is fully deterministic and runs set-based in the
+ * database (`further_activate_matches`):
+ *
+ *   - exact ID equality with harmless string/integer normalization only
+ *   - exactly one WelcomeHome prospect for the ID
+ *   - the ID is not shared by multiple Further leads
+ *   - both sides resolve to the same canonical community
+ *
+ * Ambiguous rows are stored as conflict / needs_review evidence and never
+ * activated. Name, email and phone are never used as attribution evidence.
  */
 export async function matchFurtherToWelcomeHome(
   admin: Admin,
   organizationId: string,
-  opts?: { limit?: number },
 ): Promise<MatchReport> {
-  const limit = opts?.limit ?? 500;
-  const { data: leads } = await admin
-    .from("further_leads")
-    .select("further_lead_id, external_lead_id, community_id")
-    .eq("organization_id", organizationId)
-    .order("created_on", { ascending: false })
-    .limit(limit);
-  const rows = (leads ?? []) as any[];
-  const withExternal = rows.filter((l) => l.external_lead_id);
-  const ids = [...new Set(withExternal.map((l) => String(l.external_lead_id)))];
-
-  const CANDIDATES = ["source_id", "account_id", "merged_into_prospect_id"] as const;
-  const fieldCounts: Record<string, number> = {};
-  const hits: Record<string, Map<string, string>> = {};
-
-  for (const field of CANDIDATES) {
-    const found = new Map<string, string>();
-    for (let i = 0; i < ids.length; i += 200) {
-      const chunk = ids.slice(i, i + 200);
-      if (!chunk.length) break;
-      const { data } = await admin
-        .from("wh_prospects")
-        .select(`source_id, ${field}`)
-        .eq("organization_id", organizationId)
-        .in(field, chunk);
-      for (const p of (data ?? []) as any[]) {
-        const key = String(p[field]);
-        if (key) found.set(key, String(p.source_id));
-      }
-    }
-    fieldCounts[field] = found.size;
-    hits[field] = found;
-  }
-
-  const provenField =
-    Object.entries(fieldCounts)
-      .filter(([, n]) => n > 0)
-      .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-
-  let activeMatches = 0;
-  if (provenField) {
-    const map = hits[provenField]!;
-    const upserts = withExternal
-      .filter((l) => map.has(String(l.external_lead_id)))
-      .map((l) => ({
-        organization_id: organizationId,
-        further_lead_id: String(l.further_lead_id),
-        further_external_lead_id: String(l.external_lead_id),
-        wh_prospect_id: map.get(String(l.external_lead_id))!,
-        wh_field: provenField,
-        community_id: (l.community_id as string | null) ?? null,
-        match_method: `further.external_lead_id = wh_prospects.${provenField}`,
-        evidence_type: "exact_external_id",
-        is_active: true,
-        matched_at: new Date().toISOString(),
-        audit: { validated_against: "live_data", candidate_counts: fieldCounts },
-      }));
-    activeMatches = upserts.length;
-    for (let i = 0; i < upserts.length; i += 200) {
-      const { error } = await admin
-        .from("further_wh_matches")
-        .upsert(upserts.slice(i, i + 200), {
-          onConflict: "organization_id,further_lead_id,evidence_type",
-        });
-      if (error) throw new Error(error.message);
-    }
-  }
-
+  const { data, error } = await (admin as any).rpc("further_activate_matches", {
+    _org_id: organizationId,
+  });
+  if (error) throw new Error(error.message);
+  const r = (data ?? [])[0] ?? {};
+  const { data: cov } = await (admin as any).rpc("further_match_coverage", {
+    _org_id: organizationId,
+  });
+  const coverage = (cov ?? []) as MatchReport["coverage"];
   return {
-    candidatesExamined: rows.length,
-    externalIdsPresent: withExternal.length,
-    fieldCounts,
-    provenField,
-    activeMatches,
-    unmatched: withExternal.length - activeMatches,
-    note: provenField
-      ? `external_lead_id reconciles to wh_prospects.${provenField}; only that field is used as active evidence.`
-      : "No WelcomeHome field reconciled to Further external_lead_id in the sampled data. No matches were activated.",
+    candidatesExamined: Number(r.examined ?? 0),
+    externalIdsPresent: Number(r.examined ?? 0),
+    activeMatches: Number(r.active ?? 0),
+    conflicts: Number(r.conflicts ?? 0),
+    needsReview: Number(r.needs_review ?? 0),
+    unmatched: Number(r.unmatched ?? 0),
+    coverage,
+    note:
+      "Active evidence is exact_external_id: further.external_lead_id = wh_prospects.source_id, single match, agreeing community. Conflicts and community mismatches are stored for review only.",
   };
 }

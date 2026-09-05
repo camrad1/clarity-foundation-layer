@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.further_activate_matches(uuid) TO postgres;

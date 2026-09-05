@@ -5503,6 +5503,30 @@ export type Database = {
           net_move_ins: number
         }[]
       }
+      further_activate_matches: {
+        Args: { _org_id: string }
+        Returns: {
+          active: number
+          conflicts: number
+          examined: number
+          needs_review: number
+          unmatched: number
+        }[]
+      }
+      further_match_coverage: {
+        Args: { _org_id: string }
+        Returns: {
+          active: number
+          bucket: string
+          conflicts: number
+          leads: number
+          match_rate: number
+          needs_review: number
+          unmatched: number
+          with_external_id: number
+        }[]
+      }
+      further_norm_id: { Args: { _v: string }; Returns: string }
       further_sync_reap_stalled: {
         Args: { _org_id: string; _stall_minutes?: number }
         Returns: Json

@@ -175,11 +175,12 @@ function FurtherAdmin() {
     mutationFn: async () => validateMatches({ data: { connectionId: connectionId! } }),
     onSuccess: async (r) => {
       if (!r.ok || !r.report) toast.error(r.message ?? "Match validation failed.");
-      else if (r.report.provenField)
+      else if (r.report.activeMatches)
         toast.success(
-          `${r.report.activeMatches} matched via ${r.report.provenField}; ${r.report.unmatched} unmatched.`,
+          `${r.report.activeMatches.toLocaleString()} active exact-ID matches · ${r.report.conflicts.toLocaleString()} conflicts · ${r.report.needsReview.toLocaleString()} need review · ${r.report.unmatched.toLocaleString()} unmatched.`,
         );
       else toast.warning(r.report.note);
+
       await refreshAll();
     },
     onError: (e: unknown) => toast.error((e as Error).message),
