@@ -1409,6 +1409,10 @@ function LeadSourceMix({
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {sharePct(r.inquiries, totals.inquiries)}
                     </TableCell>
+                    <TableCell className="text-right tabular-nums">{r.tours.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {sharePct(r.tours, totals.tours)}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{r.moveIns.toLocaleString()}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {sharePct(r.moveIns, totals.moveIns)}
