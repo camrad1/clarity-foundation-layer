@@ -60,7 +60,10 @@ const ADMIN: NavItem[] = [
   { to: "/admin/mappings", label: "Community Mappings", icon: Link2 },
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },
   { to: "/admin/query-rules", label: "Query Classification", icon: Tags },
+  { to: "/admin/search-console-connection", label: "Search Console Connection", icon: PlugZap },
+  { to: "/admin/ga4-connection", label: "GA4 Connection", icon: PlugZap },
   { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
+
   { to: "/admin/forecast-import", label: "Forecast Import", icon: Upload },
   { to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload },
   { to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap },
