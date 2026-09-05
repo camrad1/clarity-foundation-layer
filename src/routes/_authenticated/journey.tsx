@@ -290,6 +290,15 @@ function TransitionRow({ t }: { t: Transition }) {
 function PerformanceJourney() {
   const ctx = useWhContext();
   const scopeMode = useAppState().communityScope.mode;
+  const [sortKey, setSortKey] = useState("inquiries");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const onSort = (key: string) => {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
+  };
   const period: Period = { start: ctx.dateRange.start, end: ctx.dateRange.end };
   const prior = ctx.comparisonRange ?? priorPeriod(period.start, period.end);
   const priorLabel = ctx.comparisonRange
