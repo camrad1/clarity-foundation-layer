@@ -608,78 +608,19 @@ function SalesIntelligence() {
 
         {/* ----------------------------------------------------------- Lead sources */}
         <TabsContent value="sources" className="space-y-6 pt-6">
-          <div className="grid gap-6 xl:grid-cols-2">
-            <ChartCard
-              title="Inquiries by lead source"
-              description="Countable prospects created in the selected period, grouped by the lead source recorded in WelcomeHome."
-              empty={s.leadSources.length === 0 ? "No lead source data for this selection." : undefined}
-              height={Math.max(220, Math.min(s.leadSources.length, 10) * 30 + 50)}
-            >
-              <HorizontalBarChart
-                data={topN(
-                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.inquiries })),
-                  10,
-                )}
-                valueLabel="Inquiries"
-              />
-            </ChartCard>
-            <ChartCard
-              title="Move-ins by lead source"
-              description="Counted move-ins in the period, attributed through the prospect's recorded lead source."
-              empty={s.leadSources.every((r) => r.moveIns === 0) ? "No attributed move-ins in this period." : undefined}
-              height={Math.max(220, Math.min(s.leadSources.length, 10) * 30 + 50)}
-            >
-              <HorizontalBarChart
-                data={topN(
-                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.moveIns })),
-                  10,
-                )}
-                valueLabel="Move-ins"
-                color={CHART_TOKENS.tertiary}
-              />
-            </ChartCard>
-          </div>
-
-          <LeadSourceRatioCard
+          <LeadSourceMix
             rows={s.leadSources.map((r) => ({
               label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
               moveIns: r.moveIns,
             }))}
+            totals={{ inquiries: s.inquiries, moveIns: s.moveIns }}
+            prior={p ? { inquiries: p.inquiries, moveIns: p.moveIns } : null}
+            comparisonLabel={`${formatPeriodLabel(prior)} · ${comparisonLabel}`}
+            utm={s.utm}
           />
-
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold">All lead sources</h2>
-            <DataTable
-              columns={[
-                { key: "src", header: "Lead source", render: (r: any) => resolveLabel(labels.leadSource, r.id, "Unknown lead source") },
-                { key: "inq", header: "Inquiries", align: "right", render: (r: any) => r.inquiries },
-                { key: "mi", header: "Move-ins", align: "right", render: (r: any) => r.moveIns },
-              ]}
-              rows={s.leadSources as any[]}
-              empty={<EmptyState title="No lead source data" />}
-            />
-          </section>
-
-          <Accordion type="single" collapsible className="panel px-5">
-            <AccordionItem value="utm">
-              <AccordionTrigger className="text-sm">Digital metadata coverage (data readiness)</AccordionTrigger>
-              <AccordionContent>
-                <p className="pb-2 text-xs text-muted-foreground">
-                  How often UTM values arrive on prospect records. Cross-source attribution is a
-                  later phase; this is a readiness measurement only.
-                </p>
-                <ul className="text-sm text-muted-foreground">
-                  {Object.entries(s.utm.counts).map(([k, v]) => (
-                    <li key={k}>
-                      {k}: {v} of {s.utm.total} ({pct(ratio(Number(v), s.utm.total))})
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </TabsContent>
+
 
         {/* ------------------------------------------------------ Current occupancy */}
         <TabsContent value="occupancy" className="space-y-6 pt-6">
