@@ -1942,10 +1942,14 @@ export type Database = {
           connection_id: string
           conversions: number | null
           date: string
+          default_channel_group: string | null
+          device_category: string | null
           dim_key: string
           engaged_sessions: number
+          engagement_rate: number | null
           fetched_at: string
           id: string
+          is_partial_day: boolean
           landing_page_path: string | null
           mapped_community_id: string | null
           new_users: number
@@ -1953,6 +1957,9 @@ export type Database = {
           property_id: string
           report: string
           screen_page_views: number
+          session_campaign: string | null
+          session_medium: string | null
+          session_source: string | null
           session_source_medium: string | null
           sessions: number
           source_system: string
@@ -1963,10 +1970,14 @@ export type Database = {
           connection_id: string
           conversions?: number | null
           date: string
+          default_channel_group?: string | null
+          device_category?: string | null
           dim_key: string
           engaged_sessions?: number
+          engagement_rate?: number | null
           fetched_at?: string
           id?: string
+          is_partial_day?: boolean
           landing_page_path?: string | null
           mapped_community_id?: string | null
           new_users?: number
@@ -1974,6 +1985,9 @@ export type Database = {
           property_id: string
           report: string
           screen_page_views?: number
+          session_campaign?: string | null
+          session_medium?: string | null
+          session_source?: string | null
           session_source_medium?: string | null
           sessions?: number
           source_system?: string
@@ -1984,10 +1998,14 @@ export type Database = {
           connection_id?: string
           conversions?: number | null
           date?: string
+          default_channel_group?: string | null
+          device_category?: string | null
           dim_key?: string
           engaged_sessions?: number
+          engagement_rate?: number | null
           fetched_at?: string
           id?: string
+          is_partial_day?: boolean
           landing_page_path?: string | null
           mapped_community_id?: string | null
           new_users?: number
@@ -1995,6 +2013,9 @@ export type Database = {
           property_id?: string
           report?: string
           screen_page_views?: number
+          session_campaign?: string | null
+          session_medium?: string | null
+          session_source?: string | null
           session_source_medium?: string | null
           sessions?: number
           source_system?: string

@@ -33,17 +33,21 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
         if (ok !== true) return json({ error: "Invalid scheduler token" }, 401);
 
         let mode: "plan" | "run" = "run";
+        let service: "search_console" | "ga4" = "search_console";
+        let budgetMs = 40_000;
         try {
-          const body = (await request.json()) as { mode?: string } | null;
+          const body = (await request.json()) as { mode?: string; service?: string; budgetMs?: number } | null;
           if (body?.mode === "plan") mode = "plan";
+          if (body?.service === "ga4") service = "ga4";
+          if (typeof body?.budgetMs === "number") budgetMs = Math.min(300_000, Math.max(5_000, body.budgetMs));
         } catch {
-          /* empty body means: run a slice */
+          /* empty body means: run a Search Console slice */
         }
 
         const { data: connections } = await admin
           .from("google_connections")
           .select("id, organization_id, selected_property_id")
-          .eq("service", "search_console")
+          .eq("service", service)
           .eq("status", "connected");
 
         const { getAccessToken } = await import("@/lib/google/oauth.server");
@@ -57,7 +61,27 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
           }
           try {
             const accessToken = await getAccessToken(admin, conn.id);
-            if (mode === "plan") {
+            if (mode === "plan" && service === "ga4") {
+              results.push({
+                organizationId: conn.organization_id,
+                plan: await backfill.planGa4Backfill(admin, {
+                  organizationId: conn.organization_id,
+                  connectionId: conn.id,
+                  propertyId: conn.selected_property_id,
+                  accessToken,
+                }),
+              });
+            } else if (service === "ga4") {
+              results.push({
+                organizationId: conn.organization_id,
+                slice: await backfill.runGa4BackfillSlice(admin, {
+                  organizationId: conn.organization_id,
+                  propertyId: conn.selected_property_id,
+                  accessToken,
+                  budgetMs,
+                }),
+              });
+            } else if (mode === "plan") {
               results.push({
                 organizationId: conn.organization_id,
                 plan: await backfill.planSearchConsoleBackfill(admin, {
@@ -74,7 +98,7 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
                   organizationId: conn.organization_id,
                   propertyId: conn.selected_property_id,
                   accessToken,
-                  budgetMs: 40_000,
+                  budgetMs,
                 }),
               });
             }
@@ -86,7 +110,7 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
           }
         }
 
-        return json({ ok: true, mode, ranAt: new Date().toISOString(), results });
+        return json({ ok: true, mode, service, ranAt: new Date().toISOString(), results });
       },
     },
   },

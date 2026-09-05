@@ -172,22 +172,71 @@ export function toScFact(grain: ScGrain, keys: string[]) {
 // GA4
 // ------------------------------------------------------------
 
-export type Ga4Report = "daily_totals" | "source_medium" | "landing_page";
+export type Ga4Report =
+  | "daily_totals"
+  | "source_medium"
+  | "landing_page"
+  | "channel_group"
+  | "device"
+  | "source_medium_campaign";
 
+/**
+ * Metric set stored for every GA4 grain. Engagement rate is a ratio and is kept
+ * as reported per row; it is never averaged across rows when reading.
+ */
 const GA4_METRICS = [
   "sessions",
   "activeUsers",
   "newUsers",
   "engagedSessions",
   "screenPageViews",
+  "engagementRate",
 ];
 
+/**
+ * Grains stay separate on purpose. Every report is session-scoped except the
+ * landing page report, and no two grains are merged into one table row.
+ */
 const GA4_DIMENSIONS: Record<Ga4Report, string[]> = {
   daily_totals: ["date"],
   source_medium: ["date", "sessionSourceMedium"],
   landing_page: ["date", "landingPagePlusQueryString"],
+  channel_group: ["date", "sessionDefaultChannelGroup"],
+  device: ["date", "deviceCategory"],
+  source_medium_campaign: ["date", "sessionSource", "sessionMedium", "sessionCampaignName"],
 };
 
+const GA4_PAGE_SIZE = 100000;
+
+/** Retries transient quota (429) and server errors with capped backoff. */
+async function ga4Post(
+  url: string,
+  accessToken: string,
+  body: unknown,
+  events: { retries: number; quotaHits: number },
+): Promise<any> {
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await googlePost(url, accessToken, body);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      const quota = /\[429\]/.test(message);
+      const server = /\[5\d\d\]/.test(message);
+      if ((!quota && !server) || attempt >= 5) throw e;
+      if (quota) events.quotaHits += 1;
+      events.retries += 1;
+      attempt += 1;
+      await new Promise((r) => setTimeout(r, Math.min(30_000, 2000 * 2 ** attempt)));
+    }
+  }
+}
+
+/**
+ * Fully paginated GA4 Data API pull for one grain and date range. Paging walks
+ * `offset` until the reported `rowCount` is exhausted, so nothing is silently
+ * capped.
+ */
 export async function fetchGa4Report(params: {
   accessToken: string;
   propertyId: string;
@@ -195,23 +244,58 @@ export async function fetchGa4Report(params: {
   endDate: string;
   report: Ga4Report;
   limit?: number;
-}): Promise<{ rows: any[]; rowCount: number; sampled: boolean }> {
-  const json = await googlePost(GA4_URL(params.propertyId), params.accessToken, {
-    dateRanges: [{ startDate: params.startDate, endDate: params.endDate }],
-    dimensions: GA4_DIMENSIONS[params.report].map((name) => ({ name })),
-    metrics: GA4_METRICS.map((name) => ({ name })),
-    limit: params.limit ?? 250,
-    orderBys:
-      params.report === "daily_totals"
-        ? [{ dimension: { dimensionName: "date" } }]
-        : [{ metric: { metricName: "sessions" }, desc: true }],
-    keepEmptyRows: false,
-  });
-  return {
-    rows: (json.rows ?? []) as any[],
-    rowCount: Number(json.rowCount ?? (json.rows?.length ?? 0)),
-    sampled: Boolean(json.metadata?.dataLossFromOtherRow),
-  };
+  maxRows?: number;
+}): Promise<{
+  rows: any[];
+  rowCount: number;
+  sampled: boolean;
+  pages: number;
+  timeZone: string | null;
+  truncated: boolean;
+  retries: number;
+  quotaHits: number;
+}> {
+  const pageSize = params.limit ?? GA4_PAGE_SIZE;
+  const maxRows = params.maxRows ?? 1_000_000;
+  const events = { retries: 0, quotaHits: 0 };
+  const out: any[] = [];
+  let offset = 0;
+  let pages = 0;
+  let rowCount = 0;
+  let sampled = false;
+  let timeZone: string | null = null;
+  let truncated = false;
+
+  for (;;) {
+    const json = await ga4Post(
+      GA4_URL(params.propertyId),
+      params.accessToken,
+      {
+        dateRanges: [{ startDate: params.startDate, endDate: params.endDate }],
+        dimensions: GA4_DIMENSIONS[params.report].map((name) => ({ name })),
+        metrics: GA4_METRICS.map((name) => ({ name })),
+        limit: pageSize,
+        offset,
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+        keepEmptyRows: false,
+      },
+      events,
+    );
+    pages += 1;
+    const rows = (json.rows ?? []) as any[];
+    out.push(...rows);
+    rowCount = Number(json.rowCount ?? out.length);
+    sampled = sampled || Boolean(json.metadata?.dataLossFromOtherRow);
+    timeZone = timeZone ?? (json.metadata?.timeZone ?? null);
+    offset += rows.length;
+    if (rows.length === 0 || offset >= rowCount) break;
+    if (out.length >= maxRows) {
+      truncated = true;
+      break;
+    }
+  }
+
+  return { rows: out, rowCount, sampled, pages, timeZone, truncated, retries: events.retries, quotaHits: events.quotaHits };
 }
 
 /** GA4 returns dates as YYYYMMDD. */
@@ -219,20 +303,67 @@ export function ga4Date(raw: string): string {
   return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
 }
 
+/**
+ * Maps one GA4 row onto the storage shape for its grain. Dimension values are
+ * stored verbatim (actual calendar date, landing page path, source, medium,
+ * campaign, channel group, device) — nothing is normalized away.
+ */
 export function toGa4Fact(report: Ga4Report, row: any) {
   const dims = (row.dimensionValues ?? []).map((d: any) => d.value as string);
   const m = (row.metricValues ?? []).map((v: any) => Number(v.value ?? 0));
-  const secondary = dims[1] ?? null;
-  return {
+  const d1 = dims[1] ?? null;
+
+  const fact = {
     report,
     date: ga4Date(dims[0] ?? ""),
-    session_source_medium: report === "source_medium" ? secondary : null,
-    landing_page_path: report === "landing_page" ? secondary : null,
-    dim_key: (secondary ?? "-").toLowerCase(),
+    session_source_medium: null as string | null,
+    session_source: null as string | null,
+    session_medium: null as string | null,
+    session_campaign: null as string | null,
+    default_channel_group: null as string | null,
+    device_category: null as string | null,
+    landing_page_path: null as string | null,
+  };
+
+  switch (report) {
+    case "source_medium":
+      fact.session_source_medium = d1;
+      break;
+    case "landing_page":
+      fact.landing_page_path = d1;
+      break;
+    case "channel_group":
+      fact.default_channel_group = d1;
+      break;
+    case "device":
+      fact.device_category = d1;
+      break;
+    case "source_medium_campaign":
+      fact.session_source = d1;
+      fact.session_medium = dims[2] ?? null;
+      fact.session_campaign = dims[3] ?? null;
+      fact.session_source_medium = `${d1 ?? ""} / ${dims[2] ?? ""}`;
+      break;
+    default:
+      break;
+  }
+
+  // Case is significant: GA4 reports e.g. "Google / organic" and
+  // "google / organic" as distinct dimension values, so the key is stored
+  // verbatim rather than lower-cased.
+  const dimKeyValue =
+    report === "source_medium_campaign"
+      ? [fact.session_source ?? "", fact.session_medium ?? "", fact.session_campaign ?? ""].join("\u0001")
+      : (d1 ?? "-");
+
+  return {
+    ...fact,
+    dim_key: dimKeyValue,
     sessions: m[0] ?? 0,
     active_users: m[1] ?? 0,
     new_users: m[2] ?? 0,
     engaged_sessions: m[3] ?? 0,
     screen_page_views: m[4] ?? 0,
+    engagement_rate: Number.isFinite(m[5]) ? m[5] : null,
   };
 }
