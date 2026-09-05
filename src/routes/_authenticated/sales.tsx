@@ -255,6 +255,7 @@ function SalesIntelligence() {
             <TabsTrigger value="occupancy-history">Occupancy history</TabsTrigger>
             <TabsTrigger value="inquiries">New inquiries</TabsTrigger>
             <TabsTrigger value="sources">Lead sources</TabsTrigger>
+            <TabsTrigger value="conversion">Conversion rates</TabsTrigger>
             <TabsTrigger value="mi-sources">Move-ins by lead source</TabsTrigger>
             <TabsTrigger value="lost-leads">Lost leads</TabsTrigger>
             <TabsTrigger value="move-out-reasons">Move-out reasons</TabsTrigger>
