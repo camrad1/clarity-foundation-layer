@@ -624,10 +624,12 @@ function SalesIntelligence() {
               id: r.id,
               label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
+              tours: r.tours ?? 0,
               moveIns: r.moveIns,
             }))}
-            totals={{ inquiries: s.inquiries, moveIns: s.moveIns }}
-            prior={p ? { inquiries: p.inquiries, moveIns: p.moveIns } : null}
+            totals={{ inquiries: s.inquiries, tours: s.tours, moveIns: s.moveIns }}
+            reTours={s.reTours}
+            prior={p ? { inquiries: p.inquiries, tours: p.tours, moveIns: p.moveIns } : null}
             comparisonLabel={`${formatPeriodLabel(prior)} · ${comparisonLabel}`}
             utm={s.utm}
           />
@@ -1188,8 +1190,15 @@ function CounselorChart({
  * Shares are always taken against the period/community totals in scope, not
  * against the visible slice of rows.
  */
-type LeadSourceRow = { id: string; label: string; inquiries: number; moveIns: number };
-type SourceSortKey = "label" | "inquiries" | "inquiryShare" | "moveIns" | "moveInShare";
+type LeadSourceRow = { id: string; label: string; inquiries: number; tours: number; moveIns: number };
+type SourceSortKey =
+  | "label"
+  | "inquiries"
+  | "inquiryShare"
+  | "tours"
+  | "tourShare"
+  | "moveIns"
+  | "moveInShare";
 const SOURCE_LIMITS = [
   { value: 5, label: "Top 5" },
   { value: 10, label: "Top 10" },
@@ -1199,13 +1208,15 @@ const SOURCE_LIMITS = [
 function LeadSourceMix({
   rows,
   totals,
+  reTours,
   prior,
   comparisonLabel,
   utm,
 }: {
   rows: LeadSourceRow[];
-  totals: { inquiries: number; moveIns: number };
-  prior: { inquiries: number; moveIns: number } | null;
+  totals: { inquiries: number; tours: number; moveIns: number };
+  reTours: number;
+  prior: { inquiries: number; tours: number; moveIns: number } | null;
   comparisonLabel: string;
   utm: { total: number; counts: Record<string, number> };
 }) {
@@ -1220,15 +1231,19 @@ function LeadSourceMix({
   const attributed = useMemo(
     () =>
       rows.reduce(
-        (acc, r) => ({ inquiries: acc.inquiries + r.inquiries, moveIns: acc.moveIns + r.moveIns }),
-        { inquiries: 0, moveIns: 0 },
+        (acc, r) => ({
+          inquiries: acc.inquiries + r.inquiries,
+          tours: acc.tours + r.tours,
+          moveIns: acc.moveIns + r.moveIns,
+        }),
+        { inquiries: 0, tours: 0, moveIns: 0 },
       ),
     [rows],
   );
 
   const sorted = useMemo(() => {
     const share = (n: number, d: number) => (d > 0 ? n / d : 0);
-    const value = (r: LeadSourceRow) => {
+    const value = (r: LeadSourceRow): string | number => {
       switch (sort.key) {
         case "label":
           return r.label.toLowerCase();
@@ -1236,6 +1251,10 @@ function LeadSourceMix({
           return r.inquiries;
         case "inquiryShare":
           return share(r.inquiries, totals.inquiries);
+        case "tours":
+          return r.tours;
+        case "tourShare":
+          return share(r.tours, totals.tours);
         case "moveIns":
           return r.moveIns;
         case "moveInShare":
@@ -1283,13 +1302,21 @@ function LeadSourceMix({
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SourceTotalCard
           label="Inquiries in period"
           value={totals.inquiries}
           attributed={attributed.inquiries}
           change={prior ? changePct(totals.inquiries, prior.inquiries) : null}
           comparisonLabel={comparisonLabel}
+        />
+        <SourceTotalCard
+          label="Tours in period"
+          value={totals.tours}
+          attributed={attributed.tours}
+          change={prior ? changePct(totals.tours, prior.tours) : null}
+          comparisonLabel={comparisonLabel}
+          note={`Includes ${reTours.toLocaleString()} re-tour${reTours === 1 ? "" : "s"}`}
         />
         <SourceTotalCard
           label="Move-ins in period"
@@ -1300,7 +1327,7 @@ function LeadSourceMix({
         />
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
         <ChartCard
           title="Inquiries by lead source"
           description="Countable prospects created in the selected period, grouped by the lead source recorded in WelcomeHome. Share is of all inquiries in scope."
@@ -1311,6 +1338,19 @@ function LeadSourceMix({
             data={topN(rows.map((r) => ({ label: r.label, value: r.inquiries })), 10)}
             valueLabel="Inquiries"
             shareTotal={totals.inquiries}
+          />
+        </ChartCard>
+        <ChartCard
+          title="Tours by lead source"
+          description="Completed tours in the period (mapped tour activity with a successful result, re-tours included), attributed through the touring prospect's recorded lead source. Share is of all tours in scope."
+          empty={attributed.tours === 0 ? "No attributed tours in this period." : undefined}
+          height={Math.max(220, Math.min(rows.length, 10) * 30 + 50)}
+        >
+          <HorizontalBarChart
+            data={topN(rows.map((r) => ({ label: r.label, value: r.tours })), 10)}
+            valueLabel="Tours"
+            color={CHART_TOKENS.secondary}
+            shareTotal={totals.tours}
           />
         </ChartCard>
         <ChartCard
@@ -1354,6 +1394,8 @@ function LeadSourceMix({
                   <TableHead>{sortButton("label", "Lead source", "left")}</TableHead>
                   <TableHead className="text-right">{sortButton("inquiries", "Inquiries")}</TableHead>
                   <TableHead className="text-right">{sortButton("inquiryShare", "% of inquiries")}</TableHead>
+                  <TableHead className="text-right">{sortButton("tours", "Tours")}</TableHead>
+                  <TableHead className="text-right">{sortButton("tourShare", "% of tours")}</TableHead>
                   <TableHead className="text-right">{sortButton("moveIns", "Move-ins")}</TableHead>
                   <TableHead className="text-right">{sortButton("moveInShare", "% of move-ins")}</TableHead>
                 </TableRow>
@@ -1366,6 +1408,10 @@ function LeadSourceMix({
                     <TableCell className="text-right tabular-nums">{r.inquiries.toLocaleString()}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {sharePct(r.inquiries, totals.inquiries)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{r.tours.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {sharePct(r.tours, totals.tours)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{r.moveIns.toLocaleString()}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
@@ -1380,7 +1426,8 @@ function LeadSourceMix({
         <p className="text-xs text-muted-foreground">
           {sorted.length} lead source{sorted.length === 1 ? "" : "s"} in scope
           {hiddenCount > 0 ? ` · ${hiddenCount} hidden by the current display limit` : ""} ·{" "}
-          {attributed.inquiries.toLocaleString()} of {totals.inquiries.toLocaleString()} inquiries and{" "}
+          {attributed.inquiries.toLocaleString()} of {totals.inquiries.toLocaleString()} inquiries,{" "}
+          {attributed.tours.toLocaleString()} of {totals.tours.toLocaleString()} tours and{" "}
           {attributed.moveIns.toLocaleString()} of {totals.moveIns.toLocaleString()} move-ins carry a
           recorded lead source. Percentages are shares of the totals in scope, so an unrecorded
           source is never redistributed.
@@ -1415,12 +1462,14 @@ function SourceTotalCard({
   attributed,
   change,
   comparisonLabel,
+  note,
 }: {
   label: string;
   value: number;
   attributed: number;
   change: number | null;
   comparisonLabel: string;
+  note?: string;
 }) {
   const tone = change == null ? "neutral" : change > 0 ? "up" : change < 0 ? "down" : "neutral";
   const Icon = tone === "up" ? ArrowUpRight : tone === "down" ? ArrowDownRight : ArrowRight;
@@ -1452,6 +1501,7 @@ function SourceTotalCard({
           {attributed.toLocaleString()} with a recorded source
         </span>
       </div>
+      {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
     </div>
   );
 }

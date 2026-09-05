@@ -82,7 +82,7 @@ export type WhSalesSummary = {
     linkageCoverage: number | null;
   };
   counselors: { id: string; activities: number; tours: number; moveIns: number; pipeline: number }[];
-  leadSources: { id: string; inquiries: number; moveIns: number }[];
+  leadSources: { id: string; inquiries: number; tours?: number; moveIns: number }[];
   utm: { total: number; counts: Record<string, number> };
   occupancy: {
     /** Every WelcomeHome Unit record, including non-residential pseudo-units. */
