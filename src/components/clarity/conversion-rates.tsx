@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
 import { EmptyState } from "@/components/clarity/empty-state";
 import {
@@ -77,7 +77,7 @@ export function ConversionRatesTab({
   }, [range.start, range.end]);
 
   // Long ranges default to monthly cohorts; short ones to weekly/daily.
-  const defaultGrain: GrainOption = days > 92 ? "month" : days > 31 ? "week" : "day";
+  const defaultGrain: GrainOption = days > 92 ? "month" : days > 21 ? "week" : "day";
   const [grain, setGrain] = useState<GrainOption | null>(null);
   const activeGrain = grain ?? defaultGrain;
   const series = useWhConversionSeries(organizationId, communityIds, range.start, range.end, activeGrain);
@@ -100,6 +100,7 @@ export function ConversionRatesTab({
   const single = communityIds.length === 1;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-8">
       <CohortKpis c={c} prev={prev} priorLabel={priorLabel} comparisonLabel={comparisonLabel} onDrill={onDrill} />
 
@@ -173,6 +174,7 @@ export function ConversionRatesTab({
 
       <Methodology c={c} />
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -192,6 +194,10 @@ function CohortKpis({
   onDrill: (tab: string) => void;
 }) {
   const cmpNote = `${priorLabel} · ${comparisonLabel}`;
+  // Deposits exist in the period but none of them tie back to a cohort
+  // prospect: the cohort deposit chain cannot be evaluated for this scope, so
+  // the two deposit-dependent rates are withheld rather than shown as 0%.
+  const depositLinkage = !(c.cohort.deposited === 0 && c.period.deposits > 0);
   const cards = [
     {
       label: "Inquiry → Tour",
@@ -215,6 +221,7 @@ function CohortKpis({
       denLabel: "cohort prospects who toured",
       provisional: true,
       drill: "funnel",
+      unavailable: !depositLinkage,
       tip: "Within the same inquiry cohort: of the prospects who completed a tour, the share who later placed a standard deposit (transaction type Deposit, amount above zero). The deposit stage is provisional.",
     },
     {
@@ -227,6 +234,7 @@ function CohortKpis({
       denLabel: "cohort prospects who deposited",
       provisional: true,
       drill: "funnel",
+      unavailable: !depositLinkage,
       tip: "Within the same inquiry cohort: of the prospects who placed a standard deposit, the share with a counted move-in on a non-canceled contract. The deposit stage is provisional.",
     },
     {
@@ -284,6 +292,7 @@ function RateCard({
   tip,
   comparisonNote,
   drill,
+  unavailable,
   onDrill,
 }: {
   label: string;
@@ -297,6 +306,8 @@ function RateCard({
   tip: string;
   comparisonNote: string;
   drill: string;
+  /** Stage cannot be evaluated on the cohort chain — withhold, never show 0%. */
+  unavailable?: boolean;
   onDrill: (tab: string) => void;
 }) {
   const delta = current != null && previous != null ? current - previous : null;
@@ -314,8 +325,10 @@ function RateCard({
         </Tooltip>
       </div>
       <div className="flex flex-wrap items-baseline gap-2">
-        <p className="font-display text-2xl font-semibold tracking-tight text-brand">{pct1(current)}</p>
-        {delta != null ? (
+        <p className="font-display text-2xl font-semibold tracking-tight text-brand">
+          {unavailable ? <span className="text-lg text-muted-foreground">Not yet linkable</span> : pct1(current)}
+        </p>
+        {!unavailable && delta != null ? (
           <span
             className={cn(
               "inline-flex items-center gap-0.5 text-xs font-medium",
@@ -344,7 +357,9 @@ function RateCard({
         ) : null}
       </div>
       <p className="text-xs text-muted-foreground">
-        {(num ?? 0).toLocaleString()} {numLabel} ÷ {den.toLocaleString()} {denLabel}
+        {unavailable
+          ? "Deposits are recorded in this period but none can be tied back to a prospect in this inquiry cohort, so the rate is withheld rather than reported as zero. Period deposit counts are in the activity ratios below."
+          : `${(num ?? 0).toLocaleString()} ${numLabel} ÷ ${den.toLocaleString()} ${denLabel}`}
       </p>
       <button
         type="button"
@@ -360,6 +375,7 @@ function RateCard({
 /* --------------------------------------------------------------- the funnel */
 
 function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) => void }) {
+  const depositLinkage = !(c.cohort.deposited === 0 && c.period.deposits > 0);
   const stages = [
     { label: "Inquiries", value: c.cohort.size, provisional: false },
     { label: "Toured", value: c.cohort.toured ?? 0, provisional: false },
@@ -376,6 +392,20 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
           prospect is counted once per stage, so the steps always reconcile down the chain.
         </p>
       </div>
+      {!depositLinkage ? (
+        <p className="rounded-md bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning-foreground">
+          The deposit step is blank because no deposit in this period can be matched back to a prospect in this
+          inquiry cohort. Deposits themselves are counted — {c.period.deposits.toLocaleString()} in the period — but
+          the link from deposit to originating inquiry is not yet reliable, which is part of the known provisional
+          status of the deposit metric.
+        </p>
+      ) : null}
+      {c.period.tours === 0 && c.period.inquiries > 0 ? (
+        <p className="rounded-md bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning-foreground">
+          No completed tours are recorded for this selection, so every tour-based rate reads zero. That normally means
+          tour activity types are not yet mapped for this community rather than that no tours happened.
+        </p>
+      ) : null}
       <div className="space-y-3">
         {stages.map((stage, i) => {
           const prevStage = i > 0 ? stages[i - 1]!.value : null;
@@ -393,9 +423,11 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
                 </span>
                 <span className="text-xs text-muted-foreground">
                   <span className="font-display text-sm font-semibold tabular-nums text-foreground">
-                    {stage.value.toLocaleString()}
+                    {stage.label === "Deposited" && !depositLinkage ? "—" : stage.value.toLocaleString()}
                   </span>
-                  {step != null ? <span className="ml-2">{pct1(step)} of previous stage</span> : null}
+                  {step != null && depositLinkage ? (
+                    <span className="ml-2">{pct1(step)} of previous stage</span>
+                  ) : null}
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-brand-soft">

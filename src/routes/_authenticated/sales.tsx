@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
+import { ConversionRatesTab } from "@/components/clarity/conversion-rates";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { CandidateMetricCard, ProvisionalBadge, WithheldPanel } from "@/components/clarity/provisional";
@@ -255,6 +256,7 @@ function SalesIntelligence() {
             <TabsTrigger value="occupancy-history">Occupancy history</TabsTrigger>
             <TabsTrigger value="inquiries">New inquiries</TabsTrigger>
             <TabsTrigger value="sources">Lead sources</TabsTrigger>
+            <TabsTrigger value="conversion">Conversion rates</TabsTrigger>
             <TabsTrigger value="mi-sources">Move-ins by lead source</TabsTrigger>
             <TabsTrigger value="lost-leads">Lost leads</TabsTrigger>
             <TabsTrigger value="move-out-reasons">Move-out reasons</TabsTrigger>
@@ -631,6 +633,21 @@ function SalesIntelligence() {
           />
         </TabsContent>
 
+        {/* -------------------------------------------------------- Conversion rates */}
+        <TabsContent value="conversion" className="space-y-6 pt-6">
+          <ConversionRatesTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            range={ctx.dateRange}
+            prior={prior}
+            comparisonLabel={comparisonLabel}
+            priorLabel={formatPeriodLabel(prior)}
+            communityNames={ctx.communityNames}
+            counselorLabel={(id) => resolveLabel(labels.user, id, "Unassigned")}
+            leadSourceLabel={(id) => resolveLabel(labels.leadSource, id, "Unknown lead source")}
+            onDrill={(t) => setTab(t)}
+          />
+        </TabsContent>
 
         {/* ------------------------------------------------------ Current occupancy */}
         <TabsContent value="occupancy" className="space-y-6 pt-6">
