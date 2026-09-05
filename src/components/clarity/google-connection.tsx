@@ -149,6 +149,24 @@ export function GoogleConnectionPage({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const runValidation = useServerFn(googleValidationSync);
+  const runCompare = useServerFn(googleCompareSearchConsole);
+
+  const validation = useMutation({
+    mutationFn: async () =>
+      await runValidation({ data: { organizationId: organizationId!, service, days: 5 } }),
+    onSuccess: () => {
+      toast.success("Validation pull finished");
+      void qc.invalidateQueries({ queryKey: ["google_connection"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const compare = useMutation({
+    mutationFn: async () => await runCompare({ data: { organizationId: organizationId! } }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const unlink = useMutation({
     mutationFn: async () => await disconnect({ data: { organizationId: organizationId!, service } }),
     onSuccess: () => {
