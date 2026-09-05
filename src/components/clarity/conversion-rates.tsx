@@ -526,7 +526,9 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
                     {stage.label === "Deposited" && !depositLinkage ? "—" : stage.value.toLocaleString()}
                   </span>
                   {step != null && depositLinkage ? (
-                    <span className="ml-2">{pct1(step)} of previous stage</span>
+                    <span className="ml-2">
+                      {pct1(step)} of previous stage · {pct1(stage.value / base)} of the cohort
+                    </span>
                   ) : null}
                 </span>
               </div>
@@ -540,6 +542,7 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
           );
         })}
       </div>
+      <CohortVsPeriodNote c={c} />
       <button
         type="button"
         onClick={() => onDrill("funnel")}
@@ -548,6 +551,27 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
         Open the funnel tab for record-level tours, deposits and move-ins
       </button>
     </section>
+  );
+}
+
+/**
+ * Deterministic sentence explaining why move-ins recorded during the period can
+ * differ from move-ins belonging to the selected inquiry cohort. Counts come
+ * straight from the RPC; nothing is recalculated.
+ */
+function CohortVsPeriodNote({ c }: { c: WhConversion }) {
+  const periodMi = c.period.moveIns;
+  const cohortMi = c.cohort.movedIn;
+  if (periodMi === 0 && cohortMi === 0) return null;
+  if (periodMi === cohortMi) return null;
+  const sentence =
+    cohortMi === 0
+      ? `${periodMi.toLocaleString()} move-in${periodMi === 1 ? "" : "s"} occurred during the selected period, but none came from this inquiry cohort — those residents inquired earlier.`
+      : `${periodMi.toLocaleString()} move-in${periodMi === 1 ? "" : "s"} occurred during the selected period, but only ${cohortMi.toLocaleString()} came from this inquiry cohort. The rest belong to people who inquired before the period, and some of this cohort will move in later.`;
+  return (
+    <p className="rounded-md bg-brand-soft px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+      {sentence} Both numbers are correct; they answer different questions.
+    </p>
   );
 }
 
@@ -913,7 +937,7 @@ function SingleCommunityView({
   const row = c.byCommunity[0];
   if (!row) return null;
   const name = communityNames[row.id] ?? "Selected community";
-  const items = [
+  const cohortItems = [
     { label: "Inquiries (cohort)", value: row.inquiries.toLocaleString(), note: "Prospects who inquired in the period" },
     { label: "Toured", value: row.toured.toLocaleString(), note: pct1(rate(row.toured, row.inquiries)) + " of the cohort" },
     { label: "Deposited", value: row.deposited.toLocaleString(), note: pct1(rate(row.deposited, row.inquiries)) + " of the cohort · provisional" },
@@ -923,9 +947,17 @@ function SingleCommunityView({
       value: pct1(rate(row.touredThenMovedIn, row.toured)),
       note: `${row.touredThenMovedIn.toLocaleString()} of ${row.toured.toLocaleString()} toured prospects moved in`,
     },
-    { label: "Tours recorded in period", value: row.periodTours.toLocaleString(), note: "Activity in the period, any cohort" },
-    { label: "Move-ins recorded in period", value: row.periodMoveIns.toLocaleString(), note: "Activity in the period, any cohort" },
   ];
+  const periodItems = [
+    { label: "Tours recorded in period", value: row.periodTours.toLocaleString(), note: "Any prospect, any inquiry date" },
+    { label: "Move-ins recorded in period", value: row.periodMoveIns.toLocaleString(), note: "Any prospect, any inquiry date" },
+  ];
+  const periodNote =
+    row.periodMoveIns === row.movedIn
+      ? null
+      : row.movedIn === 0
+        ? `${row.periodMoveIns.toLocaleString()} move-in${row.periodMoveIns === 1 ? "" : "s"} were recorded at ${name} during the period, but none came from this inquiry cohort — those residents inquired earlier.`
+        : `${row.periodMoveIns.toLocaleString()} move-ins were recorded at ${name} during the period, but only ${row.movedIn.toLocaleString()} came from this inquiry cohort.`;
   return (
     <section className="space-y-3">
       <div className="space-y-1">
@@ -935,8 +967,9 @@ function SingleCommunityView({
           stages and period activity are listed separately.
         </p>
       </div>
+      <p className="eyebrow">Cohort outcomes — this period's inquiries, followed forward</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((i) => (
+        {cohortItems.map((i) => (
           <div key={i.label} className="panel space-y-1 p-4">
             <p className="eyebrow">{i.label}</p>
             <p className="font-display text-xl font-semibold text-brand">{i.value}</p>
@@ -944,6 +977,21 @@ function SingleCommunityView({
           </div>
         ))}
       </div>
+      <p className="eyebrow pt-1">Activity recorded during the period — a different question</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {periodItems.map((i) => (
+          <div key={i.label} className="panel space-y-1 border-dashed p-4">
+            <p className="eyebrow">{i.label}</p>
+            <p className="font-display text-xl font-semibold text-foreground">{i.value}</p>
+            <p className="text-xs text-muted-foreground">{i.note}</p>
+          </div>
+        ))}
+      </div>
+      {periodNote ? (
+        <p className="rounded-md bg-brand-soft px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          {periodNote} Both numbers are correct; they answer different questions.
+        </p>
+      ) : null}
     </section>
   );
 }
