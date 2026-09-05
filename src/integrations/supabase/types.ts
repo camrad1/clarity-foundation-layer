@@ -5981,6 +5981,25 @@ export type Database = {
           total_unit_records: number
         }[]
       }
+      wh_conversion_rates: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
+      wh_conversion_series: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _grain?: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
       wh_current_occupancy: {
         Args: { _community_ids?: string[]; _org_id: string }
         Returns: Json
