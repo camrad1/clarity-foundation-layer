@@ -1473,6 +1473,7 @@ function SourceTotalCard({
           {attributed.toLocaleString()} with a recorded source
         </span>
       </div>
+      {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
     </div>
   );
 }
