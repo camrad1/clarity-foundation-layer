@@ -41,6 +41,11 @@ import {
   formatPeriodLabel,
   formatRangeLabel,
 } from "@/lib/date-ranges";
+import {
+  GA4_SOURCE_LABEL,
+  ga4Coverage,
+  useGa4Totals,
+} from "@/lib/google/ga4-queries";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
@@ -375,6 +380,9 @@ function Overview() {
         gscLoading={gsc.isLoading}
         rangeLabel={formatRangeLabel(dateRange)}
         period={{ start, end }}
+        organizationId={ctx.organizationId}
+        communityIds={ctx.communityIds}
+        communityFiltered={ctx.communityIds.length > 0 && communityScope.mode !== "all"}
       />
 
       {/* 5 — Community Watchlist ------------------------------------------ */}
@@ -534,6 +542,9 @@ function MarketingSalesPulse({
   gscLoading,
   rangeLabel,
   period,
+  organizationId,
+  communityIds,
+  communityFiltered,
 }: {
   loading: boolean;
   /** The sales aggregate did not return; values render as "—" rather than 0. */
@@ -543,6 +554,9 @@ function MarketingSalesPulse({
   gscLoading: boolean;
   rangeLabel: string;
   period: { start: string; end: string };
+  organizationId: string | null;
+  communityIds: string[];
+  communityFiltered: boolean;
 }) {
   // Search Console coverage is stated honestly: daily facts either cover the
   // selected range or they do not. Nothing is prorated or estimated.
@@ -614,9 +628,97 @@ function MarketingSalesPulse({
           ) : (
             <UnavailableCard label="Organic search impressions" />
           )}
+          <Ga4PulseCards
+            organizationId={organizationId}
+            period={period}
+            communityIds={communityFiltered ? communityIds : null}
+            communityFiltered={communityFiltered}
+          />
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Website traffic from the canonical GA4 API layer. Sessions and engaged
+ * sessions only — GA4 never redefines inquiries, tours, deposits, move-ins or
+ * occupancy. Partial current-day rows are excluded, and community scope uses
+ * only landing pages a deterministic URL rule mapped, never a split of
+ * property-wide totals.
+ */
+function Ga4PulseCards({
+  organizationId,
+  period,
+  communityIds,
+  communityFiltered,
+}: {
+  organizationId: string | null;
+  period: { start: string; end: string };
+  communityIds: string[] | null;
+  communityFiltered: boolean;
+}) {
+  const totals = useGa4Totals(organizationId, period, communityIds);
+  const scopeNote = communityFiltered
+    ? "Mapped landing pages for the selected communities"
+    : "Property-wide website traffic";
+
+  if (totals.isLoading) {
+    return (
+      <>
+        <div className="kpi-card h-28 animate-pulse" />
+        <div className="kpi-card h-28 animate-pulse" />
+      </>
+    );
+  }
+
+  const data = totals.data;
+  if (!data || !data.sessions) {
+    return (
+      <div className="kpi-card h-full space-y-1.5 p-5">
+        <p className="eyebrow">Website sessions</p>
+        <p className="font-display text-2xl font-semibold tracking-tight text-muted-foreground">
+          {na}
+        </p>
+        <p className="text-xs leading-snug text-muted-foreground">
+          {communityFiltered
+            ? "No mapped landing-page traffic for these communities in this range."
+            : "No GA4 data covers this date range."}{" "}
+          {GA4_SOURCE_LABEL}.
+        </p>
+      </div>
+    );
+  }
+
+  const coverage = ga4Coverage(data, period);
+  const partialNote =
+    coverage.extent === "partial"
+      ? `GA4 covers ${data.first_date} – ${data.last_date} of this range`
+      : `${data.days} complete days · ${GA4_SOURCE_LABEL}`;
+
+  return (
+    <>
+      <KpiCard
+        label="Website sessions"
+        value={num(data.sessions)}
+        badge={coverage.extent === "partial" ? "Partial" : "GA4"}
+        context={`${partialNote} · ${scopeNote}`}
+        to="/marketing"
+      />
+      <KpiCard
+        label="Engaged sessions"
+        value={num(data.engaged_sessions)}
+        badge="GA4"
+        context={
+          data.engagement_rate == null
+            ? `${num(data.active_users)} active users`
+            : `${(Number(data.engagement_rate) * 100).toFixed(1)}% engagement rate · ${num(
+                data.active_users,
+              )} active users`
+        }
+        to="/marketing"
+      />
+    </>
   );
 }
 
