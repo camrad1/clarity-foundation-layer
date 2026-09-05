@@ -115,7 +115,7 @@ export function useFurtherCounts(organizationId: string | null, connectionId: st
     queryFn: async (): Promise<FurtherCounts> => {
       const head = async (table: string, filters: (q: any) => any) => {
         const { count, error } = await filters(
-          supabase.from(table).select("id", { count: "exact", head: true }),
+          (supabase as any).from(table).select("id", { count: "exact", head: true }),
         );
         if (error) throw error;
         return count ?? 0;
@@ -154,7 +154,7 @@ export function useFurtherFreshness(organizationId: string | null) {
     enabled: !!organizationId,
     queryFn: async () => {
       const latest = async (table: string, column: string) => {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from(table)
           .select(column)
           .eq("organization_id", organizationId!)
