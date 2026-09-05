@@ -65,6 +65,7 @@ const ADMIN: NavItem[] = [
   { to: "/admin/occupancy-history", label: "Occupancy History Import", icon: Upload },
   { to: "/admin/welcomehome", label: "WelcomeHome Connection", icon: PlugZap },
   { to: "/admin/wh-mappings", label: "WelcomeHome Mapping", icon: Link2 },
+  { to: "/admin/further", label: "Further Connection", icon: PlugZap },
   { to: "/admin/data-sources", label: "Data Sources", icon: Database },
   { to: "/admin/metrics", label: "Metric Registry", icon: Ruler },
   { to: "/admin/goals", label: "Goals", icon: Goal },
