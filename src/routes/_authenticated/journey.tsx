@@ -231,33 +231,32 @@ function PerformanceJourney() {
   // than fired together, so a wide range (year to date, all communities) does
   // not saturate the database connection and time out.
   const wh = useWhSalesSummary(ctx.organizationId, ctx.communityIds, period.start, period.end);
-  const waveTwo = wh.isFetched || wh.isError;
 
   // Visibility — Search Console API (property-wide) or the deterministic
   // page-mapping rules when exactly one community is selected.
   const searchNow = useSearchDailyTotals(
     ctx.organizationId,
-    waveTwo && !singleCommunity ? period : null,
+    singleCommunity ? null : period,
   );
   const commSearchNow = useCommunityVisibility(
     ctx.organizationId,
-    waveTwo ? singleCommunity : null,
+    singleCommunity,
     period,
   );
 
   // Traffic — GA4 API. Portfolio uses property-wide totals; a community scope
   // uses only mapped landing pages. Partial current days are excluded.
-  const ga4Now = useGa4Totals(ctx.organizationId, waveTwo ? period : null, ctx.communityIds);
+  const ga4Now = useGa4Totals(ctx.organizationId, period, ctx.communityIds);
 
   // Conversations — Further leads and their active exact-ID matches.
   const furtherNow = useJourneyFurther(
     ctx.organizationId,
     ctx.communityIds,
-    waveTwo ? period : null,
+    period,
   );
 
   const currentDone =
-    waveTwo &&
+    (wh.isFetched || wh.isError) &&
     (singleCommunity ? commSearchNow.isFetched || commSearchNow.isError : searchNow.data !== undefined || !searchNow.isLoading) &&
     (ga4Now.isFetched || ga4Now.isError) &&
     (furtherNow.isFetched || furtherNow.isError);
@@ -329,7 +328,7 @@ function PerformanceJourney() {
   );
   const ga4Health = useGa4Health(priorDone ? ctx.organizationId : null);
 
-  const occDone = priorDone && (occupancy.isFetched || occupancy.isError);
+  const occDone = priorDone;
 
   const grain = grainForPeriod(period);
   const series = useJourneySeries(
