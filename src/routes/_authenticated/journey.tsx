@@ -705,25 +705,111 @@ function PerformanceJourney() {
     [series.data, grain],
   );
 
+  /* ------------------------------------------------- deterministic snapshot */
+
+  // Every observation below restates a value already computed by a canonical
+  // layer. Nothing is inferred, and no causal wording is used.
+  const snapshot: string[] = [];
+  {
+    const dSessions = delta(ga4Now.data?.sessions ?? null, ga4Prior.data?.sessions ?? null);
+    const dInq = delta(wh.data?.inquiries ?? null, whPrior.data?.inquiries ?? null);
+    if (dSessions && dInq) {
+      snapshot.push(
+        `Website sessions ${dSessions.label === "No change" ? "were flat" : `moved ${dSessions.label}`} while new inquiries ${
+          dInq.label === "No change" ? "were flat" : `moved ${dInq.label}`
+        }.`,
+      );
+    }
+    const matchRate = ratePct(f?.matched ?? 0, f?.leads ?? 0);
+    if (f?.leads) {
+      snapshot.push(
+        `${fmtPct(matchRate)} of ${fmt(f.leads)} Further leads matched exactly to a WelcomeHome prospect.`,
+      );
+    }
+    const tourRate = ratePct(wh.data?.tours ?? 0, wh.data?.inquiries ?? 0);
+    if (wh.data?.inquiries) {
+      snapshot.push(
+        `Tours ran at ${fmtPct(tourRate)} of new inquiries in the selected period (${fmt(
+          wh.data.tours,
+        )} of ${fmt(wh.data.inquiries)}).`,
+      );
+    }
+    if (wh.data) {
+      const net = wh.data.moveIns - wh.data.moveOuts;
+      snapshot.push(
+        `${fmt(wh.data.moveIns)} move-ins and ${fmt(wh.data.moveOuts)} move-outs produced ${
+          net > 0 ? "+" : ""
+        }${fmt(net)} net movement.`,
+      );
+    }
+    const dVis = delta(vis.clicks, visPrior.clicks);
+    if (dVis && snapshot.length < 4) {
+      snapshot.push(`Search clicks moved ${dVis.label} against the comparison period.`);
+    }
+  }
+  const snapshotLoading = wh.isLoading || ga4Now.isLoading || furtherNow.isLoading;
+
+  /* ----------------------------------------- matched digital conversations */
+
+  const matchedCohort = f
+    ? [
+        { label: "Exact matched leads", value: f.matched, rate: null as number | null },
+        { label: "Toured", value: f.matched_toured, rate: ratePct(f.matched_toured, f.matched) },
+        {
+          label: "Deposited",
+          value: f.matched_deposited,
+          rate: ratePct(f.matched_deposited, f.matched),
+        },
+        {
+          label: "Moved in",
+          value: f.matched_moved_in,
+          rate: ratePct(f.matched_moved_in, f.matched),
+        },
+      ]
+    : [];
+
+  /* ------------------------------------------------------- by community */
+
   const matrixRows = matrix.data ?? [];
-  const columns: Column<JourneyCommunityRow>[] = [
-    { key: "name", header: "Community", render: (r) => r.community_name },
-    { key: "sessions", header: "Sessions", align: "right", render: (r) => fmt(r.sessions) },
-    { key: "further", header: "Further leads", align: "right", render: (r) => fmt(r.further_leads) },
-    {
-      key: "matched",
-      header: "Matched",
-      align: "right",
-      render: (r) =>
-        `${fmt(r.further_matched)}${
-          r.further_leads ? ` (${Math.round((r.further_matched / r.further_leads) * 100)}%)` : ""
-        }`,
-    },
-    { key: "inq", header: "Inquiries", align: "right", render: (r) => fmt(r.inquiries) },
-    { key: "tours", header: "Tours", align: "right", render: (r) => fmt(r.tours) },
-    { key: "deposits", header: "Deposits", align: "right", render: (r) => fmt(r.deposits) },
-    { key: "mi", header: "Move-ins", align: "right", render: (r) => fmt(r.move_ins) },
-    { key: "mo", header: "Move-outs", align: "right", render: (r) => fmt(r.move_outs) },
+  const matrixLoading = matrix.isLoading || !(series.isFetched || series.isError);
+
+  const sortValue = (r: JourneyCommunityRow, key: string): number | string => {
+    switch (key) {
+      case "name":
+        return r.community_name;
+      case "matched":
+        return r.further_leads ? r.further_matched / r.further_leads : -1;
+      case "net":
+        return Number(r.move_ins) - Number(r.move_outs);
+      default:
+        return Number((r as unknown as Record<string, number>)[key] ?? 0);
+    }
+  };
+  const sortedRows = useMemo(() => {
+    const rows = [...matrixRows];
+    rows.sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      const cmp =
+        typeof av === "string" || typeof bv === "string"
+          ? String(av).localeCompare(String(bv))
+          : av - bv;
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return rows;
+  }, [matrixRows, sortKey, sortDir]);
+
+  const matrixColumns: { key: string; header: string; numeric?: boolean }[] = [
+    { key: "name", header: "Community" },
+    { key: "sessions", header: "Sessions", numeric: true },
+    { key: "further_leads", header: "Further leads", numeric: true },
+    { key: "matched", header: "Exact match %", numeric: true },
+    { key: "inquiries", header: "Inquiries", numeric: true },
+    { key: "tours", header: "Tours", numeric: true },
+    { key: "deposits", header: "Deposits", numeric: true },
+    { key: "move_ins", header: "Move-ins", numeric: true },
+    { key: "move_outs", header: "Move-outs", numeric: true },
+    { key: "net", header: "Net", numeric: true },
   ];
 
   const totals = matrixRows.reduce(
@@ -734,9 +820,29 @@ function PerformanceJourney() {
       tours: acc.tours + Number(r.tours),
       deposits: acc.deposits + Number(r.deposits),
       move_ins: acc.move_ins + Number(r.move_ins),
+      move_outs: acc.move_outs + Number(r.move_outs),
     }),
-    { sessions: 0, further_leads: 0, inquiries: 0, tours: 0, deposits: 0, move_ins: 0 },
+    {
+      sessions: 0,
+      further_leads: 0,
+      inquiries: 0,
+      tours: 0,
+      deposits: 0,
+      move_ins: 0,
+      move_outs: 0,
+    },
   );
+
+  const txLoading: Record<string, boolean> = {
+    vis_traffic: visLoading || ga4Now.isLoading,
+    traffic_conv: ga4Now.isLoading || furtherNow.isLoading,
+    conv_leads: furtherNow.isLoading,
+    leads_tours: wh.isLoading,
+    tours_deposits: wh.isLoading,
+    deposits_movein: wh.isLoading,
+    movein_occ: wh.isLoading || occupancy.isLoading || !occDone,
+  };
+
 
   if (!ctx.organizationId) {
     return (
