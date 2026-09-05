@@ -346,12 +346,7 @@ function CohortKpis({
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Cohort conversion</h2>
-        <p className="text-xs text-muted-foreground">
-          Inquiry cohort of {c.cohort.size.toLocaleString()} prospects, followed forward as of {c.asOf}.
-        </p>
-      </div>
+      <h2 className="text-sm font-semibold">Cohort conversion</h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
           <RateCard
