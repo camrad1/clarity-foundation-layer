@@ -44,6 +44,7 @@ import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_aut
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
+import { Route as ApiPublicGoogleOauthCallbackRouteImport } from './routes/api/public/google/oauth/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -241,6 +242,12 @@ const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
   path: '/api/public/hooks/wh-nightly',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGoogleOauthCallbackRoute =
+  ApiPublicGoogleOauthCallbackRouteImport.update({
+    id: '/api/public/google/oauth/callback',
+    path: '/api/public/google/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -312,6 +320,7 @@ export interface FileRoutesByTo {
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -350,6 +359,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -423,6 +434,7 @@ export interface FileRouteTypes {
     | '/marketing'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   id:
     | '__root__'
     | '/'
@@ -460,6 +472,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -468,6 +481,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
+  ApiPublicGoogleOauthCallbackRoute: typeof ApiPublicGoogleOauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -717,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWhNightlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/google/oauth/callback': {
+      id: '/api/public/google/oauth/callback'
+      path: '/api/public/google/oauth/callback'
+      fullPath: '/api/public/google/oauth/callback'
+      preLoaderRoute: typeof ApiPublicGoogleOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -809,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
+  ApiPublicGoogleOauthCallbackRoute: ApiPublicGoogleOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
