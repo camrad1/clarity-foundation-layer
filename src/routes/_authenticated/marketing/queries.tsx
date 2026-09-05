@@ -303,6 +303,7 @@ function QueryIntelligence() {
             </Select>
             <span className="text-xs text-muted-foreground">
               {fmtInt(filtered.length)} of {fmtInt(all.length)} queries
+              {all.length >= 5000 ? " (top 5,000 by impressions for this period)" : ""}
             </span>
           </div>
 
