@@ -14,6 +14,7 @@ import { WhCompletenessPanel } from "@/components/clarity/wh-completeness";
 import { WhHealthSection } from "@/components/clarity/wh-health";
 import { SnapshotHealthSection } from "@/components/clarity/snapshot-health";
 import { OccupancyHistoryHealthSection } from "@/components/clarity/occupancy-history-health";
+import { Ga4HealthSection } from "@/components/clarity/ga4-health";
 import { FurtherHealthSection } from "@/components/clarity/further-health";
 import { WhLookupCoveragePanel } from "@/components/clarity/wh-lookup-coverage";
 import { OccupancyReconciliationPanel } from "@/components/clarity/occupancy-reconciliation";
@@ -228,6 +229,8 @@ function DataHealth() {
           </div>
         )}
       </section>
+
+      <Ga4HealthSection organizationId={organizationId} />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
