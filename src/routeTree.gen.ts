@@ -45,6 +45,7 @@ import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
+import { Route as ApiPublicHooksGoogleBackfillRouteImport } from './routes/api/public/hooks/google-backfill'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
 import { Route as ApiPublicGoogleOauthCallbackRouteImport } from './routes/api/public/google/oauth/callback'
 
@@ -251,6 +252,12 @@ const ApiPublicHooksFurtherSyncRoute =
     path: '/api/public/hooks/further-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGoogleBackfillRoute =
+  ApiPublicHooksGoogleBackfillRouteImport.update({
+    id: '/api/public/hooks/google-backfill',
+    path: '/api/public/hooks/google-backfill',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
   id: '/api/public/hooks/wh-nightly',
   path: '/api/public/hooks/wh-nightly',
@@ -299,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
+  '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -337,6 +345,7 @@ export interface FileRoutesByTo {
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
+  '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -378,6 +387,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
+  '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/marketing/segments'
     | '/marketing/'
     | '/api/public/hooks/further-sync'
+    | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/marketing/segments'
     | '/marketing'
     | '/api/public/hooks/further-sync'
+    | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   id:
@@ -497,6 +509,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/segments'
     | '/_authenticated/marketing/'
     | '/api/public/hooks/further-sync'
+    | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   fileRoutesById: FileRoutesById
@@ -506,6 +519,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
+  ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
   ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
   ApiPublicGoogleOauthCallbackRoute: typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -764,6 +778,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFurtherSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/google-backfill': {
+      id: '/api/public/hooks/google-backfill'
+      path: '/api/public/hooks/google-backfill'
+      fullPath: '/api/public/hooks/google-backfill'
+      preLoaderRoute: typeof ApiPublicHooksGoogleBackfillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/wh-nightly': {
       id: '/api/public/hooks/wh-nightly'
       path: '/api/public/hooks/wh-nightly'
@@ -874,6 +895,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
+  ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
   ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
   ApiPublicGoogleOauthCallbackRoute: ApiPublicGoogleOauthCallbackRoute,
 }

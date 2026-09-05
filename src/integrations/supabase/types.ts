@@ -2031,6 +2031,81 @@ export type Database = {
           },
         ]
       }
+      google_backfill_chunks: {
+        Row: {
+          attempts: number
+          connection_id: string
+          created_at: string
+          finished_at: string | null
+          grain: string
+          id: string
+          last_error: string | null
+          organization_id: string
+          pages: number
+          period_end: string
+          period_start: string
+          property_id: string
+          rows_written: number
+          service: string
+          started_at: string | null
+          status: string
+          truncated: boolean
+        }
+        Insert: {
+          attempts?: number
+          connection_id: string
+          created_at?: string
+          finished_at?: string | null
+          grain: string
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          pages?: number
+          period_end: string
+          period_start: string
+          property_id: string
+          rows_written?: number
+          service: string
+          started_at?: string | null
+          status?: string
+          truncated?: boolean
+        }
+        Update: {
+          attempts?: number
+          connection_id?: string
+          created_at?: string
+          finished_at?: string | null
+          grain?: string
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          pages?: number
+          period_end?: string
+          period_start?: string
+          property_id?: string
+          rows_written?: number
+          service?: string
+          started_at?: string | null
+          status?: string
+          truncated?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_backfill_chunks_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_backfill_chunks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_connections: {
         Row: {
           connected_by: string | null
