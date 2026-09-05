@@ -1,11 +1,27 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus } from "lucide-react";
-import { DataTable, type Column } from "@/components/clarity/data-table";
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  Minus,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
+
 import { useWhContext } from "@/lib/wh/use-wh";
 import { useAppState } from "@/state/app-state";
 import { useWhSalesSummary } from "@/lib/wh/summary";
@@ -53,8 +69,6 @@ export const Route = createFileRoute("/_authenticated/journey")({
 
 const nf = new Intl.NumberFormat("en-US");
 const fmt = (v: number | null | undefined) => (v == null ? "—" : nf.format(Math.round(v)));
-/** Pending reads read "Loading…" instead of an em dash, which means "no data". */
-const show = (loading: boolean, text: string) => (loading ? "Loading…" : text);
 const fmtPct = (v: number | null | undefined, digits = 1) =>
   v == null ? "—" : `${v.toFixed(digits)}%`;
 const fmtPos = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
@@ -96,6 +110,7 @@ type Stage = {
   name: string;
   metric: string;
   value: string;
+  loading?: boolean;
   delta: Delta;
   priorLabel: string;
   source: string;
@@ -105,42 +120,62 @@ type Stage = {
   href?: { to: string } | undefined;
 };
 
+function DeltaChip({ delta, priorLabel }: { delta: Delta; priorLabel: string }) {
+  const Icon = delta?.tone === "up" ? ArrowUpRight : delta?.tone === "down" ? ArrowDownRight : Minus;
+  if (!delta) return <span className="text-xs text-muted-foreground">No comparison</span>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs font-medium",
+        delta.tone === "up" && "text-success",
+        delta.tone === "down" && "text-destructive",
+        delta.tone === "neutral" && "text-muted-foreground",
+      )}
+      title={priorLabel}
+    >
+      <Icon className="size-3.5" />
+      {delta.label}
+    </span>
+  );
+}
+
+/**
+ * One stage of the journey. Provenance stays on the card but is tucked into a
+ * compact disclosure so the metric, its change and its supporting figure lead
+ * the hierarchy.
+ */
 function StageCard({ stage, index }: { stage: Stage; index: number }) {
-  const Icon =
-    stage.delta?.tone === "up" ? ArrowUpRight : stage.delta?.tone === "down" ? ArrowDownRight : Minus;
   const body = (
-    <div className="kpi-card flex h-full flex-col gap-2 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">
-          {index + 1}. {stage.name}
-        </p>
-      </div>
+    <div className="kpi-card flex h-full flex-col gap-1.5 p-4">
+      <p className="eyebrow">
+        {index + 1}. {stage.name}
+      </p>
       <p className="text-xs text-muted-foreground">{stage.metric}</p>
-      <p className="font-display text-2xl font-semibold tracking-tight text-brand">{stage.value}</p>
-      <div className="flex items-center gap-2 text-xs">
-        {stage.delta ? (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 font-medium",
-              stage.delta.tone === "up" && "text-success",
-              stage.delta.tone === "down" && "text-destructive",
-              stage.delta.tone === "neutral" && "text-muted-foreground",
-            )}
-          >
-            <Icon className="size-3.5" />
-            {stage.delta.label}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">No comparison</span>
-        )}
-        <span className="text-muted-foreground">{stage.priorLabel}</span>
-      </div>
-      {stage.support ? <p className="text-xs text-muted-foreground">{stage.support}</p> : null}
-      <div className="mt-auto space-y-0.5 border-t border-border pt-2 text-[11px] text-muted-foreground">
-        <p>{stage.source}</p>
-        <p>{stage.freshness}</p>
-        <p>{stage.scope}</p>
-      </div>
+      {stage.loading ? (
+        <Skeleton className="h-8 w-24" />
+      ) : (
+        <p className="font-display text-2xl font-semibold tracking-tight text-brand">
+          {stage.value}
+        </p>
+      )}
+      {stage.loading ? (
+        <Skeleton className="h-4 w-32" />
+      ) : (
+        <DeltaChip delta={stage.delta} priorLabel={stage.priorLabel} />
+      )}
+      {stage.support && !stage.loading ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">{stage.support}</p>
+      ) : null}
+      <details className="group mt-auto border-t border-border pt-2 text-[11px] text-muted-foreground">
+        <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
+          <span className="truncate">{stage.freshness}</span>
+          <ChevronDown className="size-3 shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="space-y-0.5 pt-1">
+          <p>{stage.source}</p>
+          <p>{stage.scope}</p>
+        </div>
+      </details>
     </div>
   );
   return stage.href ? (
@@ -149,6 +184,18 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
     </Link>
   ) : (
     body
+  );
+}
+
+/** Subtle directional connector shown between stage cards on wide layouts. */
+function StageConnector() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 sm:block"
+    >
+      <ArrowRight className="size-4 text-brand/40" />
+    </div>
   );
 }
 
@@ -162,8 +209,13 @@ function EvidenceBadge({ level }: { level: EvidenceLevel }) {
         ? "bg-info/10 text-info"
         : "bg-muted text-muted-foreground";
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium", tone)}>
-      Level {level} · {EVIDENCE_LABELS[level]}
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        tone,
+      )}
+    >
+      {EVIDENCE_LABELS[level]}
     </span>
   );
 }
@@ -177,26 +229,49 @@ type Transition = {
   rateLabel: string;
   sentence: string;
   note: string;
+  highlight?: boolean;
+  loading?: boolean;
 };
 
-function TransitionCard({ t }: { t: Transition }) {
+/**
+ * Compact transition row. The full evidence wording is preserved verbatim but
+ * moves behind a disclosure so the section reads as a chain, not a report.
+ */
+function TransitionRow({ t }: { t: Transition }) {
   return (
-    <div className="panel space-y-2 p-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
-        <span>{t.from}</span>
-        <ArrowRight className="size-3.5 text-muted-foreground" />
-        <span>{t.to}</span>
+    <details
+      className={cn(
+        "group panel px-4 py-3",
+        t.highlight && "border-success/40 bg-success/[0.04]",
+      )}
+    >
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="flex min-w-[13rem] items-center gap-2 text-sm font-medium text-foreground">
+          {t.from}
+          <ArrowRight className="size-3.5 text-muted-foreground" />
+          {t.to}
+        </span>
+        {t.loading ? (
+          <Skeleton className="h-5 w-40" />
+        ) : (
+          <span className="flex flex-1 flex-wrap items-baseline gap-2">
+            <span className="font-display text-lg font-semibold text-brand">
+              {t.rate == null ? "—" : fmtPct(t.rate)}
+            </span>
+            <span className="text-xs text-muted-foreground">{t.rateLabel}</span>
+          </span>
+        )}
+        <EvidenceBadge level={t.level} />
+        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-1 pt-2 text-xs leading-relaxed text-muted-foreground">
+        <p>{t.sentence}</p>
+        <p className="text-[11px]">{t.note}</p>
       </div>
-      <p className="font-display text-xl font-semibold text-brand">
-        {t.rate == null ? "—" : fmtPct(t.rate)}{" "}
-        <span className="text-xs font-normal text-muted-foreground">{t.rateLabel}</span>
-      </p>
-      <p className="text-xs leading-relaxed text-muted-foreground">{t.sentence}</p>
-      <EvidenceBadge level={t.level} />
-      <p className="text-[11px] leading-relaxed text-muted-foreground">{t.note}</p>
-    </div>
+    </details>
   );
 }
+
 
 /* ------------------------------------------------------------------- page */
 
@@ -213,6 +288,15 @@ function TransitionCard({ t }: { t: Transition }) {
 function PerformanceJourney() {
   const ctx = useWhContext();
   const scopeMode = useAppState().communityScope.mode;
+  const [sortKey, setSortKey] = useState("inquiries");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const onSort = (key: string) => {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
+  };
   const period: Period = { start: ctx.dateRange.start, end: ctx.dateRange.end };
   const prior = ctx.comparisonRange ?? priorPeriod(period.start, period.end);
   const priorLabel = ctx.comparisonRange
@@ -379,7 +463,8 @@ function PerformanceJourney() {
       key: "visibility",
       name: "Visibility",
       metric: "Search clicks",
-      value: show(visLoading, fmt(vis.clicks)),
+      value: fmt(vis.clicks),
+      loading: visLoading,
       delta: delta(vis.clicks, visPrior.clicks),
       priorLabel,
       source: searchSource,
@@ -394,7 +479,8 @@ function PerformanceJourney() {
       key: "traffic",
       name: "Traffic",
       metric: "Website sessions",
-      value: show(ga4Now.isLoading, fmt(ga4Now.data?.sessions)),
+      value: fmt(ga4Now.data?.sessions),
+      loading: ga4Now.isLoading,
       delta: delta(ga4Now.data?.sessions ?? null, ga4Prior.data?.sessions ?? null),
       priorLabel,
       source: GA4_SOURCE_LABEL,
@@ -410,7 +496,8 @@ function PerformanceJourney() {
       key: "conversations",
       name: "Conversations",
       metric: "Further leads",
-      value: show(furtherNow.isLoading, fmt(furtherNow.data?.leads)),
+      value: fmt(furtherNow.data?.leads),
+      loading: furtherNow.isLoading,
       delta: delta(furtherNow.data?.leads ?? null, furtherPrior.data?.leads ?? null),
       priorLabel,
       source: "Source: Further API",
@@ -426,7 +513,8 @@ function PerformanceJourney() {
       key: "leads",
       name: "Leads",
       metric: "New inquiries",
-      value: show(wh.isLoading, fmt(wh.data?.inquiries)),
+      value: fmt(wh.data?.inquiries),
+      loading: wh.isLoading,
       delta: delta(wh.data?.inquiries ?? null, whPrior.data?.inquiries ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -438,7 +526,8 @@ function PerformanceJourney() {
       key: "tours",
       name: "Tours",
       metric: "Completed tours",
-      value: show(wh.isLoading, fmt(wh.data?.tours)),
+      value: fmt(wh.data?.tours),
+      loading: wh.isLoading,
       delta: delta(wh.data?.tours ?? null, whPrior.data?.tours ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -451,7 +540,8 @@ function PerformanceJourney() {
       key: "deposits",
       name: "Deposits",
       metric: "Depositors",
-      value: show(wh.isLoading, fmt(wh.data?.deposits)),
+      value: fmt(wh.data?.deposits),
+      loading: wh.isLoading,
       delta: delta(wh.data?.deposits ?? null, whPrior.data?.deposits ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM · provisional",
@@ -463,7 +553,8 @@ function PerformanceJourney() {
       key: "move_ins",
       name: "Move-Ins",
       metric: "Move-ins",
-      value: show(wh.isLoading, fmt(wh.data?.moveIns)),
+      value: fmt(wh.data?.moveIns),
+      loading: wh.isLoading,
       delta: delta(wh.data?.moveIns ?? null, whPrior.data?.moveIns ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -478,10 +569,8 @@ function PerformanceJourney() {
       key: "occupancy",
       name: "Occupancy",
       metric: "Current occupancy",
-      value: show(
-        occupancy.isLoading,
-        occTotals?.occupancyPct == null ? "—" : fmtPct(occTotals.occupancyPct * 100),
-      ),
+      value: occTotals?.occupancyPct == null ? "—" : fmtPct(occTotals.occupancyPct * 100),
+      loading: occupancy.isLoading || !occDone,
       delta: delta(
         occTotals?.occupancyPct == null ? null : occTotals.occupancyPct * 100,
         priorOccPct,
@@ -623,25 +712,111 @@ function PerformanceJourney() {
     [series.data, grain],
   );
 
+  /* ------------------------------------------------- deterministic snapshot */
+
+  // Every observation below restates a value already computed by a canonical
+  // layer. Nothing is inferred, and no causal wording is used.
+  const snapshot: string[] = [];
+  {
+    const dSessions = delta(ga4Now.data?.sessions ?? null, ga4Prior.data?.sessions ?? null);
+    const dInq = delta(wh.data?.inquiries ?? null, whPrior.data?.inquiries ?? null);
+    if (dSessions && dInq) {
+      snapshot.push(
+        `Website sessions ${dSessions.label === "No change" ? "were flat" : `moved ${dSessions.label}`} while new inquiries ${
+          dInq.label === "No change" ? "were flat" : `moved ${dInq.label}`
+        }.`,
+      );
+    }
+    const matchRate = ratePct(f?.matched ?? 0, f?.leads ?? 0);
+    if (f?.leads) {
+      snapshot.push(
+        `${fmtPct(matchRate)} of ${fmt(f.leads)} Further leads matched exactly to a WelcomeHome prospect.`,
+      );
+    }
+    const tourRate = ratePct(wh.data?.tours ?? 0, wh.data?.inquiries ?? 0);
+    if (wh.data?.inquiries) {
+      snapshot.push(
+        `Tours ran at ${fmtPct(tourRate)} of new inquiries in the selected period (${fmt(
+          wh.data.tours,
+        )} of ${fmt(wh.data.inquiries)}).`,
+      );
+    }
+    if (wh.data) {
+      const net = wh.data.moveIns - wh.data.moveOuts;
+      snapshot.push(
+        `${fmt(wh.data.moveIns)} move-ins and ${fmt(wh.data.moveOuts)} move-outs produced ${
+          net > 0 ? "+" : ""
+        }${fmt(net)} net movement.`,
+      );
+    }
+    const dVis = delta(vis.clicks, visPrior.clicks);
+    if (dVis && snapshot.length < 4) {
+      snapshot.push(`Search clicks moved ${dVis.label} against the comparison period.`);
+    }
+  }
+  const snapshotLoading = wh.isLoading || ga4Now.isLoading || furtherNow.isLoading;
+
+  /* ----------------------------------------- matched digital conversations */
+
+  const matchedCohort = f
+    ? [
+        { label: "Exact matched leads", value: f.matched, rate: null as number | null },
+        { label: "Toured", value: f.matched_toured, rate: ratePct(f.matched_toured, f.matched) },
+        {
+          label: "Deposited",
+          value: f.matched_deposited,
+          rate: ratePct(f.matched_deposited, f.matched),
+        },
+        {
+          label: "Moved in",
+          value: f.matched_moved_in,
+          rate: ratePct(f.matched_moved_in, f.matched),
+        },
+      ]
+    : [];
+
+  /* ------------------------------------------------------- by community */
+
   const matrixRows = matrix.data ?? [];
-  const columns: Column<JourneyCommunityRow>[] = [
-    { key: "name", header: "Community", render: (r) => r.community_name },
-    { key: "sessions", header: "Sessions", align: "right", render: (r) => fmt(r.sessions) },
-    { key: "further", header: "Further leads", align: "right", render: (r) => fmt(r.further_leads) },
-    {
-      key: "matched",
-      header: "Matched",
-      align: "right",
-      render: (r) =>
-        `${fmt(r.further_matched)}${
-          r.further_leads ? ` (${Math.round((r.further_matched / r.further_leads) * 100)}%)` : ""
-        }`,
-    },
-    { key: "inq", header: "Inquiries", align: "right", render: (r) => fmt(r.inquiries) },
-    { key: "tours", header: "Tours", align: "right", render: (r) => fmt(r.tours) },
-    { key: "deposits", header: "Deposits", align: "right", render: (r) => fmt(r.deposits) },
-    { key: "mi", header: "Move-ins", align: "right", render: (r) => fmt(r.move_ins) },
-    { key: "mo", header: "Move-outs", align: "right", render: (r) => fmt(r.move_outs) },
+  const matrixLoading = matrix.isLoading || !(series.isFetched || series.isError);
+
+  const sortValue = (r: JourneyCommunityRow, key: string): number | string => {
+    switch (key) {
+      case "name":
+        return r.community_name;
+      case "matched":
+        return r.further_leads ? r.further_matched / r.further_leads : -1;
+      case "net":
+        return Number(r.move_ins) - Number(r.move_outs);
+      default:
+        return Number((r as unknown as Record<string, number>)[key] ?? 0);
+    }
+  };
+  const sortedRows = useMemo(() => {
+    const rows = [...matrixRows];
+    rows.sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      const cmp =
+        typeof av === "string" || typeof bv === "string"
+          ? String(av).localeCompare(String(bv))
+          : av - bv;
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return rows;
+  }, [matrixRows, sortKey, sortDir]);
+
+  const matrixColumns: { key: string; header: string; numeric?: boolean }[] = [
+    { key: "name", header: "Community" },
+    { key: "sessions", header: "Sessions", numeric: true },
+    { key: "further_leads", header: "Further leads", numeric: true },
+    { key: "matched", header: "Exact match %", numeric: true },
+    { key: "inquiries", header: "Inquiries", numeric: true },
+    { key: "tours", header: "Tours", numeric: true },
+    { key: "deposits", header: "Deposits", numeric: true },
+    { key: "move_ins", header: "Move-ins", numeric: true },
+    { key: "move_outs", header: "Move-outs", numeric: true },
+    { key: "net", header: "Net", numeric: true },
   ];
 
   const totals = matrixRows.reduce(
@@ -652,9 +827,29 @@ function PerformanceJourney() {
       tours: acc.tours + Number(r.tours),
       deposits: acc.deposits + Number(r.deposits),
       move_ins: acc.move_ins + Number(r.move_ins),
+      move_outs: acc.move_outs + Number(r.move_outs),
     }),
-    { sessions: 0, further_leads: 0, inquiries: 0, tours: 0, deposits: 0, move_ins: 0 },
+    {
+      sessions: 0,
+      further_leads: 0,
+      inquiries: 0,
+      tours: 0,
+      deposits: 0,
+      move_ins: 0,
+      move_outs: 0,
+    },
   );
+
+  const txLoading: Record<string, boolean> = {
+    vis_traffic: visLoading || ga4Now.isLoading,
+    traffic_conv: ga4Now.isLoading || furtherNow.isLoading,
+    conv_leads: furtherNow.isLoading,
+    leads_tours: wh.isLoading,
+    tours_deposits: wh.isLoading,
+    deposits_movein: wh.isLoading,
+    movein_occ: wh.isLoading || occupancy.isLoading || !occDone,
+  };
+
 
   if (!ctx.organizationId) {
     return (
@@ -666,7 +861,7 @@ function PerformanceJourney() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         eyebrow="Performance Journey"
         title="From visibility to occupancy"
@@ -675,45 +870,128 @@ function PerformanceJourney() {
 
       <p className="text-xs text-muted-foreground">
         {formatPeriodLabel(period)} · {scopeLabel} · {priorLabel} ({formatPeriodLabel(prior)})
+        {ga4Health.data?.last_complete_date
+          ? ` · Comparable data through ${formatDateOnly(ga4Health.data.last_complete_date)}`
+          : ""}
       </p>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Journey stages</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {stages.map((s, i) => (
-            <StageCard key={s.key} stage={s} index={i} />
+            <div key={s.key} className="relative">
+              <StageCard stage={s} index={i} />
+              {i < stages.length - 1 ? <StageConnector /> : null}
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="panel space-y-2 p-4">
+        <h2 className="text-sm font-semibold text-foreground">Journey snapshot</h2>
+        {snapshotLoading ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ) : snapshot.length ? (
+          <ul className="grid gap-1.5 text-xs leading-relaxed text-foreground sm:grid-cols-2">
+            {snapshot.slice(0, 4).map((s) => (
+              <li key={s} className="flex gap-2">
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand/60" />
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No measured movement to report for this range and scope.
+          </p>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Each observation restates a value already computed by its canonical source. No cause is
+          implied between sources.
+        </p>
+      </section>
+
+      <section className="space-y-2">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Stage to stage</h2>
           <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Each transition states the evidence behind it. Only Level 1 links are record-level
-            proven; Level 3 links describe two measured things moving together in the same period
-            and never imply that one caused the other.
+            Each transition carries its evidence level. Open a row for the full wording: only an
+            exact record chain is record-level proven, and an aggregate relationship never implies
+            that one thing caused the other.
           </p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="space-y-2">
           {transitions.map((t) => (
-            <TransitionCard key={t.key} t={t} />
+            <TransitionRow
+              key={t.key}
+              t={{
+                ...t,
+                loading: txLoading[t.key] ?? false,
+                highlight: t.key === "conv_leads",
+              }}
+            />
           ))}
         </div>
+      </section>
+
+      <section className="panel space-y-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-foreground">Matched digital conversations</h2>
+            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              Only Further leads with an active exact external-ID match to a WelcomeHome prospect.
+              Unmatched leads, leads without an external ID and quarantined duplicates or conflicts
+              are excluded, so this is not the full inquiry picture.
+            </p>
+          </div>
+          <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+            Exact record-level attribution
+          </span>
+        </div>
+        {furtherNow.isLoading ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-md" />
+            ))}
+          </div>
+        ) : matchedCohort.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {matchedCohort.map((c) => (
+              <div key={c.label} className="kpi-card space-y-1 p-4">
+                <p className="eyebrow">{c.label}</p>
+                <p className="font-display text-2xl font-semibold text-brand">{fmt(c.value)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {c.rate == null ? "of matched cohort" : `${fmtPct(c.rate)} of matched leads`}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No matched conversations in this range" />
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Match method: exact_external_id ·{" "}
+          <Link to="/admin/further" className="underline">
+            Further match detail
+          </Link>
+        </p>
       </section>
 
       <ChartCard
         title="The journey over time"
-        description={`One point per ${grain}. Every series is read from its own canonical source; nothing is prorated across buckets.`}
-        loading={series.isLoading}
-        empty={chartData.length ? undefined : "No data in this range."}
+        description={`One point per ${grain}. Series use different canonical units — compare movement and direction rather than relative line height. Nothing is prorated or indexed.`}
+        loading={series.isLoading || !occDone}
+        empty={
+          series.isFetched && !chartData.length ? "No data in this range." : undefined
+        }
         height={340}
         actions={
-          <SeriesToggleChips
-            series={seriesDefs}
-            visible={visible}
-            onToggle={toggle}
-          />
+          <SeriesToggleChips series={seriesDefs} visible={visible} onToggle={toggle} />
         }
       >
         <MetricTrendChart
@@ -722,33 +1000,131 @@ function PerformanceJourney() {
         />
       </ChartCard>
 
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold text-foreground">By community</h2>
-          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Sessions come from deterministically mapped landing pages only, so they do not add up to
-            property-wide traffic. Search visibility is not split by community here because Search
-            Console reports at property level.
-          </p>
-        </div>
-        <DataTable
-          columns={columns}
-          rows={matrixRows}
-          loading={matrix.isLoading}
-          empty={<EmptyState title="No communities in scope" />}
-        />
-        {matrixRows.length ? (
-          <p className="text-xs text-muted-foreground">
-            Totals — mapped sessions {fmt(totals.sessions)} · Further leads {fmt(totals.further_leads)} ·
-            inquiries {fmt(totals.inquiries)} · tours {fmt(totals.tours)} · deposits{" "}
-            {fmt(totals.deposits)} · move-ins {fmt(totals.move_ins)}
-          </p>
-        ) : null}
-      </section>
+      {singleCommunity ? (
+        <section className="panel space-y-2 p-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            {ctx.communityNames[singleCommunity] ?? "Selected community"} summary
+          </h2>
+          {matrixLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : matrixRows[0] ? (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {fmt(matrixRows[0].sessions)} mapped sessions · {fmt(matrixRows[0].further_leads)}{" "}
+              Further leads ({fmt(matrixRows[0].further_matched)} exact matches) ·{" "}
+              {fmt(matrixRows[0].inquiries)} inquiries · {fmt(matrixRows[0].tours)} tours ·{" "}
+              {fmt(matrixRows[0].deposits)} deposits · {fmt(matrixRows[0].move_ins)} move-ins ·{" "}
+              {fmt(matrixRows[0].move_outs)} move-outs
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">No activity in this range.</p>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-foreground">By community</h2>
+            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              Sessions come from deterministically mapped landing pages only, so they do not add up
+              to property-wide traffic. Search visibility is not split by community here because
+              Search Console reports at property level.
+            </p>
+          </div>
+          {matrixLoading ? (
+            <Skeleton className="h-64 w-full rounded-md" />
+          ) : sortedRows.length ? (
+            <div className="panel overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="thead-brand hover:bg-brand-light">
+                    {matrixColumns.map((c) => (
+                      <TableHead
+                        key={c.key}
+                        className={cn("cursor-pointer select-none", c.numeric && "text-right")}
+                        onClick={() => onSort(c.key)}
+                      >
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1",
+                            c.numeric && "flex-row-reverse",
+                          )}
+                        >
+                          {c.header}
+                          {sortKey === c.key ? (
+                            sortDir === "asc" ? (
+                              <ChevronUp className="size-3" />
+                            ) : (
+                              <ChevronDown className="size-3" />
+                            )
+                          ) : null}
+                        </span>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedRows.map((r) => {
+                    const net = Number(r.move_ins) - Number(r.move_outs);
+                    const matchPct = r.further_leads
+                      ? (r.further_matched / r.further_leads) * 100
+                      : null;
+                    return (
+                      <TableRow
+                        key={r.community_id}
+                        className="odd:bg-brand-soft/60 hover:bg-brand-light/70"
+                      >
+                        <TableCell>{r.community_name}</TableCell>
+                        <TableCell className="text-right">{fmt(r.sessions)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.further_leads)}</TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-right",
+                            matchPct != null && matchPct >= 90 && "text-success",
+                            matchPct != null && matchPct < 60 && "text-warning",
+                          )}
+                        >
+                          {matchPct == null ? "—" : fmtPct(matchPct, 0)}
+                        </TableCell>
+                        <TableCell className="text-right">{fmt(r.inquiries)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.tours)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.deposits)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.move_ins)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.move_outs)}</TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-right font-medium",
+                            net > 0 && "text-success",
+                            net < 0 && "text-destructive",
+                          )}
+                        >
+                          {net > 0 ? "+" : ""}
+                          {fmt(net)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <EmptyState title="No communities in scope" />
+          )}
+          {sortedRows.length ? (
+            <p className="text-xs text-muted-foreground">
+              Totals — mapped sessions {fmt(totals.sessions)} · Further leads{" "}
+              {fmt(totals.further_leads)} · inquiries {fmt(totals.inquiries)} · tours{" "}
+              {fmt(totals.tours)} · deposits {fmt(totals.deposits)} · move-ins{" "}
+              {fmt(totals.move_ins)} · move-outs {fmt(totals.move_outs)}
+            </p>
+          ) : null}
+        </section>
+      )}
 
-      <section className="panel space-y-2 p-5">
-        <h2 className="text-sm font-semibold text-foreground">What this page can and cannot prove</h2>
-        <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+      <details className="panel group p-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-foreground">
+          What this page can and cannot prove
+          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <ul className="list-disc space-y-1 pl-5 pt-3 text-xs leading-relaxed text-muted-foreground">
           <li>
             Search Console reports at property level, so visibility for a single community relies on
             the deterministic URL mapping rules and covers mapped pages only.
@@ -761,22 +1137,21 @@ function PerformanceJourney() {
             Further conversations link to WelcomeHome by exact external ID only. Leads without an
             external ID, and duplicates or community conflicts, are never counted as matched.
           </li>
-          <li>
-            Deposits remain a provisional metric and keep that status here.
-          </li>
+          <li>Deposits remain a provisional metric and keep that status here.</li>
           <li>
             Occupancy is current state on each community's canonical capacity basis; the comparison
             point comes from stored history and is blank when no history exists for that period.
           </li>
         </ul>
-        <p className="text-xs text-muted-foreground">
+        <p className="pt-2 text-xs text-muted-foreground">
           Source coverage and freshness in detail:{" "}
           <Link to="/data-health" className="underline">
             Data Health
           </Link>
           .
         </p>
-      </section>
+      </details>
     </div>
   );
 }
+
