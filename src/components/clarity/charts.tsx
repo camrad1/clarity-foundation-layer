@@ -553,16 +553,24 @@ export function HorizontalBarChart({
   valueLabel = "Count",
   labelWidth = 150,
   showPercent = true,
+  shareTotal,
 }: {
   data: BarDatum[];
   color?: string | undefined;
   valueLabel?: string | undefined;
   labelWidth?: number | undefined;
   showPercent?: boolean | undefined;
+  /**
+   * Denominator for the share label. Defaults to the sum of the bars shown,
+   * which is wrong whenever the chart renders only a top slice of a larger
+   * set — pass the full-scope total in that case.
+   */
+  shareTotal?: number | undefined;
 }) {
   const isMobile = useIsMobile();
-  const total = data.reduce((s, d) => s + Number(d.value ?? 0), 0);
+  const total = shareTotal ?? data.reduce((s, d) => s + Number(d.value ?? 0), 0);
   const withPct = showPercent && !isMobile && total > 0;
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: withPct ? 62 : 40, bottom: 4, left: 8 }}>

@@ -18,6 +18,15 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
 import {
   LostLeadsTab,
@@ -608,78 +617,20 @@ function SalesIntelligence() {
 
         {/* ----------------------------------------------------------- Lead sources */}
         <TabsContent value="sources" className="space-y-6 pt-6">
-          <div className="grid gap-6 xl:grid-cols-2">
-            <ChartCard
-              title="Inquiries by lead source"
-              description="Countable prospects created in the selected period, grouped by the lead source recorded in WelcomeHome."
-              empty={s.leadSources.length === 0 ? "No lead source data for this selection." : undefined}
-              height={Math.max(220, Math.min(s.leadSources.length, 10) * 30 + 50)}
-            >
-              <HorizontalBarChart
-                data={topN(
-                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.inquiries })),
-                  10,
-                )}
-                valueLabel="Inquiries"
-              />
-            </ChartCard>
-            <ChartCard
-              title="Move-ins by lead source"
-              description="Counted move-ins in the period, attributed through the prospect's recorded lead source."
-              empty={s.leadSources.every((r) => r.moveIns === 0) ? "No attributed move-ins in this period." : undefined}
-              height={Math.max(220, Math.min(s.leadSources.length, 10) * 30 + 50)}
-            >
-              <HorizontalBarChart
-                data={topN(
-                  s.leadSources.map((r) => ({ label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"), value: r.moveIns })),
-                  10,
-                )}
-                valueLabel="Move-ins"
-                color={CHART_TOKENS.tertiary}
-              />
-            </ChartCard>
-          </div>
-
-          <LeadSourceRatioCard
+          <LeadSourceMix
             rows={s.leadSources.map((r) => ({
+              id: r.id,
               label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
               moveIns: r.moveIns,
             }))}
+            totals={{ inquiries: s.inquiries, moveIns: s.moveIns }}
+            prior={p ? { inquiries: p.inquiries, moveIns: p.moveIns } : null}
+            comparisonLabel={`${formatPeriodLabel(prior)} · ${comparisonLabel}`}
+            utm={s.utm}
           />
-
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold">All lead sources</h2>
-            <DataTable
-              columns={[
-                { key: "src", header: "Lead source", render: (r: any) => resolveLabel(labels.leadSource, r.id, "Unknown lead source") },
-                { key: "inq", header: "Inquiries", align: "right", render: (r: any) => r.inquiries },
-                { key: "mi", header: "Move-ins", align: "right", render: (r: any) => r.moveIns },
-              ]}
-              rows={s.leadSources as any[]}
-              empty={<EmptyState title="No lead source data" />}
-            />
-          </section>
-
-          <Accordion type="single" collapsible className="panel px-5">
-            <AccordionItem value="utm">
-              <AccordionTrigger className="text-sm">Digital metadata coverage (data readiness)</AccordionTrigger>
-              <AccordionContent>
-                <p className="pb-2 text-xs text-muted-foreground">
-                  How often UTM values arrive on prospect records. Cross-source attribution is a
-                  later phase; this is a readiness measurement only.
-                </p>
-                <ul className="text-sm text-muted-foreground">
-                  {Object.entries(s.utm.counts).map(([k, v]) => (
-                    <li key={k}>
-                      {k}: {v} of {s.utm.total} ({pct(ratio(Number(v), s.utm.total))})
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </TabsContent>
+
 
         {/* ------------------------------------------------------ Current occupancy */}
         <TabsContent value="occupancy" className="space-y-6 pt-6">
@@ -1209,53 +1160,285 @@ function CounselorChart({
 }
 
 /**
- * Inquiry-to-move-in ratio. Descriptive only: it divides move-ins recorded in
- * the period by inquiries created in the period for the same lead source, which
- * is not a cohort conversion rate and never an attribution claim. Sources with
- * a small denominator are suppressed rather than shown as a noisy percentage.
+ * Lead source mix.
+ *
+ * Volume and share only: inquiries and move-ins per lead source, exactly as
+ * wh_sales_summary already groups them by the prospect's recorded WelcomeHome
+ * lead source. Nothing is inferred, merged by name similarity or attributed
+ * from another system, and no conversion rate is computed here — the
+ * inquiry-to-move-in ratio moved out of this tab.
+ *
+ * Shares are always taken against the period/community totals in scope, not
+ * against the visible slice of rows.
  */
-const RATIO_MIN_DENOMINATOR = 10;
+type LeadSourceRow = { id: string; label: string; inquiries: number; moveIns: number };
+type SourceSortKey = "label" | "inquiries" | "inquiryShare" | "moveIns" | "moveInShare";
+const SOURCE_LIMITS = [
+  { value: 5, label: "Top 5" },
+  { value: 10, label: "Top 10" },
+  { value: 0, label: "All" },
+] as const;
 
-function LeadSourceRatioCard({
+function LeadSourceMix({
   rows,
+  totals,
+  prior,
+  comparisonLabel,
+  utm,
 }: {
-  rows: { label: string; inquiries: number; moveIns: number }[];
+  rows: LeadSourceRow[];
+  totals: { inquiries: number; moveIns: number };
+  prior: { inquiries: number; moveIns: number } | null;
+  comparisonLabel: string;
+  utm: { total: number; counts: Record<string, number> };
 }) {
-  const eligible = rows.filter((r) => r.inquiries >= RATIO_MIN_DENOMINATOR);
-  const suppressed = rows.filter((r) => r.inquiries > 0 && r.inquiries < RATIO_MIN_DENOMINATOR).length;
-  const data = eligible
-    .map((r) => ({ label: r.label, value: Math.round((r.moveIns / r.inquiries) * 1000) / 10 }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
+  const [sort, setSort] = useState<{ key: SourceSortKey; dir: "asc" | "desc" }>({
+    key: "inquiries",
+    dir: "desc",
+  });
+  const [limit, setLimit] = useState<number>(10);
+
+  // Attributed sums can trail the scope totals when a prospect carries no lead
+  // source. Percentages use the scope total so they never overstate a source.
+  const attributed = useMemo(
+    () =>
+      rows.reduce(
+        (acc, r) => ({ inquiries: acc.inquiries + r.inquiries, moveIns: acc.moveIns + r.moveIns }),
+        { inquiries: 0, moveIns: 0 },
+      ),
+    [rows],
+  );
+
+  const sorted = useMemo(() => {
+    const share = (n: number, d: number) => (d > 0 ? n / d : 0);
+    const value = (r: LeadSourceRow) => {
+      switch (sort.key) {
+        case "label":
+          return r.label.toLowerCase();
+        case "inquiries":
+          return r.inquiries;
+        case "inquiryShare":
+          return share(r.inquiries, totals.inquiries);
+        case "moveIns":
+          return r.moveIns;
+        case "moveInShare":
+          return share(r.moveIns, totals.moveIns);
+      }
+    };
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = value(a);
+      const bv = value(b);
+      if (av === bv) return a.label.localeCompare(b.label);
+      return (av > bv ? 1 : -1) * dir;
+    });
+  }, [rows, sort, totals]);
+
+  const visible = limit > 0 ? sorted.slice(0, limit) : sorted;
+  const hiddenCount = sorted.length - visible.length;
+
+  const toggleSort = (key: SourceSortKey) =>
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "desc" ? "asc" : "desc" }
+        : { key, dir: key === "label" ? "asc" : "desc" },
+    );
+
+  const sortButton = (key: SourceSortKey, label: string, align: "left" | "right" = "right") => (
+    <button
+      type="button"
+      onClick={() => toggleSort(key)}
+      className={cn(
+        "inline-flex w-full items-center gap-1 text-xs font-medium",
+        align === "right" ? "justify-end" : "justify-start",
+      )}
+    >
+      {label}
+      <span className={cn("text-[10px]", sort.key === key ? "opacity-80" : "opacity-0")}>
+        {sort.dir === "desc" ? "▼" : "▲"}
+      </span>
+    </button>
+  );
+
+  const sharePct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");
+  const changePct = (current: number, previous: number) =>
+    previous > 0 ? ((current - previous) / previous) * 100 : null;
 
   return (
-    <ChartCard
-      title="Inquiry-to-move-in ratio"
-      badge={<ProvisionalBadge />}
-      description={`Move-ins recorded in the period divided by inquiries created in the period, per lead source. This is a descriptive volume ratio, not marketing attribution and not a cohort conversion rate. Sources with fewer than ${RATIO_MIN_DENOMINATOR} inquiries are suppressed.`}
-      empty={
-        data.length === 0
-          ? `No lead source has at least ${RATIO_MIN_DENOMINATOR} inquiries in this period, so no ratio is shown.`
-          : undefined
-      }
-      height={Math.max(200, data.length * 30 + 50)}
-      actions={
-        suppressed > 0 ? (
-          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-            {suppressed} source{suppressed === 1 ? "" : "s"} suppressed (small sample)
-          </span>
-        ) : null
-      }
-    >
-      <HorizontalBarChart
-        data={data}
-        valueLabel="Percent"
-        color={CHART_TOKENS.provisional}
-        showPercent={false}
-      />
-    </ChartCard>
+    <div className="space-y-6">
+      <section className="grid gap-4 sm:grid-cols-2">
+        <SourceTotalCard
+          label="Inquiries in period"
+          value={totals.inquiries}
+          attributed={attributed.inquiries}
+          change={prior ? changePct(totals.inquiries, prior.inquiries) : null}
+          comparisonLabel={comparisonLabel}
+        />
+        <SourceTotalCard
+          label="Move-ins in period"
+          value={totals.moveIns}
+          attributed={attributed.moveIns}
+          change={prior ? changePct(totals.moveIns, prior.moveIns) : null}
+          comparisonLabel={comparisonLabel}
+        />
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ChartCard
+          title="Inquiries by lead source"
+          description="Countable prospects created in the selected period, grouped by the lead source recorded in WelcomeHome. Share is of all inquiries in scope."
+          empty={attributed.inquiries === 0 ? "No lead source data for this selection." : undefined}
+          height={Math.max(220, Math.min(rows.length, 10) * 30 + 50)}
+        >
+          <HorizontalBarChart
+            data={topN(rows.map((r) => ({ label: r.label, value: r.inquiries })), 10)}
+            valueLabel="Inquiries"
+            shareTotal={totals.inquiries}
+          />
+        </ChartCard>
+        <ChartCard
+          title="Move-ins by lead source"
+          description="Counted move-ins in the period, attributed through the prospect's recorded lead source. Share is of all move-ins in scope."
+          empty={attributed.moveIns === 0 ? "No attributed move-ins in this period." : undefined}
+          height={Math.max(220, Math.min(rows.length, 10) * 30 + 50)}
+        >
+          <HorizontalBarChart
+            data={topN(rows.map((r) => ({ label: r.label, value: r.moveIns })), 10)}
+            valueLabel="Move-ins"
+            color={CHART_TOKENS.tertiary}
+            shareTotal={totals.moveIns}
+          />
+        </ChartCard>
+      </div>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Lead source mix</h2>
+          <div className="flex items-center gap-1">
+            {SOURCE_LIMITS.map((o) => (
+              <Button
+                key={o.label}
+                size="sm"
+                variant={limit === o.value ? "default" : "outline"}
+                onClick={() => setLimit(o.value)}
+              >
+                {o.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {sorted.length === 0 ? (
+          <EmptyState title="No lead source data" />
+        ) : (
+          <div className="panel overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="thead-brand hover:bg-brand-light">
+                  <TableHead>{sortButton("label", "Lead source", "left")}</TableHead>
+                  <TableHead className="text-right">{sortButton("inquiries", "Inquiries")}</TableHead>
+                  <TableHead className="text-right">{sortButton("inquiryShare", "% of inquiries")}</TableHead>
+                  <TableHead className="text-right">{sortButton("moveIns", "Move-ins")}</TableHead>
+                  <TableHead className="text-right">{sortButton("moveInShare", "% of move-ins")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.map((r) => (
+                  <TableRow key={r.id} className="odd:bg-brand-soft/60 hover:bg-brand-light/70">
+
+                    <TableCell className="font-medium">{r.label}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.inquiries.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {sharePct(r.inquiries, totals.inquiries)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{r.moveIns.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {sharePct(r.moveIns, totals.moveIns)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {sorted.length} lead source{sorted.length === 1 ? "" : "s"} in scope
+          {hiddenCount > 0 ? ` · ${hiddenCount} hidden by the current display limit` : ""} ·{" "}
+          {attributed.inquiries.toLocaleString()} of {totals.inquiries.toLocaleString()} inquiries and{" "}
+          {attributed.moveIns.toLocaleString()} of {totals.moveIns.toLocaleString()} move-ins carry a
+          recorded lead source. Percentages are shares of the totals in scope, so an unrecorded
+          source is never redistributed.
+        </p>
+      </section>
+
+      <Accordion type="single" collapsible className="panel px-5">
+        <AccordionItem value="utm">
+          <AccordionTrigger className="text-sm">Digital metadata coverage (data readiness)</AccordionTrigger>
+          <AccordionContent>
+            <p className="pb-2 text-xs text-muted-foreground">
+              How often UTM values arrive on prospect records. Cross-source attribution is a later
+              phase; this is a readiness measurement only and does not affect the counts above.
+            </p>
+            <ul className="text-sm text-muted-foreground">
+              {Object.entries(utm.counts).map(([k, v]) => (
+                <li key={k}>
+                  {k}: {v} of {utm.total} ({pct(ratio(Number(v), utm.total))})
+                </li>
+              ))}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   );
 }
+
+function SourceTotalCard({
+  label,
+  value,
+  attributed,
+  change,
+  comparisonLabel,
+}: {
+  label: string;
+  value: number;
+  attributed: number;
+  change: number | null;
+  comparisonLabel: string;
+}) {
+  const tone = change == null ? "neutral" : change > 0 ? "up" : change < 0 ? "down" : "neutral";
+  const Icon = tone === "up" ? ArrowUpRight : tone === "down" ? ArrowDownRight : ArrowRight;
+  return (
+    <div className="kpi-card space-y-1.5 p-5">
+      <p className="eyebrow">{label}</p>
+      <p className="font-display text-2xl font-semibold tracking-tight text-brand">
+        {value.toLocaleString()}
+      </p>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        {change == null ? (
+          <span className="text-muted-foreground">No comparison</span>
+        ) : (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 font-medium",
+              tone === "up" && "text-success",
+              tone === "down" && "text-destructive",
+              tone === "neutral" && "text-muted-foreground",
+            )}
+            title={comparisonLabel}
+          >
+            <Icon className="size-3.5" />
+            {change > 0 ? "+" : ""}
+            {change.toFixed(1)}%
+          </span>
+        )}
+        <span className="text-muted-foreground">
+          {attributed.toLocaleString()} with a recorded source
+        </span>
+      </div>
+    </div>
+  );
+}
+
 
 const BUCKETS: { value: WhProspectBucket; label: string }[] = [
   { value: "overdue", label: "Overdue next activity" },
