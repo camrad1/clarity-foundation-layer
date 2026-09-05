@@ -1426,7 +1426,8 @@ function LeadSourceMix({
         <p className="text-xs text-muted-foreground">
           {sorted.length} lead source{sorted.length === 1 ? "" : "s"} in scope
           {hiddenCount > 0 ? ` · ${hiddenCount} hidden by the current display limit` : ""} ·{" "}
-          {attributed.inquiries.toLocaleString()} of {totals.inquiries.toLocaleString()} inquiries and{" "}
+          {attributed.inquiries.toLocaleString()} of {totals.inquiries.toLocaleString()} inquiries,{" "}
+          {attributed.tours.toLocaleString()} of {totals.tours.toLocaleString()} tours and{" "}
           {attributed.moveIns.toLocaleString()} of {totals.moveIns.toLocaleString()} move-ins carry a
           recorded lead source. Percentages are shares of the totals in scope, so an unrecorded
           source is never redistributed.
