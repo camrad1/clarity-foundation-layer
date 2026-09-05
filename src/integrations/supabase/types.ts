@@ -1936,6 +1936,153 @@ export type Database = {
           },
         ]
       }
+      google_connections: {
+        Row: {
+          connected_by: string | null
+          created_at: string
+          google_account_email: string | null
+          granted_scopes: string[] | null
+          id: string
+          last_attempted_sync_at: string | null
+          last_error: string | null
+          last_successful_sync_at: string | null
+          latest_data_date: string | null
+          organization_id: string
+          rows_synced: number
+          selected_property_id: string | null
+          selected_property_name: string | null
+          selected_property_type: string | null
+          service: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          connected_by?: string | null
+          created_at?: string
+          google_account_email?: string | null
+          granted_scopes?: string[] | null
+          id?: string
+          last_attempted_sync_at?: string | null
+          last_error?: string | null
+          last_successful_sync_at?: string | null
+          latest_data_date?: string | null
+          organization_id: string
+          rows_synced?: number
+          selected_property_id?: string | null
+          selected_property_name?: string | null
+          selected_property_type?: string | null
+          service: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          connected_by?: string | null
+          created_at?: string
+          google_account_email?: string | null
+          granted_scopes?: string[] | null
+          id?: string
+          last_attempted_sync_at?: string | null
+          last_error?: string | null
+          last_successful_sync_at?: string | null
+          latest_data_date?: string | null
+          organization_id?: string
+          rows_synced?: number
+          selected_property_id?: string | null
+          selected_property_name?: string | null
+          selected_property_type?: string | null
+          service?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_oauth_states: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          organization_id: string
+          redirect_uri: string
+          requested_by: string | null
+          return_path: string | null
+          service: string
+          state: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          organization_id: string
+          redirect_uri: string
+          requested_by?: string | null
+          return_path?: string | null
+          service: string
+          state: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          organization_id?: string
+          redirect_uri?: string
+          requested_by?: string | null
+          return_path?: string | null
+          service?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_oauth_states_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_oauth_tokens: {
+        Row: {
+          access_token: string | null
+          access_token_expires_at: string | null
+          connection_id: string
+          refresh_token: string | null
+          token_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          connection_id: string
+          refresh_token?: string | null
+          token_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          connection_id?: string
+          refresh_token?: string | null
+          token_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_oauth_tokens_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: true
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gsc_country_facts: {
         Row: {
           clicks: number
