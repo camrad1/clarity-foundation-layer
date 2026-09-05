@@ -1276,6 +1276,666 @@ export type Database = {
           },
         ]
       }
+      further_communities: {
+        Row: {
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          discovered_at: string
+          further_community_id: string
+          further_organization_id: string | null
+          further_uuid: string | null
+          id: string
+          name: string | null
+          organization_id: string
+          payload: Json
+          slug: string | null
+          synced_at: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          discovered_at?: string
+          further_community_id: string
+          further_organization_id?: string | null
+          further_uuid?: string | null
+          id?: string
+          name?: string | null
+          organization_id: string
+          payload?: Json
+          slug?: string | null
+          synced_at?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          discovered_at?: string
+          further_community_id?: string
+          further_organization_id?: string | null
+          further_uuid?: string | null
+          id?: string
+          name?: string | null
+          organization_id?: string
+          payload?: Json
+          slug?: string | null
+          synced_at?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_communities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_communities_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_communities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_conversation_events: {
+        Row: {
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_on: string | null
+          data: Json
+          event_key: string
+          further_lead_id: string
+          id: string
+          message_type: string | null
+          organization_id: string
+          synced_at: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_on?: string | null
+          data?: Json
+          event_key: string
+          further_lead_id: string
+          id?: string
+          message_type?: string | null
+          organization_id: string
+          synced_at?: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_on?: string | null
+          data?: Json
+          event_key?: string
+          further_lead_id?: string
+          id?: string
+          message_type?: string | null
+          organization_id?: string
+          synced_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_conversation_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_conversation_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_conversation_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_lead_details: {
+        Row: {
+          care_type: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          detail_fetched_at: string | null
+          external_lead_id: string | null
+          further_lead_id: string
+          gclid: string | null
+          hash_code: string | null
+          id: string
+          organization_id: string
+          payload: Json
+          score: number | null
+          synced_at: string
+          traffic_source: string | null
+          updated_at: string
+          url_parameters: Json
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_uuid: string | null
+        }
+        Insert: {
+          care_type?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          detail_fetched_at?: string | null
+          external_lead_id?: string | null
+          further_lead_id: string
+          gclid?: string | null
+          hash_code?: string | null
+          id?: string
+          organization_id: string
+          payload?: Json
+          score?: number | null
+          synced_at?: string
+          traffic_source?: string | null
+          updated_at?: string
+          url_parameters?: Json
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_uuid?: string | null
+        }
+        Update: {
+          care_type?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          detail_fetched_at?: string | null
+          external_lead_id?: string | null
+          further_lead_id?: string
+          gclid?: string | null
+          hash_code?: string | null
+          id?: string
+          organization_id?: string
+          payload?: Json
+          score?: number | null
+          synced_at?: string
+          traffic_source?: string | null
+          updated_at?: string
+          url_parameters?: Json
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_lead_details_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_lead_details_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_lead_details_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_leads: {
+        Row: {
+          channel_source: string | null
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          created_on: string | null
+          device: string | null
+          email: string | null
+          external_lead_id: string | null
+          financially_unqualified: boolean | null
+          full_name: string | null
+          further_community_id: string | null
+          further_lead_id: string
+          id: string
+          lead_submitted: boolean | null
+          move_in_date: string | null
+          organization_id: string
+          payload: Json
+          phone: string | null
+          source_updated_at: string | null
+          synced_at: string
+          tour_confirmed: boolean | null
+          tour_date: string | null
+          tour_scheduled: boolean | null
+          tours_count: number | null
+          traffic_source: string | null
+          updated_at: string
+          visitor_uuid: string | null
+        }
+        Insert: {
+          channel_source?: string | null
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          created_on?: string | null
+          device?: string | null
+          email?: string | null
+          external_lead_id?: string | null
+          financially_unqualified?: boolean | null
+          full_name?: string | null
+          further_community_id?: string | null
+          further_lead_id: string
+          id?: string
+          lead_submitted?: boolean | null
+          move_in_date?: string | null
+          organization_id: string
+          payload?: Json
+          phone?: string | null
+          source_updated_at?: string | null
+          synced_at?: string
+          tour_confirmed?: boolean | null
+          tour_date?: string | null
+          tour_scheduled?: boolean | null
+          tours_count?: number | null
+          traffic_source?: string | null
+          updated_at?: string
+          visitor_uuid?: string | null
+        }
+        Update: {
+          channel_source?: string | null
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          created_on?: string | null
+          device?: string | null
+          email?: string | null
+          external_lead_id?: string | null
+          financially_unqualified?: boolean | null
+          full_name?: string | null
+          further_community_id?: string | null
+          further_lead_id?: string
+          id?: string
+          lead_submitted?: boolean | null
+          move_in_date?: string | null
+          organization_id?: string
+          payload?: Json
+          phone?: string | null
+          source_updated_at?: string | null
+          synced_at?: string
+          tour_confirmed?: boolean | null
+          tour_date?: string | null
+          tour_scheduled?: boolean | null
+          tours_count?: number | null
+          traffic_source?: string | null
+          updated_at?: string
+          visitor_uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_leads_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_leads_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_sync_state: {
+        Row: {
+          connection_id: string
+          created_at: string
+          dataset: string
+          error_summary: string | null
+          id: string
+          last_attempted_at: string | null
+          last_successful_at: string | null
+          organization_id: string
+          rows_failed: number
+          rows_inserted: number
+          rows_received: number
+          rows_unmapped: number
+          rows_updated: number
+          updated_at: string
+          watermark: string | null
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          dataset: string
+          error_summary?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_successful_at?: string | null
+          organization_id: string
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          updated_at?: string
+          watermark?: string | null
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          dataset?: string
+          error_summary?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_successful_at?: string | null
+          organization_id?: string
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          updated_at?: string
+          watermark?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_sync_state_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_sync_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_sync_unit_runs: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          created_at: string
+          dataset: string
+          duration_ms: number | null
+          error_summary: string | null
+          id: string
+          last_progress_at: string
+          mode: string
+          organization_id: string
+          pages_fetched: number
+          requested_after: string | null
+          rows_failed: number
+          rows_inserted: number
+          rows_received: number
+          rows_unmapped: number
+          rows_updated: number
+          source_max_updated_at: string | null
+          started_at: string
+          status: string
+          sync_run_id: string | null
+          unit_key: string
+          warnings: string[]
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          created_at?: string
+          dataset: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          last_progress_at?: string
+          mode?: string
+          organization_id: string
+          pages_fetched?: number
+          requested_after?: string | null
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          started_at?: string
+          status?: string
+          sync_run_id?: string | null
+          unit_key: string
+          warnings?: string[]
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          created_at?: string
+          dataset?: string
+          duration_ms?: number | null
+          error_summary?: string | null
+          id?: string
+          last_progress_at?: string
+          mode?: string
+          organization_id?: string
+          pages_fetched?: number
+          requested_after?: string | null
+          rows_failed?: number
+          rows_inserted?: number
+          rows_received?: number
+          rows_unmapped?: number
+          rows_updated?: number
+          source_max_updated_at?: string | null
+          started_at?: string
+          status?: string
+          sync_run_id?: string | null
+          unit_key?: string
+          warnings?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_sync_unit_runs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_sync_unit_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_sync_unit_runs_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "source_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_visitors: {
+        Row: {
+          community_id: string | null
+          connection_id: string
+          created_at: string
+          further_community_id: string | null
+          id: string
+          occurred_at: string | null
+          organization_id: string
+          payload: Json
+          referrer: string | null
+          synced_at: string
+          traffic_source: string | null
+          updated_at: string
+          visitor_uuid: string
+        }
+        Insert: {
+          community_id?: string | null
+          connection_id: string
+          created_at?: string
+          further_community_id?: string | null
+          id?: string
+          occurred_at?: string | null
+          organization_id: string
+          payload?: Json
+          referrer?: string | null
+          synced_at?: string
+          traffic_source?: string | null
+          updated_at?: string
+          visitor_uuid: string
+        }
+        Update: {
+          community_id?: string | null
+          connection_id?: string
+          created_at?: string
+          further_community_id?: string | null
+          id?: string
+          occurred_at?: string | null
+          organization_id?: string
+          payload?: Json
+          referrer?: string | null
+          synced_at?: string
+          traffic_source?: string | null
+          updated_at?: string
+          visitor_uuid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_visitors_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_visitors_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_visitors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      further_wh_matches: {
+        Row: {
+          audit: Json
+          community_id: string | null
+          created_at: string
+          evidence_type: string
+          further_external_lead_id: string | null
+          further_lead_id: string
+          id: string
+          is_active: boolean
+          match_method: string
+          matched_at: string | null
+          organization_id: string
+          updated_at: string
+          wh_field: string | null
+          wh_prospect_id: string | null
+        }
+        Insert: {
+          audit?: Json
+          community_id?: string | null
+          created_at?: string
+          evidence_type: string
+          further_external_lead_id?: string | null
+          further_lead_id: string
+          id?: string
+          is_active?: boolean
+          match_method: string
+          matched_at?: string | null
+          organization_id: string
+          updated_at?: string
+          wh_field?: string | null
+          wh_prospect_id?: string | null
+        }
+        Update: {
+          audit?: Json
+          community_id?: string | null
+          created_at?: string
+          evidence_type?: string
+          further_external_lead_id?: string | null
+          further_lead_id?: string
+          id?: string
+          is_active?: boolean
+          match_method?: string
+          matched_at?: string | null
+          organization_id?: string
+          updated_at?: string
+          wh_field?: string | null
+          wh_prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "further_wh_matches_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "further_wh_matches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gsc_country_facts: {
         Row: {
           clicks: number
@@ -4350,6 +5010,10 @@ export type Database = {
           move_outs: number
           net_move_ins: number
         }[]
+      }
+      further_sync_reap_stalled: {
+        Args: { _org_id: string; _stall_minutes?: number }
+        Returns: Json
       }
       gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
       gsc_classify_query: {
