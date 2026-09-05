@@ -619,6 +619,7 @@ function SalesIntelligence() {
         <TabsContent value="sources" className="space-y-6 pt-6">
           <LeadSourceMix
             rows={s.leadSources.map((r) => ({
+              id: r.id,
               label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
               moveIns: r.moveIns,
@@ -1170,7 +1171,7 @@ function CounselorChart({
  * Shares are always taken against the period/community totals in scope, not
  * against the visible slice of rows.
  */
-type LeadSourceRow = { label: string; inquiries: number; moveIns: number };
+type LeadSourceRow = { id: string; label: string; inquiries: number; moveIns: number };
 type SourceSortKey = "label" | "inquiries" | "inquiryShare" | "moveIns" | "moveInShare";
 const SOURCE_LIMITS = [
   { value: 5, label: "Top 5" },
