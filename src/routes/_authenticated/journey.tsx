@@ -1,11 +1,27 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus } from "lucide-react";
-import { DataTable, type Column } from "@/components/clarity/data-table";
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  Minus,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
+
 import { useWhContext } from "@/lib/wh/use-wh";
 import { useAppState } from "@/state/app-state";
 import { useWhSalesSummary } from "@/lib/wh/summary";
