@@ -624,10 +624,12 @@ function SalesIntelligence() {
               id: r.id,
               label: resolveLabel(labels.leadSource, r.id, "Unknown lead source"),
               inquiries: r.inquiries,
+              tours: r.tours ?? 0,
               moveIns: r.moveIns,
             }))}
-            totals={{ inquiries: s.inquiries, moveIns: s.moveIns }}
-            prior={p ? { inquiries: p.inquiries, moveIns: p.moveIns } : null}
+            totals={{ inquiries: s.inquiries, tours: s.tours, moveIns: s.moveIns }}
+            reTours={s.reTours}
+            prior={p ? { inquiries: p.inquiries, tours: p.tours, moveIns: p.moveIns } : null}
             comparisonLabel={`${formatPeriodLabel(prior)} · ${comparisonLabel}`}
             utm={s.utm}
           />
