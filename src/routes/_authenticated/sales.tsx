@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
+import { ConversionRatesTab } from "@/components/clarity/conversion-rates";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { PageHeader } from "@/components/clarity/page-header";
 import { CandidateMetricCard, ProvisionalBadge, WithheldPanel } from "@/components/clarity/provisional";
