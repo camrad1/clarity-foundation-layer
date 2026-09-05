@@ -136,13 +136,15 @@ export function ConversionRatesTab({
             inq_tour: p.inquiries ? Number(((p.toured / p.inquiries) * 100).toFixed(1)) : 0,
             tour_dep: p.toured ? Number(((p.deposited / p.toured) * 100).toFixed(1)) : 0,
             dep_mi: p.deposited ? Number(((p.movedIn / p.deposited) * 100).toFixed(1)) : 0,
+            tour_mi: p.toured ? Number(((p.touredThenMovedIn / p.toured) * 100).toFixed(1)) : 0,
             inq_mi: p.inquiries ? Number(((p.movedIn / p.inquiries) * 100).toFixed(1)) : 0,
           }))}
           series={[
             { key: "inq_tour", label: "Inquiry → Tour %", color: CHART_TOKENS.primary },
             { key: "tour_dep", label: "Tour → Deposit %", color: CHART_TOKENS.secondary },
             { key: "dep_mi", label: "Deposit → Move-in %", color: CHART_TOKENS.tertiary },
-            { key: "inq_mi", label: "Inquiry → Move-in %", color: CHART_TOKENS.quaternary ?? CHART_TOKENS.primary },
+            { key: "tour_mi", label: "Tour → Move-in %", color: CHART_TOKENS.negative },
+            { key: "inq_mi", label: "Inquiry → Move-in %", color: CHART_TOKENS.quaternary },
           ]}
           valueFormatter={(v) => `${v.toFixed(1)}%`}
         />
@@ -238,6 +240,18 @@ function CohortKpis({
       tip: "Within the same inquiry cohort: of the prospects who placed a standard deposit, the share with a counted move-in on a non-canceled contract. The deposit stage is provisional.",
     },
     {
+      label: "Tour → Move-in",
+      current: rate(c.cohort.touredThenMovedIn, c.cohort.toured),
+      previous: prev ? rate(prev.cohort.touredThenMovedIn, prev.cohort.toured) : null,
+      num: c.cohort.touredThenMovedIn,
+      den: c.cohort.toured ?? 0,
+      numLabel: "of those who toured also moved in",
+      denLabel: "cohort prospects who toured",
+      provisional: false,
+      drill: "funnel",
+      tip: "Within the same inquiry cohort: of the prospects who completed a successful tour, the share with a counted move-in on a non-canceled contract at any later date. A deposit is not required, so this rate is unaffected by the provisional deposit stage. It is not move-ins recorded in the period divided by tours recorded in the period.",
+    },
+    {
       label: "Inquiry → Move-in",
       current: rate(c.cohort.movedIn, c.cohort.size),
       previous: prev ? rate(prev.cohort.movedIn, prev.cohort.size) : null,
@@ -271,7 +285,7 @@ function CohortKpis({
           Inquiry cohort of {c.cohort.size.toLocaleString()} prospects, followed forward as of {c.asOf}.
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
           <RateCard key={card.label} {...card} comparisonNote={cmpNote} onDrill={onDrill} />
         ))}
@@ -519,6 +533,7 @@ function Maturity({ c }: { c: WhConversion }) {
               <TableHead className="text-right">Toured</TableHead>
               <TableHead className="text-right">Inquiry → Tour</TableHead>
               <TableHead className="text-right">Moved in</TableHead>
+              <TableHead className="text-right">Tour → Move-in</TableHead>
               <TableHead className="text-right">Inquiry → Move-in</TableHead>
             </TableRow>
           </TableHeader>
@@ -532,6 +547,9 @@ function Maturity({ c }: { c: WhConversion }) {
                   {m.size >= MIN_COHORT_SAMPLE ? pct1(rate(m.toured, m.size)) : <SmallSample />}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{m.movedIn.toLocaleString()}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {m.size >= MIN_COHORT_SAMPLE ? pct1(rate(m.touredThenMovedIn, m.toured)) : <SmallSample />}
+                </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {m.size >= MIN_COHORT_SAMPLE ? pct1(rate(m.movedIn, m.size)) : <SmallSample />}
                 </TableCell>
@@ -562,7 +580,15 @@ function SmallSample() {
 
 /* ------------------------------------------------------- generic breakdowns */
 
-type SortKey = "label" | "inquiries" | "toured" | "inqTour" | "deposited" | "movedIn" | "inqMoveIn";
+type SortKey =
+  | "label"
+  | "inquiries"
+  | "toured"
+  | "inqTour"
+  | "deposited"
+  | "tourMoveIn"
+  | "movedIn"
+  | "inqMoveIn";
 
 function BreakdownTable({
   title,
@@ -588,6 +614,7 @@ function BreakdownTable({
         big: r.inquiries >= MIN_COHORT_SAMPLE,
         inqTour: rate(r.toured, r.inquiries),
         inqDep: rate(r.deposited, r.inquiries),
+        tourMoveIn: rate(r.touredThenMovedIn, r.toured),
         inqMoveIn: rate(r.movedIn, r.inquiries),
       })),
     [rows, label],
@@ -635,6 +662,7 @@ function BreakdownTable({
               {th("inquiries", "Inquiries")}
               {th("inqTour", "Inquiry → Tour")}
               <TableHead className="text-right">Inquiry → Deposit</TableHead>
+              {th("tourMoveIn", "Tour → Move-in")}
               {th("inqMoveIn", "Inquiry → Move-in")}
               {th("movedIn", "Move-ins")}
             </TableRow>
@@ -649,6 +677,9 @@ function BreakdownTable({
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {r.big ? pct1(r.inqDep) : <SmallSample />}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {r.big ? pct1(r.tourMoveIn) : <SmallSample />}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {r.big ? pct1(r.inqMoveIn) : <SmallSample />}
@@ -678,7 +709,14 @@ function BreakdownTable({
 
 /* -------------------------------------------------------------- communities */
 
-type CommunitySortKey = "label" | "inquiries" | "inqTour" | "tourDep" | "depMi" | "inqMi";
+type CommunitySortKey =
+  | "label"
+  | "inquiries"
+  | "inqTour"
+  | "tourDep"
+  | "depMi"
+  | "tourMi"
+  | "inqMi";
 
 function CommunityTable({
   rows,
@@ -701,6 +739,7 @@ function CommunityTable({
         inqTour: rate(r.toured, r.inquiries),
         tourDep: rate(r.deposited, r.toured),
         depMi: rate(r.movedIn, r.deposited),
+        tourMi: rate(r.touredThenMovedIn, r.toured),
         inqMi: rate(r.movedIn, r.inquiries),
       })),
     [rows, communityNames],
@@ -748,6 +787,7 @@ function CommunityTable({
               {th("inqTour", "Inq → Tour")}
               {th("tourDep", "Tour → Dep")}
               {th("depMi", "Dep → MI")}
+              {th("tourMi", "Tour → MI")}
               {th("inqMi", "Inq → MI")}
             </TableRow>
           </TableHeader>
@@ -762,6 +802,7 @@ function CommunityTable({
                 <TableCell className="text-right tabular-nums">{r.big ? pct1(r.inqTour) : <SmallSample />}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.big ? pct1(r.tourDep) : <SmallSample />}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.big ? pct1(r.depMi) : <SmallSample />}</TableCell>
+                <TableCell className="text-right tabular-nums">{r.big ? pct1(r.tourMi) : <SmallSample />}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.big ? pct1(r.inqMi) : <SmallSample />}</TableCell>
               </TableRow>
             ))}
@@ -791,6 +832,11 @@ function SingleCommunityView({
     { label: "Toured", value: row.toured.toLocaleString(), note: pct1(rate(row.toured, row.inquiries)) + " of the cohort" },
     { label: "Deposited", value: row.deposited.toLocaleString(), note: pct1(rate(row.deposited, row.inquiries)) + " of the cohort · provisional" },
     { label: "Moved in", value: row.movedIn.toLocaleString(), note: pct1(rate(row.movedIn, row.inquiries)) + " of the cohort" },
+    {
+      label: "Tour → Move-in",
+      value: pct1(rate(row.touredThenMovedIn, row.toured)),
+      note: `${row.touredThenMovedIn.toLocaleString()} of ${row.toured.toLocaleString()} toured prospects moved in`,
+    },
     { label: "Tours recorded in period", value: row.periodTours.toLocaleString(), note: "Activity in the period, any cohort" },
     { label: "Move-ins recorded in period", value: row.periodMoveIns.toLocaleString(), note: "Activity in the period, any cohort" },
   ];
@@ -839,6 +885,13 @@ function Methodology({ c }: { c: WhConversion }) {
             <strong className="text-foreground">Direction of time.</strong> Cohort stages look forward without a cut-off,
             so a prospect who inquired in the period and moves in three months later still counts. That is why cohort
             rates for recent periods keep rising as time passes.
+          </p>
+          <p>
+            <strong className="text-foreground">Tour → Move-in.</strong> A cross-stage cohort rate: of the cohort
+            prospects who completed a successful tour, the share who later moved in. It does not require a deposit,
+            so it stays usable while the deposit stage is provisional, and it is never calculated as move-ins
+            recorded in the period divided by tours recorded in the period. The sequential funnel below is
+            unchanged: Inquiry → Tour → Deposit → Move-in.
           </p>
           <p>
             <strong className="text-foreground">Comparison.</strong> Rate changes are reported in percentage points
