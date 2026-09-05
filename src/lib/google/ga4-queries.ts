@@ -147,7 +147,7 @@ export function useGa4Totals(
         _org_id: organizationId!,
         _start: period!.start,
         _end: period!.end,
-        _community_ids: ids,
+        ...(ids ? { _community_ids: ids } : {}),
         _include_partial: includePartial,
       });
       if (error) throw error;
@@ -171,7 +171,7 @@ export function useGa4Series(
         _org_id: organizationId!,
         _start: period!.start,
         _end: period!.end,
-        _community_ids: ids,
+        ...(ids ? { _community_ids: ids } : {}),
       });
       if (error) throw error;
       return (data ?? []) as Ga4SeriesPoint[];
@@ -218,7 +218,7 @@ export function useGa4LandingPages(
         _org_id: organizationId!,
         _start: period!.start,
         _end: period!.end,
-        _community_ids: ids,
+        ...(ids ? { _community_ids: ids } : {}),
         _limit: limit,
         _include_partial: false,
       });
