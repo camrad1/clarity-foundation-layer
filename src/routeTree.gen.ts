@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
 import { Route as AuthenticatedAdminForecastImportRouteImport } from './routes/_authenticated/admin/forecast-import'
 import { Route as AuthenticatedAdminFurtherRouteImport } from './routes/_authenticated/admin/further'
+import { Route as AuthenticatedAdminGa4ConnectionRouteImport } from './routes/_authenticated/admin/ga4-connection'
 import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
 import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_authenticated/admin/gsc-imports'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminOccupancyHistoryRouteImport } from './routes/_authenticated/admin/occupancy-history'
 import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_authenticated/admin/organizations'
 import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
+import { Route as AuthenticatedAdminSearchConsoleConnectionRouteImport } from './routes/_authenticated/admin/search-console-connection'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedAdminWelcomehomeRouteImport } from './routes/_authenticated/admin/welcomehome'
@@ -44,6 +46,7 @@ import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_aut
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
+import { Route as ApiPublicGoogleOauthCallbackRouteImport } from './routes/api/public/google/oauth/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -129,6 +132,12 @@ const AuthenticatedAdminFurtherRoute =
     path: '/admin/further',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminGa4ConnectionRoute =
+  AuthenticatedAdminGa4ConnectionRouteImport.update({
+    id: '/admin/ga4-connection',
+    path: '/admin/ga4-connection',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminGoalsRoute = AuthenticatedAdminGoalsRouteImport.update({
   id: '/admin/goals',
   path: '/admin/goals',
@@ -168,6 +177,12 @@ const AuthenticatedAdminQueryRulesRoute =
   AuthenticatedAdminQueryRulesRouteImport.update({
     id: '/admin/query-rules',
     path: '/admin/query-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSearchConsoleConnectionRoute =
+  AuthenticatedAdminSearchConsoleConnectionRouteImport.update({
+    id: '/admin/search-console-connection',
+    path: '/admin/search-console-connection',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminUrlRulesRoute =
@@ -241,6 +256,12 @@ const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
   path: '/api/public/hooks/wh-nightly',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGoogleOauthCallbackRoute =
+  ApiPublicGoogleOauthCallbackRouteImport.update({
+    id: '/api/public/google/oauth/callback',
+    path: '/api/public/google/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -258,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/admin/further': typeof AuthenticatedAdminFurtherRoute
+  '/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -265,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
+  '/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
@@ -277,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -293,6 +317,7 @@ export interface FileRoutesByTo {
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/admin/further': typeof AuthenticatedAdminFurtherRoute
+  '/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -300,6 +325,7 @@ export interface FileRoutesByTo {
   '/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
+  '/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
@@ -312,6 +338,7 @@ export interface FileRoutesByTo {
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -331,6 +358,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/_authenticated/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
   '/_authenticated/admin/further': typeof AuthenticatedAdminFurtherRoute
+  '/_authenticated/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/_authenticated/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
@@ -338,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/occupancy-history': typeof AuthenticatedAdminOccupancyHistoryRoute
   '/_authenticated/admin/organizations': typeof AuthenticatedAdminOrganizationsRoute
   '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
+  '/_authenticated/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/_authenticated/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
@@ -350,6 +379,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -369,6 +399,7 @@ export interface FileRouteTypes {
     | '/admin/data-sources'
     | '/admin/forecast-import'
     | '/admin/further'
+    | '/admin/ga4-connection'
     | '/admin/goals'
     | '/admin/gsc-imports'
     | '/admin/mappings'
@@ -376,6 +407,7 @@ export interface FileRouteTypes {
     | '/admin/occupancy-history'
     | '/admin/organizations'
     | '/admin/query-rules'
+    | '/admin/search-console-connection'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/admin/welcomehome'
@@ -388,6 +420,7 @@ export interface FileRouteTypes {
     | '/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -404,6 +437,7 @@ export interface FileRouteTypes {
     | '/admin/data-sources'
     | '/admin/forecast-import'
     | '/admin/further'
+    | '/admin/ga4-connection'
     | '/admin/goals'
     | '/admin/gsc-imports'
     | '/admin/mappings'
@@ -411,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin/occupancy-history'
     | '/admin/organizations'
     | '/admin/query-rules'
+    | '/admin/search-console-connection'
     | '/admin/url-rules'
     | '/admin/validation'
     | '/admin/welcomehome'
@@ -423,6 +458,7 @@ export interface FileRouteTypes {
     | '/marketing'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   id:
     | '__root__'
     | '/'
@@ -441,6 +477,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/data-sources'
     | '/_authenticated/admin/forecast-import'
     | '/_authenticated/admin/further'
+    | '/_authenticated/admin/ga4-connection'
     | '/_authenticated/admin/goals'
     | '/_authenticated/admin/gsc-imports'
     | '/_authenticated/admin/mappings'
@@ -448,6 +485,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/occupancy-history'
     | '/_authenticated/admin/organizations'
     | '/_authenticated/admin/query-rules'
+    | '/_authenticated/admin/search-console-connection'
     | '/_authenticated/admin/url-rules'
     | '/_authenticated/admin/validation'
     | '/_authenticated/admin/welcomehome'
@@ -460,6 +498,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/api/public/google/oauth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -468,6 +507,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
+  ApiPublicGoogleOauthCallbackRoute: typeof ApiPublicGoogleOauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -584,6 +624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFurtherRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ga4-connection': {
+      id: '/_authenticated/admin/ga4-connection'
+      path: '/admin/ga4-connection'
+      fullPath: '/admin/ga4-connection'
+      preLoaderRoute: typeof AuthenticatedAdminGa4ConnectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/goals': {
       id: '/_authenticated/admin/goals'
       path: '/admin/goals'
@@ -631,6 +678,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/query-rules'
       fullPath: '/admin/query-rules'
       preLoaderRoute: typeof AuthenticatedAdminQueryRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/search-console-connection': {
+      id: '/_authenticated/admin/search-console-connection'
+      path: '/admin/search-console-connection'
+      fullPath: '/admin/search-console-connection'
+      preLoaderRoute: typeof AuthenticatedAdminSearchConsoleConnectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/url-rules': {
@@ -717,6 +771,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWhNightlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/google/oauth/callback': {
+      id: '/api/public/google/oauth/callback'
+      path: '/api/public/google/oauth/callback'
+      fullPath: '/api/public/google/oauth/callback'
+      preLoaderRoute: typeof ApiPublicGoogleOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -759,6 +820,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
   AuthenticatedAdminForecastImportRoute: typeof AuthenticatedAdminForecastImportRoute
   AuthenticatedAdminFurtherRoute: typeof AuthenticatedAdminFurtherRoute
+  AuthenticatedAdminGa4ConnectionRoute: typeof AuthenticatedAdminGa4ConnectionRoute
   AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
   AuthenticatedAdminGscImportsRoute: typeof AuthenticatedAdminGscImportsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
@@ -766,6 +828,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminOccupancyHistoryRoute: typeof AuthenticatedAdminOccupancyHistoryRoute
   AuthenticatedAdminOrganizationsRoute: typeof AuthenticatedAdminOrganizationsRoute
   AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
+  AuthenticatedAdminSearchConsoleConnectionRoute: typeof AuthenticatedAdminSearchConsoleConnectionRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
   AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
   AuthenticatedAdminWelcomehomeRoute: typeof AuthenticatedAdminWelcomehomeRoute
@@ -786,6 +849,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
   AuthenticatedAdminForecastImportRoute: AuthenticatedAdminForecastImportRoute,
   AuthenticatedAdminFurtherRoute: AuthenticatedAdminFurtherRoute,
+  AuthenticatedAdminGa4ConnectionRoute: AuthenticatedAdminGa4ConnectionRoute,
   AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
   AuthenticatedAdminGscImportsRoute: AuthenticatedAdminGscImportsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
@@ -794,6 +858,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAdminOccupancyHistoryRoute,
   AuthenticatedAdminOrganizationsRoute: AuthenticatedAdminOrganizationsRoute,
   AuthenticatedAdminQueryRulesRoute: AuthenticatedAdminQueryRulesRoute,
+  AuthenticatedAdminSearchConsoleConnectionRoute:
+    AuthenticatedAdminSearchConsoleConnectionRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
   AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
   AuthenticatedAdminWelcomehomeRoute: AuthenticatedAdminWelcomehomeRoute,
@@ -809,6 +875,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
+  ApiPublicGoogleOauthCallbackRoute: ApiPublicGoogleOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
