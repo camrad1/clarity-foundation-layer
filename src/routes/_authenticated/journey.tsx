@@ -53,6 +53,8 @@ export const Route = createFileRoute("/_authenticated/journey")({
 
 const nf = new Intl.NumberFormat("en-US");
 const fmt = (v: number | null | undefined) => (v == null ? "—" : nf.format(Math.round(v)));
+/** Pending reads read "Loading…" instead of an em dash, which means "no data". */
+const show = (loading: boolean, text: string) => (loading ? "Loading…" : text);
 const fmtPct = (v: number | null | undefined, digits = 1) =>
   v == null ? "—" : `${v.toFixed(digits)}%`;
 const fmtPos = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
@@ -344,6 +346,7 @@ function PerformanceJourney() {
   );
 
 
+  const visLoading = singleCommunity ? commSearchNow.isLoading : searchNow.isLoading;
   const occTotals = occupancy.data?.totals;
   const priorOccPct = useMemo(() => {
     const pts = priorOcc.data ?? [];
@@ -371,7 +374,7 @@ function PerformanceJourney() {
       key: "visibility",
       name: "Visibility",
       metric: "Search clicks",
-      value: fmt(vis.clicks),
+      value: show(visLoading, fmt(vis.clicks)),
       delta: delta(vis.clicks, visPrior.clicks),
       priorLabel,
       source: searchSource,
@@ -386,7 +389,7 @@ function PerformanceJourney() {
       key: "traffic",
       name: "Traffic",
       metric: "Website sessions",
-      value: fmt(ga4Now.data?.sessions),
+      value: show(ga4Now.isLoading, fmt(ga4Now.data?.sessions)),
       delta: delta(ga4Now.data?.sessions ?? null, ga4Prior.data?.sessions ?? null),
       priorLabel,
       source: GA4_SOURCE_LABEL,
@@ -402,7 +405,7 @@ function PerformanceJourney() {
       key: "conversations",
       name: "Conversations",
       metric: "Further leads",
-      value: fmt(furtherNow.data?.leads),
+      value: show(furtherNow.isLoading, fmt(furtherNow.data?.leads)),
       delta: delta(furtherNow.data?.leads ?? null, furtherPrior.data?.leads ?? null),
       priorLabel,
       source: "Source: Further API",
@@ -418,7 +421,7 @@ function PerformanceJourney() {
       key: "leads",
       name: "Leads",
       metric: "New inquiries",
-      value: fmt(wh.data?.inquiries),
+      value: show(wh.isLoading, fmt(wh.data?.inquiries)),
       delta: delta(wh.data?.inquiries ?? null, whPrior.data?.inquiries ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -430,7 +433,7 @@ function PerformanceJourney() {
       key: "tours",
       name: "Tours",
       metric: "Completed tours",
-      value: fmt(wh.data?.tours),
+      value: show(wh.isLoading, fmt(wh.data?.tours)),
       delta: delta(wh.data?.tours ?? null, whPrior.data?.tours ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -443,7 +446,7 @@ function PerformanceJourney() {
       key: "deposits",
       name: "Deposits",
       metric: "Depositors",
-      value: fmt(wh.data?.deposits),
+      value: show(wh.isLoading, fmt(wh.data?.deposits)),
       delta: delta(wh.data?.deposits ?? null, whPrior.data?.deposits ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM · provisional",
@@ -455,7 +458,7 @@ function PerformanceJourney() {
       key: "move_ins",
       name: "Move-Ins",
       metric: "Move-ins",
-      value: fmt(wh.data?.moveIns),
+      value: show(wh.isLoading, fmt(wh.data?.moveIns)),
       delta: delta(wh.data?.moveIns ?? null, whPrior.data?.moveIns ?? null),
       priorLabel,
       source: "Source: WelcomeHome CRM",
@@ -470,7 +473,10 @@ function PerformanceJourney() {
       key: "occupancy",
       name: "Occupancy",
       metric: "Current occupancy",
-      value: occTotals?.occupancyPct == null ? "—" : fmtPct(occTotals.occupancyPct * 100),
+      value: show(
+        occupancy.isLoading,
+        occTotals?.occupancyPct == null ? "—" : fmtPct(occTotals.occupancyPct * 100),
+      ),
       delta: delta(
         occTotals?.occupancyPct == null ? null : occTotals.occupancyPct * 100,
         priorOccPct,
