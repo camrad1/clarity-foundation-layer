@@ -219,6 +219,48 @@ export function GoogleConnectionPage({
       </section>
 
       <section className="rounded-lg border bg-card p-5 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Validation pull</h2>
+            <p className="text-sm text-muted-foreground">
+              Fetches only a few recent days into a separate, clearly labeled area. Existing imports and
+              dashboards are not changed.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={!canManageImports || !conn?.selected_property_id || validation.isPending}
+              onClick={() => validation.mutate()}
+            >
+              <RefreshCw className={`mr-2 size-4 ${validation.isPending ? "animate-spin" : ""}`} />
+              Run validation pull
+            </Button>
+            {service === "search_console" ? (
+              <Button
+                variant="outline"
+                disabled={!canManageImports || compare.isPending}
+                onClick={() => compare.mutate()}
+              >
+                Compare with manual import
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        {validation.data ? (
+          <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs">
+            {JSON.stringify(validation.data, null, 2)}
+          </pre>
+        ) : null}
+        {compare.data ? (
+          <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs">
+            {JSON.stringify(compare.data, null, 2)}
+          </pre>
+        ) : null}
+      </section>
+
+      <section className="rounded-lg border bg-card p-5 space-y-3">
+
         <h2 className="text-sm font-semibold">Google Cloud redirect URI</h2>
         <p className="text-sm text-muted-foreground">
           Add this exact address to the authorized redirect URIs of your Google Cloud OAuth client.
