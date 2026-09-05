@@ -77,7 +77,7 @@ export function ConversionRatesTab({
   }, [range.start, range.end]);
 
   // Long ranges default to monthly cohorts; short ones to weekly/daily.
-  const defaultGrain: GrainOption = days > 92 ? "month" : days > 31 ? "week" : "day";
+  const defaultGrain: GrainOption = days > 92 ? "month" : days > 21 ? "week" : "day";
   const [grain, setGrain] = useState<GrainOption | null>(null);
   const activeGrain = grain ?? defaultGrain;
   const series = useWhConversionSeries(organizationId, communityIds, range.start, range.end, activeGrain);
@@ -423,9 +423,11 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
                 </span>
                 <span className="text-xs text-muted-foreground">
                   <span className="font-display text-sm font-semibold tabular-nums text-foreground">
-                    {stage.value.toLocaleString()}
+                    {stage.label === "Deposited" && !depositLinkage ? "—" : stage.value.toLocaleString()}
                   </span>
-                  {step != null ? <span className="ml-2">{pct1(step)} of previous stage</span> : null}
+                  {step != null && depositLinkage ? (
+                    <span className="ml-2">{pct1(step)} of previous stage</span>
+                  ) : null}
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-brand-soft">
