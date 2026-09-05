@@ -82,9 +82,7 @@ export function ConversionRatesTab({
   const activeGrain = grain ?? defaultGrain;
   const series = useWhConversionSeries(organizationId, communityIds, range.start, range.end, activeGrain);
 
-  if (current.isLoading) {
-    return <div className="panel px-6 py-16 text-center text-sm text-muted-foreground">Calculating conversion…</div>;
-  }
+  if (current.isLoading) return <ConversionSkeleton />;
   if (current.error) {
     return (
       <EmptyState
@@ -102,7 +100,16 @@ export function ConversionRatesTab({
   return (
     <TooltipProvider delayDuration={150}>
     <div className="space-y-8">
-      <CohortKpis c={c} prev={prev} priorLabel={priorLabel} comparisonLabel={comparisonLabel} onDrill={onDrill} />
+      <CohortContext c={c} range={range} />
+
+      <CohortKpis
+        c={c}
+        prev={prev}
+        prevLoading={previous.isLoading}
+        priorLabel={priorLabel}
+        comparisonLabel={comparisonLabel}
+        onDrill={onDrill}
+      />
 
       <CohortFunnel c={c} onDrill={onDrill} />
 
@@ -110,7 +117,7 @@ export function ConversionRatesTab({
 
       <ChartCard
         title="Conversion over time"
-        description={`Each point is the inquiry cohort for that ${activeGrain}, followed forward to a tour, deposit and move-in. Recent cohorts are still maturing, so the right-hand edge of every line normally sits low.`}
+        description={`Each point is the inquiry cohort for that ${activeGrain}, followed forward through ${c.asOf}. Recent cohorts may still be maturing, so the right-hand edge of every line normally sits low. Values are percentages of the stage denominator; use the legend to focus a single line.`}
         height={300}
         actions={
           <div className="inline-flex rounded-md border border-border p-0.5">
@@ -166,17 +173,69 @@ export function ConversionRatesTab({
         <CommunityTable rows={c.byCommunity} communityNames={communityNames} />
       )}
 
-      <BreakdownTable
-        title="Conversion by counselor"
-        description="Inquiries are grouped by the sales counselor currently recorded on the prospect, using the existing WelcomeHome assignment. Counts are descriptive: caseload, community mix and lead quality all differ, so this is not a performance ranking."
-        rows={c.byCounselor}
-        label={counselorLabel}
-        firstHeader="Counselor"
-      />
+      <Accordion type="single" collapsible>
+        <AccordionItem value="counselor" className="panel px-5">
+          <AccordionTrigger className="text-sm font-semibold">Conversion by counselor</AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <BreakdownTable
+              title=""
+              description="Inquiries are grouped by the sales counselor currently recorded on the prospect, using the existing WelcomeHome assignment. Counts are descriptive: caseload, community mix and lead quality all differ, so this is not a performance ranking."
+              rows={c.byCounselor}
+              label={counselorLabel}
+              firstHeader="Counselor"
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Methodology c={c} />
     </div>
     </TooltipProvider>
+  );
+}
+
+/* ------------------------------------------------------ loading + context */
+
+function SkelBlock({ className }: { className: string }) {
+  return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
+}
+
+function ConversionSkeleton() {
+  return (
+    <div className="space-y-8">
+      <SkelBlock className="h-5 w-2/3" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="kpi-card space-y-3 p-5">
+            <SkelBlock className="h-3 w-24" />
+            <SkelBlock className="h-7 w-20" />
+            <SkelBlock className="h-3 w-40" />
+          </div>
+        ))}
+      </div>
+      <SkelBlock className="h-56 w-full" />
+      <SkelBlock className="h-72 w-full" />
+      <SkelBlock className="h-64 w-full" />
+    </div>
+  );
+}
+
+const prettyDate = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+function CohortContext({ c, range }: { c: WhConversion; range: { start: string; end: string } }) {
+  return (
+    <p className="panel px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+      <span className="font-medium text-foreground">Inquiry cohort:</span>{" "}
+      {c.cohort.size.toLocaleString()} prospects who inquired {prettyDate(range.start)} – {prettyDate(range.end)},
+      followed forward through {prettyDate(c.asOf)}. Every conversion rate below tracks this same group of people over
+      time — it is not a count of what happened during the period.
+    </p>
   );
 }
 
@@ -185,12 +244,14 @@ export function ConversionRatesTab({
 function CohortKpis({
   c,
   prev,
+  prevLoading,
   priorLabel,
   comparisonLabel,
   onDrill,
 }: {
   c: WhConversion;
   prev: WhConversion | null;
+  prevLoading: boolean;
   priorLabel: string;
   comparisonLabel: string;
   onDrill: (tab: string) => void;
@@ -209,6 +270,7 @@ function CohortKpis({
       den: c.cohort.size,
       numLabel: "cohort prospects with a completed tour",
       denLabel: "inquiries in the cohort",
+      support: `${c.cohort.toured ?? 0} of ${c.cohort.size} inquiries toured`,
       provisional: false,
       drill: "inquiries",
       tip: "Of the countable prospects whose inquiry date falls in the selected period, the share with at least one completed tour activity carrying a successful WelcomeHome result — at any later date, inside or outside the period.",
@@ -221,6 +283,7 @@ function CohortKpis({
       den: c.cohort.toured ?? 0,
       numLabel: "of those who toured also deposited",
       denLabel: "cohort prospects who toured",
+      support: `${c.cohort.touredThenDeposited} of ${c.cohort.toured ?? 0} toured prospects deposited`,
       provisional: true,
       drill: "funnel",
       unavailable: !depositLinkage,
@@ -234,6 +297,7 @@ function CohortKpis({
       den: c.cohort.deposited,
       numLabel: "of those who deposited also moved in",
       denLabel: "cohort prospects who deposited",
+      support: `${c.cohort.depositedThenMovedIn} of ${c.cohort.deposited} depositors moved in`,
       provisional: true,
       drill: "funnel",
       unavailable: !depositLinkage,
@@ -247,6 +311,7 @@ function CohortKpis({
       den: c.cohort.toured ?? 0,
       numLabel: "of those who toured also moved in",
       denLabel: "cohort prospects who toured",
+      support: `${c.cohort.touredThenMovedIn} of ${c.cohort.toured ?? 0} toured prospects moved in`,
       provisional: false,
       drill: "funnel",
       tip: "Within the same inquiry cohort: of the prospects who completed a successful tour, the share with a counted move-in on a non-canceled contract at any later date. A deposit is not required, so this rate is unaffected by the provisional deposit stage. It is not move-ins recorded in the period divided by tours recorded in the period.",
@@ -259,6 +324,7 @@ function CohortKpis({
       den: c.cohort.size,
       numLabel: "cohort prospects who moved in",
       denLabel: "inquiries in the cohort",
+      support: `${c.cohort.movedIn} of ${c.cohort.size} inquiries moved in`,
       provisional: false,
       drill: "inquiries",
       tip: "End-to-end cohort conversion: of the prospects who inquired in the selected period, the share with a counted move-in on a non-canceled contract at any later date. Transfers and canceled leases are excluded.",
@@ -271,6 +337,7 @@ function CohortKpis({
       den: c.period.tours,
       numLabel: "repeat tours completed in the period",
       denLabel: "completed tours in the period",
+      support: `${c.period.reTours} of ${c.period.tours} tours completed in the period were repeat visits`,
       provisional: false,
       drill: "funnel",
       tip: "Period activity ratio, not cohort conversion: of all successful tours completed in the selected period, the share that were not the prospect's first completed tour.",
@@ -279,15 +346,16 @@ function CohortKpis({
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Cohort conversion</h2>
-        <p className="text-xs text-muted-foreground">
-          Inquiry cohort of {c.cohort.size.toLocaleString()} prospects, followed forward as of {c.asOf}.
-        </p>
-      </div>
+      <h2 className="text-sm font-semibold">Cohort conversion</h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
-          <RateCard key={card.label} {...card} comparisonNote={cmpNote} onDrill={onDrill} />
+          <RateCard
+            key={card.label}
+            {...card}
+            comparisonNote={cmpNote}
+            comparisonPending={prevLoading}
+            onDrill={onDrill}
+          />
         ))}
       </div>
     </section>
@@ -302,9 +370,11 @@ function RateCard({
   den,
   numLabel,
   denLabel,
+  support,
   provisional,
   tip,
   comparisonNote,
+  comparisonPending,
   drill,
   unavailable,
   onDrill,
@@ -316,9 +386,12 @@ function RateCard({
   den: number;
   numLabel: string;
   denLabel: string;
+  /** Plain-language numerator/denominator, e.g. "12 of 33 inquiries toured". */
+  support?: string;
   provisional: boolean;
   tip: string;
   comparisonNote: string;
+  comparisonPending?: boolean;
   drill: string;
   /** Stage cannot be evaluated on the cohort chain — withhold, never show 0%. */
   unavailable?: boolean;
@@ -342,7 +415,10 @@ function RateCard({
         <p className="font-display text-2xl font-semibold tracking-tight text-brand">
           {unavailable ? <span className="text-lg text-muted-foreground">Not yet linkable</span> : pct1(current)}
         </p>
-        {!unavailable && delta != null ? (
+        {!unavailable && comparisonPending ? (
+          <span className="h-3 w-16 animate-pulse rounded bg-muted" />
+        ) : null}
+        {!unavailable && !comparisonPending && delta != null ? (
           <span
             className={cn(
               "inline-flex items-center gap-0.5 text-xs font-medium",
@@ -370,11 +446,16 @@ function RateCard({
           </span>
         ) : null}
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs font-medium text-foreground">
         {unavailable
           ? "Deposits are recorded in this period but none can be tied back to a prospect in this inquiry cohort, so the rate is withheld rather than reported as zero. Period deposit counts are in the activity ratios below."
-          : `${(num ?? 0).toLocaleString()} ${numLabel} ÷ ${den.toLocaleString()} ${denLabel}`}
+          : (support ?? `${(num ?? 0).toLocaleString()} ${numLabel} ÷ ${den.toLocaleString()} ${denLabel}`)}
       </p>
+      {!unavailable && !comparisonPending && current != null && previous != null ? (
+        <p className="text-xs text-muted-foreground">
+          {pct1(current)} vs {pct1(previous)} · {pts(current - previous)} ({comparisonNote})
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={() => onDrill(drill)}
@@ -440,7 +521,9 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
                     {stage.label === "Deposited" && !depositLinkage ? "—" : stage.value.toLocaleString()}
                   </span>
                   {step != null && depositLinkage ? (
-                    <span className="ml-2">{pct1(step)} of previous stage</span>
+                    <span className="ml-2">
+                      {pct1(step)} of previous stage · {pct1(stage.value / base)} of the cohort
+                    </span>
                   ) : null}
                 </span>
               </div>
@@ -454,6 +537,7 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
           );
         })}
       </div>
+      <CohortVsPeriodNote c={c} />
       <button
         type="button"
         onClick={() => onDrill("funnel")}
@@ -462,6 +546,27 @@ function CohortFunnel({ c, onDrill }: { c: WhConversion; onDrill: (tab: string) 
         Open the funnel tab for record-level tours, deposits and move-ins
       </button>
     </section>
+  );
+}
+
+/**
+ * Deterministic sentence explaining why move-ins recorded during the period can
+ * differ from move-ins belonging to the selected inquiry cohort. Counts come
+ * straight from the RPC; nothing is recalculated.
+ */
+function CohortVsPeriodNote({ c }: { c: WhConversion }) {
+  const periodMi = c.period.moveIns;
+  const cohortMi = c.cohort.movedIn;
+  if (periodMi === 0 && cohortMi === 0) return null;
+  if (periodMi === cohortMi) return null;
+  const sentence =
+    cohortMi === 0
+      ? `${periodMi.toLocaleString()} move-in${periodMi === 1 ? "" : "s"} occurred during the selected period, but none came from this inquiry cohort — those residents inquired earlier.`
+      : `${periodMi.toLocaleString()} move-in${periodMi === 1 ? "" : "s"} occurred during the selected period, but only ${cohortMi.toLocaleString()} came from this inquiry cohort. The rest belong to people who inquired before the period, and some of this cohort will move in later.`;
+  return (
+    <p className="rounded-md bg-brand-soft px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+      {sentence} Both numbers are correct; they answer different questions.
+    </p>
   );
 }
 
@@ -827,7 +932,7 @@ function SingleCommunityView({
   const row = c.byCommunity[0];
   if (!row) return null;
   const name = communityNames[row.id] ?? "Selected community";
-  const items = [
+  const cohortItems = [
     { label: "Inquiries (cohort)", value: row.inquiries.toLocaleString(), note: "Prospects who inquired in the period" },
     { label: "Toured", value: row.toured.toLocaleString(), note: pct1(rate(row.toured, row.inquiries)) + " of the cohort" },
     { label: "Deposited", value: row.deposited.toLocaleString(), note: pct1(rate(row.deposited, row.inquiries)) + " of the cohort · provisional" },
@@ -837,9 +942,17 @@ function SingleCommunityView({
       value: pct1(rate(row.touredThenMovedIn, row.toured)),
       note: `${row.touredThenMovedIn.toLocaleString()} of ${row.toured.toLocaleString()} toured prospects moved in`,
     },
-    { label: "Tours recorded in period", value: row.periodTours.toLocaleString(), note: "Activity in the period, any cohort" },
-    { label: "Move-ins recorded in period", value: row.periodMoveIns.toLocaleString(), note: "Activity in the period, any cohort" },
   ];
+  const periodItems = [
+    { label: "Tours recorded in period", value: row.periodTours.toLocaleString(), note: "Any prospect, any inquiry date" },
+    { label: "Move-ins recorded in period", value: row.periodMoveIns.toLocaleString(), note: "Any prospect, any inquiry date" },
+  ];
+  const periodNote =
+    row.periodMoveIns === row.movedIn
+      ? null
+      : row.movedIn === 0
+        ? `${row.periodMoveIns.toLocaleString()} move-in${row.periodMoveIns === 1 ? "" : "s"} were recorded at ${name} during the period, but none came from this inquiry cohort — those residents inquired earlier.`
+        : `${row.periodMoveIns.toLocaleString()} move-ins were recorded at ${name} during the period, but only ${row.movedIn.toLocaleString()} came from this inquiry cohort.`;
   return (
     <section className="space-y-3">
       <div className="space-y-1">
@@ -849,8 +962,9 @@ function SingleCommunityView({
           stages and period activity are listed separately.
         </p>
       </div>
+      <p className="eyebrow">Cohort outcomes — this period's inquiries, followed forward</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((i) => (
+        {cohortItems.map((i) => (
           <div key={i.label} className="panel space-y-1 p-4">
             <p className="eyebrow">{i.label}</p>
             <p className="font-display text-xl font-semibold text-brand">{i.value}</p>
@@ -858,6 +972,21 @@ function SingleCommunityView({
           </div>
         ))}
       </div>
+      <p className="eyebrow pt-1">Activity recorded during the period — a different question</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {periodItems.map((i) => (
+          <div key={i.label} className="panel space-y-1 border-dashed p-4">
+            <p className="eyebrow">{i.label}</p>
+            <p className="font-display text-xl font-semibold text-foreground">{i.value}</p>
+            <p className="text-xs text-muted-foreground">{i.note}</p>
+          </div>
+        ))}
+      </div>
+      {periodNote ? (
+        <p className="rounded-md bg-brand-soft px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          {periodNote} Both numbers are correct; they answer different questions.
+        </p>
+      ) : null}
     </section>
   );
 }
