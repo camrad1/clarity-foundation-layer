@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
 import { EmptyState } from "@/components/clarity/empty-state";
 import {
@@ -100,6 +100,7 @@ export function ConversionRatesTab({
   const single = communityIds.length === 1;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-8">
       <CohortKpis c={c} prev={prev} priorLabel={priorLabel} comparisonLabel={comparisonLabel} onDrill={onDrill} />
 
@@ -173,6 +174,7 @@ export function ConversionRatesTab({
 
       <Methodology c={c} />
     </div>
+    </TooltipProvider>
   );
 }
 
