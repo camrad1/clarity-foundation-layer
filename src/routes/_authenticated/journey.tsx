@@ -98,8 +98,8 @@ type Stage = {
   source: string;
   freshness: string;
   scope: string;
-  support?: string;
-  href?: { to: string };
+  support?: string | undefined;
+  href?: { to: string } | undefined;
 };
 
 function StageCard({ stage, index }: { stage: Stage; index: number }) {
