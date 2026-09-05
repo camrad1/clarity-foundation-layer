@@ -51,6 +51,17 @@ const GRAIN_DIMENSIONS: Record<ScGrain, string[]> = {
 
 const PAGE_SIZE = 25000;
 
+function eachDay(start: string, end: string): string[] {
+  const days: string[] = [];
+  const cur = new Date(`${start}T00:00:00Z`);
+  const last = new Date(`${end}T00:00:00Z`);
+  while (cur <= last) {
+    days.push(cur.toISOString().slice(0, 10));
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return days;
+}
+
 /** Fully paginated Search Analytics pull for one grain and date range. */
 export async function fetchSearchAnalytics(params: {
   accessToken: string;
@@ -63,6 +74,27 @@ export async function fetchSearchAnalytics(params: {
   const dimensions = GRAIN_DIMENSIONS[params.grain];
   const maxRows = params.maxRows ?? 100000;
   const out: any[] = [];
+
+  // Search appearance cannot be grouped with any other dimension, so it is
+  // fetched one day at a time and the date is re-attached locally.
+  if (params.grain === "search_appearance") {
+    let pagesSa = 0;
+    for (const day of eachDay(params.startDate, params.endDate)) {
+      const json = await googlePost(SC_QUERY_URL(params.property), params.accessToken, {
+        startDate: day,
+        endDate: day,
+        dimensions: ["searchAppearance"],
+        rowLimit: PAGE_SIZE,
+        dataState: "final",
+      });
+      pagesSa += 1;
+      for (const row of (json.rows ?? []) as any[]) {
+        out.push({ ...row, keys: [day, ...(row.keys ?? [])] });
+      }
+    }
+    return { rows: out, pages: pagesSa, truncated: false };
+  }
+
   let startRow = 0;
   let pages = 0;
   let truncated = false;
@@ -76,10 +108,6 @@ export async function fetchSearchAnalytics(params: {
       startRow,
       dataState: "final",
     };
-    if (params.grain === "search_appearance") {
-      // searchAppearance cannot be combined with other dimensions except date.
-      body["dimensions"] = ["date", "searchAppearance"];
-    }
     const json = await googlePost(SC_QUERY_URL(params.property), params.accessToken, body);
     pages += 1;
     const rows = (json.rows ?? []) as any[];
