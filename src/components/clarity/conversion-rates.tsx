@@ -82,9 +82,7 @@ export function ConversionRatesTab({
   const activeGrain = grain ?? defaultGrain;
   const series = useWhConversionSeries(organizationId, communityIds, range.start, range.end, activeGrain);
 
-  if (current.isLoading) {
-    return <div className="panel px-6 py-16 text-center text-sm text-muted-foreground">Calculating conversion…</div>;
-  }
+  if (current.isLoading) return <ConversionSkeleton />;
   if (current.error) {
     return (
       <EmptyState
@@ -102,7 +100,16 @@ export function ConversionRatesTab({
   return (
     <TooltipProvider delayDuration={150}>
     <div className="space-y-8">
-      <CohortKpis c={c} prev={prev} priorLabel={priorLabel} comparisonLabel={comparisonLabel} onDrill={onDrill} />
+      <CohortContext c={c} range={range} />
+
+      <CohortKpis
+        c={c}
+        prev={prev}
+        prevLoading={previous.isLoading}
+        priorLabel={priorLabel}
+        comparisonLabel={comparisonLabel}
+        onDrill={onDrill}
+      />
 
       <CohortFunnel c={c} onDrill={onDrill} />
 
@@ -110,7 +117,7 @@ export function ConversionRatesTab({
 
       <ChartCard
         title="Conversion over time"
-        description={`Each point is the inquiry cohort for that ${activeGrain}, followed forward to a tour, deposit and move-in. Recent cohorts are still maturing, so the right-hand edge of every line normally sits low.`}
+        description={`Each point is the inquiry cohort for that ${activeGrain}, followed forward through ${c.asOf}. Recent cohorts may still be maturing, so the right-hand edge of every line normally sits low. Values are percentages of the stage denominator; use the legend to focus a single line.`}
         height={300}
         actions={
           <div className="inline-flex rounded-md border border-border p-0.5">
@@ -166,13 +173,20 @@ export function ConversionRatesTab({
         <CommunityTable rows={c.byCommunity} communityNames={communityNames} />
       )}
 
-      <BreakdownTable
-        title="Conversion by counselor"
-        description="Inquiries are grouped by the sales counselor currently recorded on the prospect, using the existing WelcomeHome assignment. Counts are descriptive: caseload, community mix and lead quality all differ, so this is not a performance ranking."
-        rows={c.byCounselor}
-        label={counselorLabel}
-        firstHeader="Counselor"
-      />
+      <Accordion type="single" collapsible>
+        <AccordionItem value="counselor" className="panel px-5">
+          <AccordionTrigger className="text-sm font-semibold">Conversion by counselor</AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <BreakdownTable
+              title=""
+              description="Inquiries are grouped by the sales counselor currently recorded on the prospect, using the existing WelcomeHome assignment. Counts are descriptive: caseload, community mix and lead quality all differ, so this is not a performance ranking."
+              rows={c.byCounselor}
+              label={counselorLabel}
+              firstHeader="Counselor"
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Methodology c={c} />
     </div>
