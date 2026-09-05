@@ -1434,12 +1434,14 @@ function SourceTotalCard({
   attributed,
   change,
   comparisonLabel,
+  note,
 }: {
   label: string;
   value: number;
   attributed: number;
   change: number | null;
   comparisonLabel: string;
+  note?: string;
 }) {
   const tone = change == null ? "neutral" : change > 0 ? "up" : change < 0 ? "down" : "neutral";
   const Icon = tone === "up" ? ArrowUpRight : tone === "down" ? ArrowDownRight : ArrowRight;
