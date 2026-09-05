@@ -1,8 +1,21 @@
 import { format } from "date-fns";
 import { EmptyState } from "@/components/clarity/empty-state";
-import { StatusPill } from "@/components/clarity/status-pill";
+import { cn } from "@/lib/utils";
 import { useGoogleConnection } from "@/lib/google/queries";
 import { useGa4Coverage, useGa4Health } from "@/lib/google/ga4-queries";
+
+function Pill({ tone, label }: { tone: "positive" | "warning"; label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        tone === "positive" ? "bg-success/10 text-success" : "bg-warning/15 text-warning",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
 
 function day(value: string | null | undefined) {
   return value ? format(new Date(`${value}T00:00:00`), "MMM d, yyyy") : "—";
@@ -27,7 +40,7 @@ const REPORT_LABELS: Record<string, string> = {
  * the last error. Grains are listed separately and never merged.
  */
 export function Ga4HealthSection({ organizationId }: { organizationId: string | null }) {
-  const connection = useGoogleConnection(organizationId, "analytics");
+  const connection = useGoogleConnection(organizationId, "ga4");
   const health = useGa4Health(organizationId);
   const coverage = useGa4Coverage(organizationId);
   const rows = coverage.data ?? [];
@@ -49,17 +62,17 @@ export function Ga4HealthSection({ organizationId }: { organizationId: string | 
       ) : (
         <div className="panel space-y-4 p-5">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusPill
-              status={connection.data?.status === "connected" ? "success" : "warning"}
+            <Pill
+              tone={connection.data?.status === "connected" ? "positive" : "warning"}
               label={connection.data?.status === "connected" ? "GA4 connected" : "Not connected"}
             />
             {h?.partial_date ? (
-              <StatusPill status="warning" label={`Partial day: ${day(h.partial_date)}`} />
+              <Pill tone="warning" label={`Partial day: ${day(h.partial_date)}`} />
             ) : null}
             {h?.missing_days ? (
-              <StatusPill status="warning" label={`${h.missing_days} missing days`} />
+              <Pill tone="warning" label={`${h.missing_days} missing days`} />
             ) : (
-              <StatusPill status="success" label="No missing days" />
+              <Pill tone="positive" label="No missing days" />
             )}
           </div>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
