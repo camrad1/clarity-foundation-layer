@@ -173,13 +173,9 @@ export function GoogleConnectionPage({
       <section className="rounded-lg border bg-card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <StatusPill status={status === "connected" ? "success" : status === "authorized" ? "warning" : "neutral"}>
-              {status === "connected"
-                ? "Connected"
-                : status === "authorized"
-                  ? "Authorized — property not selected"
-                  : "Not connected"}
-            </StatusPill>
+            <StatusPill
+              status={status === "connected" ? "connected" : status === "authorized" ? "pending" : "disconnected"}
+            />
             {conn?.google_account_email ? (
               <span className="text-sm text-muted-foreground">{conn.google_account_email}</span>
             ) : null}
