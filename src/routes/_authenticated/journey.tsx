@@ -863,7 +863,7 @@ function PerformanceJourney() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         eyebrow="Performance Journey"
         title="From visibility to occupancy"
@@ -872,45 +872,128 @@ function PerformanceJourney() {
 
       <p className="text-xs text-muted-foreground">
         {formatPeriodLabel(period)} · {scopeLabel} · {priorLabel} ({formatPeriodLabel(prior)})
+        {ga4Health.data?.last_complete_date
+          ? ` · Comparable data through ${formatDateOnly(ga4Health.data.last_complete_date)}`
+          : ""}
       </p>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Journey stages</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {stages.map((s, i) => (
-            <StageCard key={s.key} stage={s} index={i} />
+            <div key={s.key} className="relative">
+              <StageCard stage={s} index={i} />
+              {i < stages.length - 1 ? <StageConnector /> : null}
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="panel space-y-2 p-4">
+        <h2 className="text-sm font-semibold text-foreground">Journey snapshot</h2>
+        {snapshotLoading ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ) : snapshot.length ? (
+          <ul className="grid gap-1.5 text-xs leading-relaxed text-foreground sm:grid-cols-2">
+            {snapshot.slice(0, 4).map((s) => (
+              <li key={s} className="flex gap-2">
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand/60" />
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No measured movement to report for this range and scope.
+          </p>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Each observation restates a value already computed by its canonical source. No cause is
+          implied between sources.
+        </p>
+      </section>
+
+      <section className="space-y-2">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Stage to stage</h2>
           <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Each transition states the evidence behind it. Only Level 1 links are record-level
-            proven; Level 3 links describe two measured things moving together in the same period
-            and never imply that one caused the other.
+            Each transition carries its evidence level. Open a row for the full wording: only an
+            exact record chain is record-level proven, and an aggregate relationship never implies
+            that one thing caused the other.
           </p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="space-y-2">
           {transitions.map((t) => (
-            <TransitionCard key={t.key} t={t} />
+            <TransitionRow
+              key={t.key}
+              t={{
+                ...t,
+                loading: txLoading[t.key] ?? false,
+                highlight: t.key === "conv_leads",
+              }}
+            />
           ))}
         </div>
+      </section>
+
+      <section className="panel space-y-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-foreground">Matched digital conversations</h2>
+            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              Only Further leads with an active exact external-ID match to a WelcomeHome prospect.
+              Unmatched leads, leads without an external ID and quarantined duplicates or conflicts
+              are excluded, so this is not the full inquiry picture.
+            </p>
+          </div>
+          <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+            Exact record-level attribution
+          </span>
+        </div>
+        {furtherNow.isLoading ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-md" />
+            ))}
+          </div>
+        ) : matchedCohort.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {matchedCohort.map((c) => (
+              <div key={c.label} className="kpi-card space-y-1 p-4">
+                <p className="eyebrow">{c.label}</p>
+                <p className="font-display text-2xl font-semibold text-brand">{fmt(c.value)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {c.rate == null ? "of matched cohort" : `${fmtPct(c.rate)} of matched leads`}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No matched conversations in this range" />
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Match method: exact_external_id ·{" "}
+          <Link to="/admin/further" className="underline">
+            Further match detail
+          </Link>
+        </p>
       </section>
 
       <ChartCard
         title="The journey over time"
-        description={`One point per ${grain}. Every series is read from its own canonical source; nothing is prorated across buckets.`}
-        loading={series.isLoading}
-        empty={chartData.length ? undefined : "No data in this range."}
+        description={`One point per ${grain}. Series use different canonical units — compare movement and direction rather than relative line height. Nothing is prorated or indexed.`}
+        loading={series.isLoading || !occDone}
+        empty={
+          series.isFetched && !chartData.length ? "No data in this range." : undefined
+        }
         height={340}
         actions={
-          <SeriesToggleChips
-            series={seriesDefs}
-            visible={visible}
-            onToggle={toggle}
-          />
+          <SeriesToggleChips series={seriesDefs} visible={visible} onToggle={toggle} />
         }
       >
         <MetricTrendChart
@@ -919,33 +1002,131 @@ function PerformanceJourney() {
         />
       </ChartCard>
 
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold text-foreground">By community</h2>
-          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Sessions come from deterministically mapped landing pages only, so they do not add up to
-            property-wide traffic. Search visibility is not split by community here because Search
-            Console reports at property level.
-          </p>
-        </div>
-        <DataTable
-          columns={columns}
-          rows={matrixRows}
-          loading={matrix.isLoading}
-          empty={<EmptyState title="No communities in scope" />}
-        />
-        {matrixRows.length ? (
-          <p className="text-xs text-muted-foreground">
-            Totals — mapped sessions {fmt(totals.sessions)} · Further leads {fmt(totals.further_leads)} ·
-            inquiries {fmt(totals.inquiries)} · tours {fmt(totals.tours)} · deposits{" "}
-            {fmt(totals.deposits)} · move-ins {fmt(totals.move_ins)}
-          </p>
-        ) : null}
-      </section>
+      {singleCommunity ? (
+        <section className="panel space-y-2 p-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            {ctx.communityNames[singleCommunity] ?? "Selected community"} summary
+          </h2>
+          {matrixLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : matrixRows[0] ? (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {fmt(matrixRows[0].sessions)} mapped sessions · {fmt(matrixRows[0].further_leads)}{" "}
+              Further leads ({fmt(matrixRows[0].further_matched)} exact matches) ·{" "}
+              {fmt(matrixRows[0].inquiries)} inquiries · {fmt(matrixRows[0].tours)} tours ·{" "}
+              {fmt(matrixRows[0].deposits)} deposits · {fmt(matrixRows[0].move_ins)} move-ins ·{" "}
+              {fmt(matrixRows[0].move_outs)} move-outs
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">No activity in this range.</p>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-foreground">By community</h2>
+            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              Sessions come from deterministically mapped landing pages only, so they do not add up
+              to property-wide traffic. Search visibility is not split by community here because
+              Search Console reports at property level.
+            </p>
+          </div>
+          {matrixLoading ? (
+            <Skeleton className="h-64 w-full rounded-md" />
+          ) : sortedRows.length ? (
+            <div className="panel overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="thead-brand hover:bg-brand-light">
+                    {matrixColumns.map((c) => (
+                      <TableHead
+                        key={c.key}
+                        className={cn("cursor-pointer select-none", c.numeric && "text-right")}
+                        onClick={() => onSort(c.key)}
+                      >
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1",
+                            c.numeric && "flex-row-reverse",
+                          )}
+                        >
+                          {c.header}
+                          {sortKey === c.key ? (
+                            sortDir === "asc" ? (
+                              <ChevronUp className="size-3" />
+                            ) : (
+                              <ChevronDown className="size-3" />
+                            )
+                          ) : null}
+                        </span>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedRows.map((r) => {
+                    const net = Number(r.move_ins) - Number(r.move_outs);
+                    const matchPct = r.further_leads
+                      ? (r.further_matched / r.further_leads) * 100
+                      : null;
+                    return (
+                      <TableRow
+                        key={r.community_id}
+                        className="odd:bg-brand-soft/60 hover:bg-brand-light/70"
+                      >
+                        <TableCell>{r.community_name}</TableCell>
+                        <TableCell className="text-right">{fmt(r.sessions)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.further_leads)}</TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-right",
+                            matchPct != null && matchPct >= 90 && "text-success",
+                            matchPct != null && matchPct < 60 && "text-warning",
+                          )}
+                        >
+                          {matchPct == null ? "—" : fmtPct(matchPct, 0)}
+                        </TableCell>
+                        <TableCell className="text-right">{fmt(r.inquiries)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.tours)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.deposits)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.move_ins)}</TableCell>
+                        <TableCell className="text-right">{fmt(r.move_outs)}</TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-right font-medium",
+                            net > 0 && "text-success",
+                            net < 0 && "text-destructive",
+                          )}
+                        >
+                          {net > 0 ? "+" : ""}
+                          {fmt(net)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <EmptyState title="No communities in scope" />
+          )}
+          {sortedRows.length ? (
+            <p className="text-xs text-muted-foreground">
+              Totals — mapped sessions {fmt(totals.sessions)} · Further leads{" "}
+              {fmt(totals.further_leads)} · inquiries {fmt(totals.inquiries)} · tours{" "}
+              {fmt(totals.tours)} · deposits {fmt(totals.deposits)} · move-ins{" "}
+              {fmt(totals.move_ins)} · move-outs {fmt(totals.move_outs)}
+            </p>
+          ) : null}
+        </section>
+      )}
 
-      <section className="panel space-y-2 p-5">
-        <h2 className="text-sm font-semibold text-foreground">What this page can and cannot prove</h2>
-        <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+      <details className="panel group p-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-foreground">
+          What this page can and cannot prove
+          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <ul className="list-disc space-y-1 pl-5 pt-3 text-xs leading-relaxed text-muted-foreground">
           <li>
             Search Console reports at property level, so visibility for a single community relies on
             the deterministic URL mapping rules and covers mapped pages only.
@@ -958,22 +1139,21 @@ function PerformanceJourney() {
             Further conversations link to WelcomeHome by exact external ID only. Leads without an
             external ID, and duplicates or community conflicts, are never counted as matched.
           </li>
-          <li>
-            Deposits remain a provisional metric and keep that status here.
-          </li>
+          <li>Deposits remain a provisional metric and keep that status here.</li>
           <li>
             Occupancy is current state on each community's canonical capacity basis; the comparison
             point comes from stored history and is blank when no history exists for that period.
           </li>
         </ul>
-        <p className="text-xs text-muted-foreground">
+        <p className="pt-2 text-xs text-muted-foreground">
           Source coverage and freshness in detail:{" "}
           <Link to="/data-health" className="underline">
             Data Health
           </Link>
           .
         </p>
-      </section>
+      </details>
     </div>
   );
 }
+
