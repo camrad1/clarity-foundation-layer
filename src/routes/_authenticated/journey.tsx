@@ -217,11 +217,12 @@ function PerformanceJourney() {
 
   const singleCommunity = ctx.communityIds.length === 1 ? ctx.communityIds[0]! : null;
   const scopeLabel =
-    ctx.communityIds.length === 0
-      ? "All authorized communities"
-      : ctx.communityIds.length === 1
-        ? (ctx.communityNames[singleCommunity!] ?? "Selected community")
+    ctx.communityIds.length === 1
+      ? (ctx.communityNames[singleCommunity!] ?? "Selected community")
+      : scopeMode === "all"
+        ? `All authorized communities (${ctx.communityIds.length})`
         : `${ctx.communityIds.length} communities`;
+
 
   // The eight stages read from eight different canonical layers, several of
   // which are heavy portfolio aggregates. They are released in waves rather
