@@ -1,5 +1,31 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { SectionPlaceholder } from "@/components/clarity/section-placeholder";
+import { useMemo } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus } from "lucide-react";
+import { DataTable, type Column } from "@/components/clarity/data-table";
+import { EmptyState } from "@/components/clarity/empty-state";
+import { PageHeader } from "@/components/clarity/page-header";
+import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
+import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
+import { useWhContext } from "@/lib/wh/use-wh";
+import { useWhSalesSummary } from "@/lib/wh/summary";
+import { useOccupancyWithBudget } from "@/lib/wh/occupancy";
+import { useOccupancyTrend } from "@/lib/wh/snapshots";
+import { useSearchDailyTotals } from "@/lib/gsc/api-queries";
+import { GA4_SOURCE_LABEL, useGa4Health, useGa4Totals } from "@/lib/google/ga4-queries";
+import {
+  EVIDENCE_LABELS,
+  EVIDENCE_VERBS,
+  grainForPeriod,
+  ratePct,
+  useCommunityVisibility,
+  useJourneyFurther,
+  useJourneyMatrix,
+  useJourneySeries,
+  type EvidenceLevel,
+  type JourneyCommunityRow,
+} from "@/lib/journey/queries";
+import { comparisonSuffix, formatDateOnly, formatPeriodLabel, type Period } from "@/lib/date-ranges";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/journey")({
   head: () => ({
@@ -8,30 +34,679 @@ export const Route = createFileRoute("/_authenticated/journey")({
       {
         name: "description",
         content:
-          "The end-to-end journey from search visibility through occupancy, in one connected view.",
+          "From search visibility through traffic, conversations, leads, tours, deposits and move-ins to occupancy, with the evidence behind every link stated plainly.",
       },
       { property: "og:title", content: "Performance Journey — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
-        content: "Visibility to occupancy, connected stage by stage.",
+        content: "Visibility to occupancy, connected stage by stage with declared attribution.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Journey"
-      title="Performance Journey"
-      description="Visibility → Traffic → Conversations → Leads → Tours → Deposits → Move-Ins → Occupancy, with attribution level stated at every stage."
-      planned={[
-        "Stage-by-stage volume and conversion with declared attribution level",
-        "Where performance is being lost between stages",
-        "Deterministic signals feeding future Clarity insights",
-      ]}
-      dependsOn={[
-        "All three initial sources connected",
-        "Cross-source community resolution through canonical mappings",
-        "Validated metric definitions at each stage",
-      ]}
-    />
-  ),
+  component: PerformanceJourney,
 });
+
+/* ------------------------------------------------------------------ utils */
+
+const nf = new Intl.NumberFormat("en-US");
+const fmt = (v: number | null | undefined) => (v == null ? "—" : nf.format(Math.round(v)));
+const fmtPct = (v: number | null | undefined, digits = 1) =>
+  v == null ? "—" : `${v.toFixed(digits)}%`;
+const fmtPos = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
+
+function priorPeriod(start: string, end: string): Period {
+  const s = new Date(`${start}T00:00:00Z`);
+  const e = new Date(`${end}T00:00:00Z`);
+  const days = Math.max(1, Math.round((e.getTime() - s.getTime()) / 86400000) + 1);
+  const pe = new Date(s.getTime() - 86400000);
+  const ps = new Date(pe.getTime() - (days - 1) * 86400000);
+  return { start: ps.toISOString().slice(0, 10), end: pe.toISOString().slice(0, 10) };
+}
+
+type Delta = { label: string; tone: "up" | "down" | "neutral" } | null;
+
+/** Relative change; lower-is-better metrics (average position) invert the tone. */
+function delta(current: number | null | undefined, prior: number | null | undefined, opts?: {
+  lowerIsBetter?: boolean;
+  points?: boolean;
+}): Delta {
+  if (current == null || prior == null) return null;
+  if (opts?.points) {
+    const d = current - prior;
+    if (Math.abs(d) < 0.05) return { label: "No change", tone: "neutral" };
+    const better = opts.lowerIsBetter ? d < 0 : d > 0;
+    return { label: `${d > 0 ? "+" : ""}${d.toFixed(1)} pts`, tone: better ? "up" : "down" };
+  }
+  if (!prior) return current ? { label: "New", tone: "up" } : null;
+  const pct = ((current - prior) / prior) * 100;
+  if (Math.abs(pct) < 0.5) return { label: "No change", tone: "neutral" };
+  const better = opts?.lowerIsBetter ? pct < 0 : pct > 0;
+  return { label: `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`, tone: better ? "up" : "down" };
+}
+
+/* ------------------------------------------------------------- stage card */
+
+type Stage = {
+  key: string;
+  name: string;
+  metric: string;
+  value: string;
+  delta: Delta;
+  priorLabel: string;
+  source: string;
+  freshness: string;
+  scope: string;
+  support?: string;
+  href?: { to: string };
+};
+
+function StageCard({ stage, index }: { stage: Stage; index: number }) {
+  const Icon =
+    stage.delta?.tone === "up" ? ArrowUpRight : stage.delta?.tone === "down" ? ArrowDownRight : Minus;
+  const body = (
+    <div className="kpi-card flex h-full flex-col gap-2 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="eyebrow">
+          {index + 1}. {stage.name}
+        </p>
+      </div>
+      <p className="text-xs text-muted-foreground">{stage.metric}</p>
+      <p className="font-display text-2xl font-semibold tracking-tight text-brand">{stage.value}</p>
+      <div className="flex items-center gap-2 text-xs">
+        {stage.delta ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 font-medium",
+              stage.delta.tone === "up" && "text-success",
+              stage.delta.tone === "down" && "text-destructive",
+              stage.delta.tone === "neutral" && "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-3.5" />
+            {stage.delta.label}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">No comparison</span>
+        )}
+        <span className="text-muted-foreground">{stage.priorLabel}</span>
+      </div>
+      {stage.support ? <p className="text-xs text-muted-foreground">{stage.support}</p> : null}
+      <div className="mt-auto space-y-0.5 border-t border-border pt-2 text-[11px] text-muted-foreground">
+        <p>{stage.source}</p>
+        <p>{stage.freshness}</p>
+        <p>{stage.scope}</p>
+      </div>
+    </div>
+  );
+  return stage.href ? (
+    <Link to={stage.href.to} className="block h-full focus:outline-none">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
+}
+
+/* -------------------------------------------------------------- evidence  */
+
+function EvidenceBadge({ level }: { level: EvidenceLevel }) {
+  const tone =
+    level === 1
+      ? "bg-success/10 text-success"
+      : level === 2
+        ? "bg-info/10 text-info"
+        : "bg-muted text-muted-foreground";
+  return (
+    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium", tone)}>
+      Level {level} · {EVIDENCE_LABELS[level]}
+    </span>
+  );
+}
+
+type Transition = {
+  key: string;
+  from: string;
+  to: string;
+  level: EvidenceLevel;
+  rate: number | null;
+  rateLabel: string;
+  sentence: string;
+  note: string;
+};
+
+function TransitionCard({ t }: { t: Transition }) {
+  return (
+    <div className="panel space-y-2 p-4">
+      <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
+        <span>{t.from}</span>
+        <ArrowRight className="size-3.5 text-muted-foreground" />
+        <span>{t.to}</span>
+      </div>
+      <p className="font-display text-xl font-semibold text-brand">
+        {t.rate == null ? "—" : fmtPct(t.rate)}{" "}
+        <span className="text-xs font-normal text-muted-foreground">{t.rateLabel}</span>
+      </p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{t.sentence}</p>
+      <EvidenceBadge level={t.level} />
+      <p className="text-[11px] leading-relaxed text-muted-foreground">{t.note}</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------- page */
+
+/**
+ * Performance Journey.
+ *
+ * Every number is read from the canonical layer that already owns it: Search
+ * Console API for visibility, GA4 API for traffic, the Further lead layer and
+ * its active exact-ID matches for conversations, wh_sales_summary for leads,
+ * tours, deposits and move-ins, and the canonical occupancy resolver (with the
+ * community-specific capacity basis) for occupancy. Nothing is recalculated
+ * here, and each transition states the strength of its own evidence.
+ */
+function PerformanceJourney() {
+  const ctx = useWhContext();
+  const period: Period = { start: ctx.dateRange.start, end: ctx.dateRange.end };
+  const prior = ctx.comparisonRange ?? priorPeriod(period.start, period.end);
+  const priorLabel = ctx.comparisonRange
+    ? comparisonSuffix(ctx.comparisonMode)
+    : "vs prior equal-length period";
+
+  const singleCommunity = ctx.communityIds.length === 1 ? ctx.communityIds[0]! : null;
+  const scopeLabel =
+    ctx.communityIds.length === 0
+      ? "All authorized communities"
+      : ctx.communityIds.length === 1
+        ? (ctx.communityNames[singleCommunity!] ?? "Selected community")
+        : `${ctx.communityIds.length} communities`;
+
+  // Visibility — Search Console API (property-wide) or the deterministic
+  // page-mapping rules when exactly one community is selected.
+  const searchNow = useSearchDailyTotals(ctx.organizationId, singleCommunity ? null : period);
+  const searchPrior = useSearchDailyTotals(ctx.organizationId, singleCommunity ? null : prior);
+  const commSearchNow = useCommunityVisibility(ctx.organizationId, singleCommunity, period);
+  const commSearchPrior = useCommunityVisibility(ctx.organizationId, singleCommunity, prior);
+
+  const vis = singleCommunity
+    ? {
+        clicks: commSearchNow.data?.clicks ?? null,
+        impressions: commSearchNow.data?.impressions ?? null,
+        ctr: commSearchNow.data?.ctr ?? null,
+        position: commSearchNow.data?.position ?? null,
+      }
+    : {
+        clicks: (searchNow.data?.clicks as number | undefined) ?? null,
+        impressions: (searchNow.data?.impressions as number | undefined) ?? null,
+        ctr: (searchNow.data?.ctr as number | null | undefined) ?? null,
+        position: (searchNow.data?.avg_position as number | null | undefined) ?? null,
+      };
+  const visPrior = singleCommunity
+    ? {
+        clicks: commSearchPrior.data?.clicks ?? null,
+        impressions: commSearchPrior.data?.impressions ?? null,
+        ctr: commSearchPrior.data?.ctr ?? null,
+        position: commSearchPrior.data?.position ?? null,
+      }
+    : {
+        clicks: (searchPrior.data?.clicks as number | undefined) ?? null,
+        impressions: (searchPrior.data?.impressions as number | undefined) ?? null,
+        ctr: (searchPrior.data?.ctr as number | null | undefined) ?? null,
+        position: (searchPrior.data?.avg_position as number | null | undefined) ?? null,
+      };
+
+  // Traffic — GA4 API. Portfolio uses property-wide totals; a community scope
+  // uses only mapped landing pages. Partial current days are excluded.
+  const ga4Now = useGa4Totals(ctx.organizationId, period, ctx.communityIds);
+  const ga4Prior = useGa4Totals(ctx.organizationId, prior, ctx.communityIds);
+  const ga4Health = useGa4Health(ctx.organizationId);
+
+  // Conversations — Further leads and their active exact-ID matches.
+  const furtherNow = useJourneyFurther(ctx.organizationId, ctx.communityIds, period);
+  const furtherPrior = useJourneyFurther(ctx.organizationId, ctx.communityIds, prior);
+
+  // Leads → Move-ins — the validated WelcomeHome definitions, unchanged.
+  const wh = useWhSalesSummary(ctx.organizationId, ctx.communityIds, period.start, period.end);
+  const whPrior = useWhSalesSummary(ctx.organizationId, ctx.communityIds, prior.start, prior.end);
+
+  // Occupancy — canonical current state with the community capacity basis.
+  const { occupancy } = useOccupancyWithBudget(ctx.organizationId, ctx.communityIds);
+  const priorOcc = useOccupancyTrend(
+    ctx.organizationId,
+    ctx.communityIds,
+    prior.start,
+    prior.end,
+    "daily",
+  );
+
+  const grain = grainForPeriod(period);
+  const series = useJourneySeries(ctx.organizationId, ctx.communityIds, period, grain);
+  const matrix = useJourneyMatrix(ctx.organizationId, ctx.communityIds, period);
+
+  const occTotals = occupancy.data?.totals;
+  const priorOccPct = useMemo(() => {
+    const pts = priorOcc.data ?? [];
+    const last = pts[pts.length - 1];
+    return last?.occupancy_pct == null ? null : Number(last.occupancy_pct) * 100;
+  }, [priorOcc.data]);
+
+  const searchSource = singleCommunity
+    ? "Source: Search Console API · mapped pages only"
+    : searchNow.source === "manual"
+      ? "Source: Manual Search Console import"
+      : "Source: Search Console API";
+  const searchFresh = singleCommunity
+    ? formatPeriodLabel(period)
+    : searchNow.data?.last_date
+      ? `Through ${formatDateOnly(searchNow.data.last_date)}`
+      : "No data for this range";
+
+  const ga4Fresh = ga4Health.data?.last_complete_date
+    ? `Through ${formatDateOnly(ga4Health.data.last_complete_date)}`
+    : "No complete GA4 day yet";
+
+  const stages: Stage[] = [
+    {
+      key: "visibility",
+      name: "Visibility",
+      metric: "Search clicks",
+      value: fmt(vis.clicks),
+      delta: delta(vis.clicks, visPrior.clicks),
+      priorLabel,
+      source: searchSource,
+      freshness: searchFresh,
+      scope: singleCommunity ? `${scopeLabel} (mapped pages)` : "Property-wide",
+      support: `${fmt(vis.impressions)} impressions · CTR ${
+        vis.ctr == null ? "—" : fmtPct(vis.ctr * 100, 2)
+      } · avg position ${fmtPos(vis.position)}`,
+      href: { to: "/marketing" },
+    },
+    {
+      key: "traffic",
+      name: "Traffic",
+      metric: "Website sessions",
+      value: fmt(ga4Now.data?.sessions),
+      delta: delta(ga4Now.data?.sessions ?? null, ga4Prior.data?.sessions ?? null),
+      priorLabel,
+      source: GA4_SOURCE_LABEL,
+      freshness: ga4Fresh,
+      scope: ctx.communityIds.length ? `${scopeLabel} (mapped landing pages)` : "Property-wide",
+      support: `${fmt(ga4Now.data?.active_users)} active users · ${fmt(
+        ga4Now.data?.new_users,
+      )} new · engagement ${
+        ga4Now.data?.engagement_rate == null ? "—" : fmtPct(ga4Now.data.engagement_rate * 100)
+      }`,
+    },
+    {
+      key: "conversations",
+      name: "Conversations",
+      metric: "Further leads",
+      value: fmt(furtherNow.data?.leads),
+      delta: delta(furtherNow.data?.leads ?? null, furtherPrior.data?.leads ?? null),
+      priorLabel,
+      source: "Source: Further API",
+      freshness: furtherNow.data?.last_lead
+        ? `Latest lead ${formatDateOnly(furtherNow.data.last_lead)}`
+        : "No leads in this range",
+      scope: scopeLabel,
+      support: `${fmt(furtherNow.data?.matched)} matched to WelcomeHome · ${fmt(
+        furtherNow.data?.tour_scheduled,
+      )} tour requests`,
+    },
+    {
+      key: "leads",
+      name: "Leads",
+      metric: "New inquiries",
+      value: fmt(wh.data?.inquiries),
+      delta: delta(wh.data?.inquiries ?? null, whPrior.data?.inquiries ?? null),
+      priorLabel,
+      source: "Source: WelcomeHome CRM",
+      freshness: formatPeriodLabel(period),
+      scope: scopeLabel,
+      href: { to: "/sales" },
+    },
+    {
+      key: "tours",
+      name: "Tours",
+      metric: "Completed tours",
+      value: fmt(wh.data?.tours),
+      delta: delta(wh.data?.tours ?? null, whPrior.data?.tours ?? null),
+      priorLabel,
+      source: "Source: WelcomeHome CRM",
+      freshness: formatPeriodLabel(period),
+      scope: scopeLabel,
+      support: `${fmt(wh.data?.reTours)} of these are re-tours`,
+      href: { to: "/sales" },
+    },
+    {
+      key: "deposits",
+      name: "Deposits",
+      metric: "Depositors",
+      value: fmt(wh.data?.deposits),
+      delta: delta(wh.data?.deposits ?? null, whPrior.data?.deposits ?? null),
+      priorLabel,
+      source: "Source: WelcomeHome CRM · provisional",
+      freshness: formatPeriodLabel(period),
+      scope: scopeLabel,
+      href: { to: "/sales" },
+    },
+    {
+      key: "move_ins",
+      name: "Move-Ins",
+      metric: "Move-ins",
+      value: fmt(wh.data?.moveIns),
+      delta: delta(wh.data?.moveIns ?? null, whPrior.data?.moveIns ?? null),
+      priorLabel,
+      source: "Source: WelcomeHome CRM",
+      freshness: formatPeriodLabel(period),
+      scope: scopeLabel,
+      support: `${fmt(wh.data?.moveOuts)} move-outs · net ${
+        wh.data ? fmt(wh.data.moveIns - wh.data.moveOuts) : "—"
+      }`,
+      href: { to: "/sales" },
+    },
+    {
+      key: "occupancy",
+      name: "Occupancy",
+      metric: "Current occupancy",
+      value: occTotals?.occupancyPct == null ? "—" : fmtPct(occTotals.occupancyPct * 100),
+      delta: delta(
+        occTotals?.occupancyPct == null ? null : occTotals.occupancyPct * 100,
+        priorOccPct,
+        { points: true },
+      ),
+      priorLabel: ctx.comparisonRange ? priorLabel : "no comparison period selected",
+      source: "Source: Canonical occupancy layer",
+      freshness: occupancy.data?.asOf ? `As of ${formatDateOnly(occupancy.data.asOf)}` : "—",
+      scope: `${scopeLabel} · community capacity basis`,
+      support: occTotals
+        ? `${fmt(occTotals.occupiedCapacity || occTotals.occupiedUnits)} of ${fmt(
+            occTotals.censusCapacity || occTotals.censusUnits,
+          )} capacity`
+        : undefined,
+      href: { to: "/occupancy" },
+    },
+  ];
+
+  const f = furtherNow.data;
+  const transitions: Transition[] = [
+    {
+      key: "vis_traffic",
+      from: "Visibility",
+      to: "Traffic",
+      level: 3,
+      rate: ratePct(ga4Now.data?.sessions ?? 0, vis.clicks ?? 0),
+      rateLabel: "sessions per search click",
+      sentence:
+        "Website sessions occurred alongside search clicks in the same period. Search Console impressions and clicks carry no session identifier, so no click can be traced to a session.",
+      note: "Both sides are property-wide unless a community scope narrows GA4 to mapped landing pages.",
+    },
+    {
+      key: "traffic_conv",
+      from: "Traffic",
+      to: "Conversations",
+      level: 3,
+      rate: ratePct(f?.leads ?? 0, ga4Now.data?.sessions ?? 0),
+      rateLabel: "Further leads per session",
+      sentence:
+        "Further conversations occurred alongside website traffic during the same period. There is no validated identifier bridging a GA4 session to a Further lead.",
+      note: "The Further visitors endpoint is unavailable, so no session-level bridge exists today.",
+    },
+    {
+      key: "conv_leads",
+      from: "Conversations",
+      to: "Leads",
+      level: 1,
+      rate: ratePct(f?.matched ?? 0, f?.leads ?? 0),
+      rateLabel: "of Further leads matched to a CRM prospect",
+      sentence: `${fmt(f?.matched)} Further leads ${EVIDENCE_VERBS[1]} an exact WelcomeHome prospect record.`,
+      note: `Exact external-ID matching only. ${fmt(f?.with_external_id)} leads carry an external ID; ${fmt(
+        f?.conflicts,
+      )} are quarantined as duplicates or conflicts.`,
+    },
+    {
+      key: "leads_tours",
+      from: "Leads",
+      to: "Tours",
+      level: 2,
+      rate: ratePct(wh.data?.tours ?? 0, wh.data?.inquiries ?? 0),
+      rateLabel: "tours per inquiry in period",
+      sentence:
+        "Completed tours are linked with inquiries through CRM prospect records, but both are counted by event date in the period rather than as one cohort.",
+      note: `Cohort view: ${fmt(wh.data?.cohort?.toured)} of ${fmt(
+        wh.data?.cohort?.cohortSize,
+      )} prospects who inquired in this period have since toured.`,
+    },
+    {
+      key: "tours_deposits",
+      from: "Tours",
+      to: "Deposits",
+      level: 2,
+      rate: ratePct(wh.data?.deposits ?? 0, wh.data?.tours ?? 0),
+      rateLabel: "depositors per completed tour",
+      sentence:
+        "Deposits are linked with tour activity through the same CRM prospect, counted by event date in the period.",
+      note: `Cohort view: ${fmt(wh.data?.cohort?.deposited)} of this period's inquiries have deposited. Deposits remain a provisional metric.`,
+    },
+    {
+      key: "deposits_movein",
+      from: "Deposits",
+      to: "Move-Ins",
+      level: 2,
+      rate: ratePct(wh.data?.moveIns ?? 0, wh.data?.deposits ?? 0),
+      rateLabel: "move-ins per depositor",
+      sentence:
+        "Move-ins are linked with deposits through the CRM prospect and housing contract, counted by event date in the period.",
+      note: `Cohort view: ${fmt(wh.data?.cohort?.movedIn)} of this period's inquiries have moved in.`,
+    },
+    {
+      key: "movein_occ",
+      from: "Move-Ins",
+      to: "Occupancy",
+      level: 2,
+      rate:
+        wh.data && occTotals?.censusCapacity
+          ? ratePct(wh.data.moveIns - wh.data.moveOuts, occTotals.censusCapacity)
+          : null,
+      rateLabel: "net movement as a share of capacity",
+      sentence:
+        "Move-ins and move-outs are the operational drivers of occupancy, but occupancy also reflects transfers, notices and units taken off census.",
+      note: "Occupancy uses each community's canonical capacity basis (rooms, occupancy points or configured capacity).",
+    },
+  ];
+
+  const seriesDefs = [
+    { key: "clicks", label: "Search clicks", color: CHART_TOKENS.primary },
+    { key: "sessions", label: "Sessions", color: CHART_TOKENS.secondary },
+    { key: "further_leads", label: "Further leads", color: CHART_TOKENS.tertiary },
+    { key: "inquiries", label: "Inquiries", color: CHART_TOKENS.quaternary },
+    { key: "tours", label: "Tours", color: CHART_TOKENS.muted },
+    { key: "deposits", label: "Deposits", color: CHART_TOKENS.provisional },
+    { key: "move_ins", label: "Move-ins", color: CHART_TOKENS.negative },
+  ];
+  const allKeys = seriesDefs.map((s) => s.key);
+  const { visible, toggle } = useSeriesVisibility("mph-journey-series", allKeys, [
+    "sessions",
+    "further_leads",
+    "inquiries",
+    "tours",
+    "move_ins",
+  ]);
+
+  const chartData = useMemo(
+    () =>
+      (series.data ?? []).map((p) => ({
+        label:
+          grain === "month"
+            ? formatDateOnly(p.bucket, "MMM yyyy")
+            : formatDateOnly(p.bucket, "MMM d"),
+        clicks: p.clicks,
+        sessions: p.sessions,
+        further_leads: p.further_leads,
+        inquiries: p.inquiries,
+        tours: p.tours,
+        deposits: p.deposits,
+        move_ins: p.move_ins,
+      })),
+    [series.data, grain],
+  );
+
+  const matrixRows = matrix.data ?? [];
+  const columns: Column<JourneyCommunityRow>[] = [
+    { key: "name", header: "Community", render: (r) => r.community_name },
+    { key: "sessions", header: "Sessions", align: "right", render: (r) => fmt(r.sessions) },
+    { key: "further", header: "Further leads", align: "right", render: (r) => fmt(r.further_leads) },
+    {
+      key: "matched",
+      header: "Matched",
+      align: "right",
+      render: (r) =>
+        `${fmt(r.further_matched)}${
+          r.further_leads ? ` (${Math.round((r.further_matched / r.further_leads) * 100)}%)` : ""
+        }`,
+    },
+    { key: "inq", header: "Inquiries", align: "right", render: (r) => fmt(r.inquiries) },
+    { key: "tours", header: "Tours", align: "right", render: (r) => fmt(r.tours) },
+    { key: "deposits", header: "Deposits", align: "right", render: (r) => fmt(r.deposits) },
+    { key: "mi", header: "Move-ins", align: "right", render: (r) => fmt(r.move_ins) },
+    { key: "mo", header: "Move-outs", align: "right", render: (r) => fmt(r.move_outs) },
+  ];
+
+  const totals = matrixRows.reduce(
+    (acc, r) => ({
+      sessions: acc.sessions + Number(r.sessions),
+      further_leads: acc.further_leads + Number(r.further_leads),
+      inquiries: acc.inquiries + Number(r.inquiries),
+      tours: acc.tours + Number(r.tours),
+      deposits: acc.deposits + Number(r.deposits),
+      move_ins: acc.move_ins + Number(r.move_ins),
+    }),
+    { sessions: 0, further_leads: 0, inquiries: 0, tours: 0, deposits: 0, move_ins: 0 },
+  );
+
+  if (!ctx.organizationId) {
+    return (
+      <div className="space-y-6">
+        <PageHeader eyebrow="Performance Journey" title="From visibility to occupancy" />
+        <EmptyState title="Select an organization" description="Choose an organization to load the journey." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Performance Journey"
+        title="From visibility to occupancy"
+        description="See how marketing activity, website traffic, conversations, sales activity and occupancy move together across the resident journey."
+      />
+
+      <p className="text-xs text-muted-foreground">
+        {formatPeriodLabel(period)} · {scopeLabel} · {priorLabel} ({formatPeriodLabel(prior)})
+      </p>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Journey stages</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {stages.map((s, i) => (
+            <StageCard key={s.key} stage={s} index={i} />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">Stage to stage</h2>
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            Each transition states the evidence behind it. Only Level 1 links are record-level
+            proven; Level 3 links describe two measured things moving together in the same period
+            and never imply that one caused the other.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {transitions.map((t) => (
+            <TransitionCard key={t.key} t={t} />
+          ))}
+        </div>
+      </section>
+
+      <ChartCard
+        title="The journey over time"
+        description={`One point per ${grain}. Every series is read from its own canonical source; nothing is prorated across buckets.`}
+        loading={series.isLoading}
+        empty={chartData.length ? undefined : "No data in this range."}
+        height={340}
+        actions={
+          <SeriesToggleChips
+            series={seriesDefs}
+            visible={visible}
+            onToggle={toggle}
+          />
+        }
+      >
+        <MetricTrendChart
+          data={chartData}
+          series={seriesDefs.filter((s) => visible.includes(s.key))}
+        />
+      </ChartCard>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">By community</h2>
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            Sessions come from deterministically mapped landing pages only, so they do not add up to
+            property-wide traffic. Search visibility is not split by community here because Search
+            Console reports at property level.
+          </p>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={matrixRows}
+          loading={matrix.isLoading}
+          empty={<EmptyState title="No communities in scope" />}
+        />
+        {matrixRows.length ? (
+          <p className="text-xs text-muted-foreground">
+            Totals — mapped sessions {fmt(totals.sessions)} · Further leads {fmt(totals.further_leads)} ·
+            inquiries {fmt(totals.inquiries)} · tours {fmt(totals.tours)} · deposits{" "}
+            {fmt(totals.deposits)} · move-ins {fmt(totals.move_ins)}
+          </p>
+        ) : null}
+      </section>
+
+      <section className="panel space-y-2 p-5">
+        <h2 className="text-sm font-semibold text-foreground">What this page can and cannot prove</h2>
+        <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+          <li>
+            Search Console reports at property level, so visibility for a single community relies on
+            the deterministic URL mapping rules and covers mapped pages only.
+          </li>
+          <li>
+            GA4 community scope uses mapped landing pages; property-wide totals are never split
+            across communities. Partial current days are excluded from every comparison.
+          </li>
+          <li>
+            Further conversations link to WelcomeHome by exact external ID only. Leads without an
+            external ID, and duplicates or community conflicts, are never counted as matched.
+          </li>
+          <li>
+            Deposits remain a provisional metric and keep that status here.
+          </li>
+          <li>
+            Occupancy is current state on each community's canonical capacity basis; the comparison
+            point comes from stored history and is blank when no history exists for that period.
+          </li>
+        </ul>
+        <p className="text-xs text-muted-foreground">
+          Source coverage and freshness in detail:{" "}
+          <Link to="/data-health" className="underline">
+            Data Health
+          </Link>
+          .
+        </p>
+      </section>
+    </div>
+  );
+}
