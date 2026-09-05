@@ -1936,6 +1936,101 @@ export type Database = {
           },
         ]
       }
+      ga4_api_facts: {
+        Row: {
+          active_users: number
+          connection_id: string
+          conversions: number | null
+          date: string
+          dim_key: string
+          engaged_sessions: number
+          fetched_at: string
+          id: string
+          landing_page_path: string | null
+          mapped_community_id: string | null
+          new_users: number
+          organization_id: string
+          property_id: string
+          report: string
+          screen_page_views: number
+          session_source_medium: string | null
+          sessions: number
+          source_system: string
+          sync_run_id: string | null
+        }
+        Insert: {
+          active_users?: number
+          connection_id: string
+          conversions?: number | null
+          date: string
+          dim_key: string
+          engaged_sessions?: number
+          fetched_at?: string
+          id?: string
+          landing_page_path?: string | null
+          mapped_community_id?: string | null
+          new_users?: number
+          organization_id: string
+          property_id: string
+          report: string
+          screen_page_views?: number
+          session_source_medium?: string | null
+          sessions?: number
+          source_system?: string
+          sync_run_id?: string | null
+        }
+        Update: {
+          active_users?: number
+          connection_id?: string
+          conversions?: number | null
+          date?: string
+          dim_key?: string
+          engaged_sessions?: number
+          fetched_at?: string
+          id?: string
+          landing_page_path?: string | null
+          mapped_community_id?: string | null
+          new_users?: number
+          organization_id?: string
+          property_id?: string
+          report?: string
+          screen_page_views?: number
+          session_source_medium?: string | null
+          sessions?: number
+          source_system?: string
+          sync_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ga4_api_facts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ga4_api_facts_mapped_community_id_fkey"
+            columns: ["mapped_community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ga4_api_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ga4_api_facts_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "google_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_connections: {
         Row: {
           connected_by: string | null
@@ -2079,6 +2174,160 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: true
             referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_sync_runs: {
+        Row: {
+          connection_id: string
+          details: Json
+          error_summary: string | null
+          finished_at: string | null
+          id: string
+          organization_id: string
+          property_id: string | null
+          range_end: string | null
+          range_start: string | null
+          rows_written: number
+          run_type: string
+          service: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          connection_id: string
+          details?: Json
+          error_summary?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          property_id?: string | null
+          range_end?: string | null
+          range_start?: string | null
+          rows_written?: number
+          run_type?: string
+          service: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          connection_id?: string
+          details?: Json
+          error_summary?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          property_id?: string | null
+          range_end?: string | null
+          range_start?: string | null
+          rows_written?: number
+          run_type?: string
+          service?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_sync_runs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_sync_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_api_facts: {
+        Row: {
+          clicks: number
+          connection_id: string
+          country: string | null
+          ctr: number | null
+          date: string
+          device: string | null
+          dim_key: string
+          fetched_at: string
+          grain: string
+          id: string
+          impressions: number
+          organization_id: string
+          page: string | null
+          position: number | null
+          property_id: string
+          query: string | null
+          search_appearance: string | null
+          source_system: string
+          sync_run_id: string | null
+        }
+        Insert: {
+          clicks?: number
+          connection_id: string
+          country?: string | null
+          ctr?: number | null
+          date: string
+          device?: string | null
+          dim_key: string
+          fetched_at?: string
+          grain: string
+          id?: string
+          impressions?: number
+          organization_id: string
+          page?: string | null
+          position?: number | null
+          property_id: string
+          query?: string | null
+          search_appearance?: string | null
+          source_system?: string
+          sync_run_id?: string | null
+        }
+        Update: {
+          clicks?: number
+          connection_id?: string
+          country?: string | null
+          ctr?: number | null
+          date?: string
+          device?: string | null
+          dim_key?: string
+          fetched_at?: string
+          grain?: string
+          id?: string
+          impressions?: number
+          organization_id?: string
+          page?: string | null
+          position?: number | null
+          property_id?: string
+          query?: string | null
+          search_appearance?: string | null
+          source_system?: string
+          sync_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_api_facts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_api_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_api_facts_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "google_sync_runs"
             referencedColumns: ["id"]
           },
         ]
