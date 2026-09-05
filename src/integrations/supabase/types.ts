@@ -5864,6 +5864,69 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      journey_community_matrix: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          community_id: string
+          community_name: string
+          deposits: number
+          engaged_sessions: number
+          further_leads: number
+          further_matched: number
+          inquiries: number
+          move_ins: number
+          move_outs: number
+          re_tours: number
+          sessions: number
+          tours: number
+        }[]
+      }
+      journey_further_stage: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          conflicts: number
+          first_lead: string
+          last_lead: string
+          leads: number
+          matched: number
+          matched_deposited: number
+          matched_moved_in: number
+          matched_toured: number
+          tour_scheduled: number
+          unmapped_leads: number
+          with_external_id: number
+        }[]
+      }
+      journey_stage_series: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _grain?: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          bucket: string
+          clicks: number
+          deposits: number
+          further_leads: number
+          impressions: number
+          inquiries: number
+          move_ins: number
+          sessions: number
+          tours: number
+        }[]
+      }
       occ_history_health: {
         Args: { _community_ids?: string[]; _org_id: string }
         Returns: {
