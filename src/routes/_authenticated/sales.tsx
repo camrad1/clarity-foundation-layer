@@ -1342,7 +1342,8 @@ function LeadSourceMix({
               </TableHeader>
               <TableBody>
                 {visible.map((r) => (
-                  <TableRow key={r.label} className="odd:bg-brand-soft/60 hover:bg-brand-light/70">
+                  <TableRow key={r.id} className="odd:bg-brand-soft/60 hover:bg-brand-light/70">
+
                     <TableCell className="font-medium">{r.label}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.inquiries.toLocaleString()}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
