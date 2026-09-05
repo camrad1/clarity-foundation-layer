@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/clarity/page-header";
 import { CHART_TOKENS, ChartCard, MetricTrendChart } from "@/components/clarity/charts";
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
 import { useWhContext } from "@/lib/wh/use-wh";
+import { useAppState } from "@/state/app-state";
 import { useWhSalesSummary } from "@/lib/wh/summary";
 import { useOccupancyWithBudget } from "@/lib/wh/occupancy";
 import { useOccupancyTrend } from "@/lib/wh/snapshots";
@@ -209,6 +210,7 @@ function TransitionCard({ t }: { t: Transition }) {
  */
 function PerformanceJourney() {
   const ctx = useWhContext();
+  const scopeMode = useAppState().communityScope.mode;
   const period: Period = { start: ctx.dateRange.start, end: ctx.dateRange.end };
   const prior = ctx.comparisonRange ?? priorPeriod(period.start, period.end);
   const priorLabel = ctx.comparisonRange
