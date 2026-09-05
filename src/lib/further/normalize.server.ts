@@ -148,7 +148,7 @@ export function normalizeLead(row: Row): FurtherLeadRow | null {
     full_name: name,
     email: str(row, "email", "email_address"),
     phone: str(row, "phone", "phone_number", "telephone"),
-    created_on: ts(row, "created_on", "created_at", "created", "createdOn", "date_created"),
+    created_on: ts(row, "created_on", "created_at", "created", "createdOn", "date_created", "date"),
     source_updated_at: ts(row, "updated_on", "updated_at", "modified_on", "last_updated", "updatedOn"),
     financially_unqualified: bool(row, "financially_unqualified", "financiallyUnqualified"),
     move_in_date: dateOnly(row, "move_in_date", "moveInDate", "move_in"),
