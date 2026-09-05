@@ -13,3 +13,8 @@
 ## Not started
 - [ ] Reconcile capacity basis individually for Belmare, The Esther, The Rawlin, Vineyard Henderson
 - [ ] Optimize `wh_sales_summary` / `wh_sales_trend` (statement timeouts on Sales Intelligence)
+
+## Further integration
+- [x] Read-only Further source layer (communities, visitors, leads, lead details, conversations, WH match evidence)
+- [x] Admin → Further Connection UI, hourly + nightly server-side sync, Data Health section
+- [ ] Enter Further Organization API Key, confirm community mappings, validate external_lead_id ↔ WelcomeHome join on live data
