@@ -5521,7 +5521,7 @@ export type Database = {
       }
       ga4_daily_series: {
         Args: {
-          _community_id?: string
+          _community_ids?: string[]
           _end: string
           _org_id: string
           _start: string
@@ -5539,7 +5539,7 @@ export type Database = {
       }
       ga4_daily_totals: {
         Args: {
-          _community_id?: string
+          _community_ids?: string[]
           _end: string
           _include_partial?: boolean
           _org_id: string
@@ -5593,7 +5593,7 @@ export type Database = {
       }
       ga4_landing_page_report: {
         Args: {
-          _community_id?: string
+          _community_ids?: string[]
           _end: string
           _include_partial?: boolean
           _limit?: number
