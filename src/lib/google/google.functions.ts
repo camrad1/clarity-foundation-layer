@@ -285,7 +285,7 @@ export const googleValidationSync = createServerFn({ method: "POST" })
         const startDate = window[0]!;
         const endDate = latest;
 
-        const grains: sync.ScGrain[] = [
+        const grains: import("./sync.server").ScGrain[] = [
           "date",
           "query",
           "page",
@@ -375,7 +375,7 @@ export const googleValidationSync = createServerFn({ method: "POST" })
       // ---- GA4 ----
       const startDate = iso(shift(data.days));
       const endDate = iso(shift(1));
-      const reports: sync.Ga4Report[] = ["daily_totals", "source_medium", "landing_page"];
+      const reports: import("./sync.server").Ga4Report[] = ["daily_totals", "source_medium", "landing_page"];
       const perReport: Record<string, { rows: number; totalRows: number; error?: string }> = {};
       let written = 0;
       let latest: string | null = null;
