@@ -1231,15 +1231,19 @@ function LeadSourceMix({
   const attributed = useMemo(
     () =>
       rows.reduce(
-        (acc, r) => ({ inquiries: acc.inquiries + r.inquiries, moveIns: acc.moveIns + r.moveIns }),
-        { inquiries: 0, moveIns: 0 },
+        (acc, r) => ({
+          inquiries: acc.inquiries + r.inquiries,
+          tours: acc.tours + r.tours,
+          moveIns: acc.moveIns + r.moveIns,
+        }),
+        { inquiries: 0, tours: 0, moveIns: 0 },
       ),
     [rows],
   );
 
   const sorted = useMemo(() => {
     const share = (n: number, d: number) => (d > 0 ? n / d : 0);
-    const value = (r: LeadSourceRow) => {
+    const value = (r: LeadSourceRow): string | number => {
       switch (sort.key) {
         case "label":
           return r.label.toLowerCase();
@@ -1247,6 +1251,10 @@ function LeadSourceMix({
           return r.inquiries;
         case "inquiryShare":
           return share(r.inquiries, totals.inquiries);
+        case "tours":
+          return r.tours;
+        case "tourShare":
+          return share(r.tours, totals.tours);
         case "moveIns":
           return r.moveIns;
         case "moveInShare":
