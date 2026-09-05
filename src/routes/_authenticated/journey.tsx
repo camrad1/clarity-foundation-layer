@@ -69,8 +69,6 @@ export const Route = createFileRoute("/_authenticated/journey")({
 
 const nf = new Intl.NumberFormat("en-US");
 const fmt = (v: number | null | undefined) => (v == null ? "—" : nf.format(Math.round(v)));
-/** Pending reads read "Loading…" instead of an em dash, which means "no data". */
-const show = (loading: boolean, text: string) => (loading ? "Loading…" : text);
 const fmtPct = (v: number | null | undefined, digits = 1) =>
   v == null ? "—" : `${v.toFixed(digits)}%`;
 const fmtPos = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
