@@ -138,7 +138,8 @@ export function normalizeLead(row: Row): FurtherLeadRow | null {
   if (!id) return null;
   const first = str(row, "first_name", "firstname");
   const last = str(row, "last_name", "lastname");
-  const name = str(row, "name", "full_name", "lead_name") ?? [first, last].filter(Boolean).join(" ") || null;
+  const name =
+    str(row, "name", "full_name", "lead_name") ?? ([first, last].filter(Boolean).join(" ") || null);
   return {
     further_lead_id: id,
     external_lead_id: str(row, "external_lead_id", "externalLeadId", "external_id"),
