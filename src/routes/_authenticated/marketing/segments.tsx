@@ -13,8 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fmtInt, fmtPercent, fmtPosition } from "@/lib/gsc/format";
-import { selectImportForPeriod, useGrainImports, useSimpleGrain } from "@/lib/gsc/queries";
-import type { GrainKey } from "@/lib/gsc/parse";
+import { useSearchDimensionReport } from "@/lib/gsc/api-queries";
+import { GscManualSourceNote, GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/marketing/segments")({
@@ -38,30 +38,22 @@ export const Route = createFileRoute("/_authenticated/marketing/segments")({
   component: Segments,
 });
 
-type Metrics = { clicks: number; impressions: number; ctr: number | null; position: number | null };
-
 function SegmentTable({
   grain,
   table,
-  dimension,
   label,
 }: {
-  grain: GrainKey;
+  grain: "device" | "country" | "search_appearance";
   table: "gsc_device_facts" | "gsc_country_facts" | "gsc_search_appearance_facts";
-  dimension: "device" | "country" | "search_appearance";
   label: string;
 }) {
   const { organizationId, dateRange } = useAppState();
-  const grains = useGrainImports(organizationId, grain);
   const period = { start: dateRange.start, end: dateRange.end };
-  // null = follow the global date filter; set = the user opened an older export.
+  // null = follow the global date filter; set = the user opened an older manual export.
   const [reportImportId, setReportImportId] = useState<string | null>(null);
-  const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
-    [grains.data, period.start, period.end, reportImportId],
-  );
-  const rows = useSimpleGrain(table, dimension, selection.current?.import_id ?? null);
-  const data = (rows.data ?? []) as (Metrics & Record<string, unknown>)[];
+  const report = useSearchDimensionReport(organizationId, period, grain, table, reportImportId);
+  const selection = report.selection;
+  const data = report.rows;
 
   const notice = (
     <GscExportNotice
@@ -76,16 +68,28 @@ function SegmentTable({
   return (
     <section className="space-y-3">
       <h2 className="text-base font-semibold text-foreground">{label}</h2>
-      {!selection.options.length ? (
+      {report.source === "none" && !selection.options.length ? (
         <p className="panel px-4 py-6 text-sm text-muted-foreground">
-          No {label} report has been imported. This grain stays empty until an export containing it
-          is uploaded.
+          No {label} data is available for this period from the Search Console API or a manual
+          import.
         </p>
-      ) : !selection.current ? (
+      ) : report.source === "none" ? (
         notice
       ) : (
         <>
-          {notice}
+          {report.source === "api" ? (
+            <GscSourceNote
+              source={report.source}
+              coverage={report.coverage}
+              period={period}
+              grainLabel={label}
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel={label} />
+              {notice}
+            </>
+          )}
 
           <div className="panel overflow-hidden">
             <Table>
@@ -101,7 +105,7 @@ function SegmentTable({
               <TableBody>
                 {data.map((r, i) => (
                   <TableRow key={i}>
-                    <TableCell className="font-medium">{String(r[dimension] ?? "—")}</TableCell>
+                    <TableCell className="font-medium">{r.label}</TableCell>
                     <TableCell className="text-right">{fmtInt(r.clicks)}</TableCell>
                     <TableCell className="text-right">{fmtInt(r.impressions)}</TableCell>
                     <TableCell className="text-right">{fmtPercent(r.ctr)}</TableCell>
@@ -133,14 +137,13 @@ function Segments() {
       <PageHeader
         eyebrow="Search Intelligence"
         title="Search Segments"
-        description="Devices, countries and search appearance are separate Search Console reports. Each is shown on its own — they cannot be crossed with queries or pages because the export does not contain those combinations."
+        description="Devices, countries and search appearance are separate Search Console reports. Each is shown on its own — they cannot be crossed with queries or pages, because Search Console does not report those combinations."
       />
-      <SegmentTable grain="device" table="gsc_device_facts" dimension="device" label="Devices" />
-      <SegmentTable grain="country" table="gsc_country_facts" dimension="country" label="Countries" />
+      <SegmentTable grain="device" table="gsc_device_facts" label="Devices" />
+      <SegmentTable grain="country" table="gsc_country_facts" label="Countries" />
       <SegmentTable
         grain="search_appearance"
         table="gsc_search_appearance_facts"
-        dimension="search_appearance"
         label="Search appearance"
       />
     </div>

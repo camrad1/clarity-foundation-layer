@@ -27,7 +27,8 @@ import { useCommunities } from "@/lib/clarity-queries";
 import { change } from "@/lib/gsc/compare";
 import { downloadCsv, fmtDelta, fmtInt, fmtPercent, fmtPosition, toCsv } from "@/lib/gsc/format";
 import { pageLabel } from "@/lib/gsc/normalize";
-import { selectImportForPeriod, useGrainImports, usePageReport } from "@/lib/gsc/queries";
+import { useSearchPageReport } from "@/lib/gsc/api-queries";
+import { GscManualSourceNote, GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
@@ -78,22 +79,13 @@ type Row = {
 
 function PageIntelligence() {
   const initial = Route.useSearch();
-  const { organizationId, dateRange, communityScope } = useAppState();
+  const { organizationId, dateRange, comparisonRange, communityScope } = useAppState();
   const communities = useCommunities(organizationId);
-  const grains = useGrainImports(organizationId, "page");
   const period = { start: dateRange.start, end: dateRange.end };
-  // null = follow the global date filter; set = the user opened an older export.
+  // null = follow the global date filter; set = the user opened an older manual export.
   const [reportImportId, setReportImportId] = useState<string | null>(null);
-  const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
-    [grains.data, period.start, period.end, reportImportId],
-  );
-
-  const report = usePageReport(
-    organizationId,
-    selection.current?.import_id ?? null,
-    selection.comparison?.import_id ?? null,
-  );
+  const report = useSearchPageReport(organizationId, period, comparisonRange, reportImportId);
+  const selection = report.selection;
 
   const [search, setSearch] = useState(initial.url);
   const [view, setView] = useState<"pages" | "communities">(initial.view);
@@ -138,9 +130,13 @@ function PageIntelligence() {
     >();
     for (const r of scoped) {
       const key = r.mapped_community_id ?? "unmapped";
-      const e =
-        map.get(key) ??
-        { name: r.community_name ?? "Unmapped pages", clicks: 0, impressions: 0, weighted: 0, pages: 0 };
+      const e = map.get(key) ?? {
+        name: r.community_name ?? "Unmapped pages",
+        clicks: 0,
+        impressions: 0,
+        weighted: 0,
+        pages: 0,
+      };
       e.clicks += r.clicks;
       e.impressions += r.impressions;
       e.weighted += (r.position_value ?? 0) * r.impressions;
@@ -173,7 +169,6 @@ function PageIntelligence() {
       ? scopedCommunityNames[0]
       : `the ${scopedCommunityNames.length} selected communities`;
 
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -187,7 +182,7 @@ function PageIntelligence() {
             disabled={!filtered.length}
             onClick={() =>
               downloadCsv(
-                `clarityiq-pages-${selection.current?.period_start}-${selection.current?.period_end}.csv`,
+                `clarityiq-pages-${period.start}-${period.end}.csv`,
                 toCsv(
                   [
                     "Page",
@@ -228,15 +223,15 @@ function PageIntelligence() {
         }
       />
 
-      {grains.isLoading || report.isLoading ? (
+      {report.isLoading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.options.length ? (
+      ) : report.source === "none" && !selection.options.length ? (
         <EmptyState
           icon={<FileSearch className="size-6" />}
-          title="No Pages report imported"
-          description="Upload a Search Console export containing the Pages report from Admin → Search Console Imports."
+          title="No page data for this period"
+          description="No Search Console API rows cover this range and no Pages export has been imported for it."
         />
-      ) : !selection.current ? (
+      ) : report.source === "none" ? (
         <GscExportNotice
           selection={selection}
           grainLabel="Pages"
@@ -246,14 +241,26 @@ function PageIntelligence() {
         />
       ) : (
         <>
-          <GscExportNotice
-            selection={selection}
-            grainLabel="Pages"
-            period={period}
-            value={reportImportId}
-            onChange={setReportImportId}
-          />
-
+          {report.source === "api" ? (
+            <GscSourceNote
+              source={report.source}
+              coverage={report.coverage}
+              period={period}
+              comparison={comparisonRange}
+              grainLabel="Pages"
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel="Pages" />
+              <GscExportNotice
+                selection={selection}
+                grainLabel="Pages"
+                period={period}
+                value={reportImportId}
+                onChange={setReportImportId}
+              />
+            </>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
@@ -267,7 +274,10 @@ function PageIntelligence() {
               footnote={`${fmtInt(totalClicks - unmappedClicks)} of ${fmtInt(totalClicks)} clicks`}
             />
 
-            <MetricCard label="Clicks in scope" value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))} />
+            <MetricCard
+              label="Clicks in scope"
+              value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))}
+            />
             <MetricCard
               label="Impressions in scope"
               value={fmtInt(scoped.reduce((s, r) => s + r.impressions, 0))}
@@ -313,7 +323,6 @@ function PageIntelligence() {
               description="Review Admin → URL Mapping Rules to add a deterministic rule for this community's page URLs. Unmapped pages stay visible in the All communities view."
             />
           ) : view === "communities" ? (
-
             <div className="panel overflow-hidden">
               <Table>
                 <TableHeader>
@@ -397,7 +406,9 @@ function PageIntelligence() {
                         </TableCell>
                         <TableCell className="text-right">{fmtInt(r.impressions)}</TableCell>
                         <TableCell className="text-right">{fmtPercent(r.ctr)}</TableCell>
-                        <TableCell className="text-right">{fmtPosition(r.position_value)}</TableCell>
+                        <TableCell className="text-right">
+                          {fmtPosition(r.position_value)}
+                        </TableCell>
                       </TableRow>
                     );
                   })}

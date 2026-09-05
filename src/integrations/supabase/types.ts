@@ -5486,6 +5486,126 @@ export type Database = {
         Args: { _org_id: string; _stall_minutes?: number }
         Returns: Json
       }
+      gsc_api_coverage: {
+        Args: { _org_id: string }
+        Returns: {
+          first_date: string
+          grain: string
+          last_date: string
+          row_count: number
+        }[]
+      }
+      gsc_api_daily_series: {
+        Args: { _end: string; _org_id: string; _start: string }
+        Returns: {
+          avg_position: number
+          clicks: number
+          ctr: number
+          date: string
+          impressions: number
+        }[]
+      }
+      gsc_api_daily_totals: {
+        Args: { _end: string; _org_id: string; _start: string }
+        Returns: {
+          avg_position: number
+          clicks: number
+          ctr: number
+          days: number
+          first_date: string
+          impressions: number
+          last_date: string
+        }[]
+      }
+      gsc_api_dimension_report: {
+        Args: {
+          _dimension: string
+          _end: string
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          clicks: number
+          ctr: number
+          dimension_value: string
+          impressions: number
+          position_value: number
+        }[]
+      }
+      gsc_api_norm_url: { Args: { _u: string }; Returns: string }
+      gsc_api_page_report: {
+        Args: {
+          _community_id?: string
+          _compare_end?: string
+          _compare_start?: string
+          _end: string
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          clicks: number
+          community_name: string
+          ctr: number
+          impressions: number
+          mapped_community_id: string
+          mapped_content_type: string
+          mapped_intent_type: string
+          mapped_topic: string
+          mapping_rule_id: string
+          normalized_url: string
+          page_url: string
+          position_value: number
+          prev_clicks: number
+          prev_ctr: number
+          prev_impressions: number
+          prev_position_value: number
+        }[]
+      }
+      gsc_api_query_page_report: {
+        Args: {
+          _community_id?: string
+          _end: string
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          clicks: number
+          community_name: string
+          ctr: number
+          impressions: number
+          mapped_community_id: string
+          normalized_url: string
+          page_url: string
+          position_value: number
+          query: string
+        }[]
+      }
+      gsc_api_query_report: {
+        Args: {
+          _compare_end?: string
+          _compare_start?: string
+          _end: string
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          classification: Database["public"]["Enums"]["query_classification"]
+          clicks: number
+          ctr: number
+          impressions: number
+          normalized_query: string
+          position_value: number
+          prev_clicks: number
+          prev_ctr: number
+          prev_impressions: number
+          prev_position_value: number
+          query: string
+        }[]
+      }
       gsc_apply_page_mappings: { Args: { _import_id: string }; Returns: number }
       gsc_classify_query: {
         Args: { _org_id: string; _query: string }

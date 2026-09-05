@@ -34,12 +34,8 @@ import {
   type MetricLike,
   type OpportunityFlag,
 } from "@/lib/gsc/opportunities";
-import {
-  selectImportForPeriod,
-  useGrainImports,
-  usePageReport,
-  useQueryReport,
-} from "@/lib/gsc/queries";
+import { useSearchPageReport, useSearchQueryReport } from "@/lib/gsc/api-queries";
+import { GscManualSourceNote, GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/marketing/opportunities")({
@@ -71,32 +67,13 @@ function Opportunities() {
   const [flag, setFlag] = useState<OpportunityFlag>("striking");
 
   const period = { start: dateRange.start, end: dateRange.end };
-  const queryGrains = useGrainImports(organizationId, "query");
-  const pageGrains = useGrainImports(organizationId, "page");
 
-  // null = follow the global date filter; set = the user opened an older export.
+  // null = follow the global date filter; set = the user opened an older manual export.
   const [reportImportId, setReportImportId] = useState<string | null>(null);
-  const selection = useMemo(
-    () =>
-      selectImportForPeriod(
-        (dataset === "query" ? queryGrains.data : pageGrains.data) ?? [],
-        period,
-        reportImportId,
-      ),
-    [dataset, queryGrains.data, pageGrains.data, period.start, period.end, reportImportId],
-  );
-
-
-  const queryReport = useQueryReport(
-    organizationId,
-    dataset === "query" ? (selection.current?.import_id ?? null) : null,
-    null,
-  );
-  const pageReport = usePageReport(
-    organizationId,
-    dataset === "page" ? (selection.current?.import_id ?? null) : null,
-    null,
-  );
+  const queryReport = useSearchQueryReport(organizationId, period, null, reportImportId);
+  const pageReport = useSearchPageReport(organizationId, period, null, reportImportId);
+  const active = dataset === "query" ? queryReport : pageReport;
+  const selection = active.selection;
 
   const rows: Base[] = useMemo(() => {
     if (dataset === "query") {
@@ -113,7 +90,7 @@ function Opportunities() {
     return ((pageReport.data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
       key: String(r["normalized_url"]),
       label: pageLabel(String(r["page_url"])),
-      secondary: ((r["community_name"] as string | null | undefined) ?? "Unmapped"),
+      secondary: (r["community_name"] as string | null | undefined) ?? "Unmapped",
       clicks: Number(r["clicks"] ?? 0),
       impressions: Number(r["impressions"] ?? 0),
       ctr: r["ctr"] == null ? null : Number(r["ctr"]),
@@ -140,7 +117,7 @@ function Opportunities() {
     .filter((x) => x.flags.includes(flag))
     .sort((a, b) => b.row.impressions - a.row.impressions);
 
-  const loading = queryReport.isLoading || pageReport.isLoading || queryGrains.isLoading;
+  const loading = active.isLoading;
 
   return (
     <div className="space-y-6">
@@ -157,7 +134,15 @@ function Opportunities() {
               downloadCsv(
                 `clarityiq-opportunities-${flag}-${dataset}.csv`,
                 toCsv(
-                  ["Item", "Context", "Opportunity", "Clicks", "Impressions", "CTR", "Average position"],
+                  [
+                    "Item",
+                    "Context",
+                    "Opportunity",
+                    "Clicks",
+                    "Impressions",
+                    "CTR",
+                    "Average position",
+                  ],
                   visible.map((x) => [
                     x.row.label,
                     x.row.secondary,
@@ -203,13 +188,13 @@ function Opportunities() {
 
       {loading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.options.length ? (
+      ) : active.source === "none" && !selection.options.length ? (
         <EmptyState
           icon={<Target className="size-6" />}
-          title="No report imported for this grain"
-          description="Import a Search Console export containing the relevant report to see opportunities."
+          title="No data for this grain and period"
+          description="No Search Console API rows cover this range and no matching export has been imported."
         />
-      ) : !selection.current ? (
+      ) : active.source === "none" ? (
         <GscExportNotice
           selection={selection}
           grainLabel={dataset === "query" ? "Queries" : "Pages"}
@@ -219,14 +204,25 @@ function Opportunities() {
         />
       ) : (
         <>
-          <GscExportNotice
-            selection={selection}
-            grainLabel={dataset === "query" ? "Queries" : "Pages"}
-            period={period}
-            value={reportImportId}
-            onChange={setReportImportId}
-          />
-
+          {active.source === "api" ? (
+            <GscSourceNote
+              source={active.source}
+              coverage={active.coverage}
+              period={period}
+              grainLabel={dataset === "query" ? "Queries" : "Pages"}
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel={dataset === "query" ? "Queries" : "Pages"} />
+              <GscExportNotice
+                selection={selection}
+                grainLabel={dataset === "query" ? "Queries" : "Pages"}
+                period={period}
+                value={reportImportId}
+                onChange={setReportImportId}
+              />
+            </>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <MetricCard label={OPPORTUNITY_LABELS.striking} value={fmtInt(counts.striking)} />

@@ -8,6 +8,8 @@ import { useConnections, useSourceTypes, useSyncRuns } from "@/lib/clarity-queri
 import { fmtInt } from "@/lib/gsc/format";
 import { GRAIN_LABELS, type GrainKey } from "@/lib/gsc/parse";
 import { useActiveGrainCoverage } from "@/lib/gsc/queries";
+import { useGscApiCoverage } from "@/lib/gsc/api-queries";
+import { useGoogleConnection } from "@/lib/google/queries";
 import { WhCompletenessPanel } from "@/components/clarity/wh-completeness";
 import { WhHealthSection } from "@/components/clarity/wh-health";
 import { SnapshotHealthSection } from "@/components/clarity/snapshot-health";
@@ -47,13 +49,28 @@ function DataHealth() {
   const sourceTypes = useSourceTypes();
   const runs = useSyncRuns(organizationId);
   const coverage = useActiveGrainCoverage(organizationId);
+  const apiCoverage = useGscApiCoverage(organizationId);
+  const gscConnection = useGoogleConnection(organizationId, "search_console");
+  const apiRows = apiCoverage.data ?? [];
+  const apiLatestDate = apiRows
+    .map((r) => r.last_date)
+    .filter(Boolean)
+    .sort()
+    .at(-1) as string | undefined;
+  const apiTotalRows = apiRows.reduce((n, r) => n + Number(r.row_count ?? 0), 0);
   const activeGrainRows = coverage.data ?? [];
 
   /** Per-grain coverage — grains are never merged into one implied range. */
   const perGrain = (Object.keys(GRAIN_LABELS) as GrainKey[]).map((grain) => {
     const rows = activeGrainRows.filter((r) => r.grain === grain);
-    const starts = rows.map((r) => r.period_start).filter(Boolean).sort() as string[];
-    const ends = rows.map((r) => r.period_end).filter(Boolean).sort() as string[];
+    const starts = rows
+      .map((r) => r.period_start)
+      .filter(Boolean)
+      .sort() as string[];
+    const ends = rows
+      .map((r) => r.period_end)
+      .filter(Boolean)
+      .sort() as string[];
     const lastImport = rows
       .map((r) => r.imported_at)
       .filter(Boolean)
@@ -75,7 +92,6 @@ function DataHealth() {
     .filter(Boolean)
     .sort()
     .at(-1) as string | undefined;
-
 
   const typeName = (key: string) =>
     (sourceTypes.data ?? []).find((t) => t.key === key)?.name ?? key;
@@ -141,9 +157,7 @@ function DataHealth() {
                       <span>Received {latest.records_received}</span>
                       <span>Inserted {latest.records_inserted}</span>
                       <span>Updated {latest.records_updated}</span>
-                      <span
-                        className={latest.records_failed > 0 ? "text-destructive" : undefined}
-                      >
+                      <span className={latest.records_failed > 0 ? "text-destructive" : undefined}>
                         Failed {latest.records_failed}
                       </span>
                       {latest.error_summary ? (
@@ -161,7 +175,64 @@ function DataHealth() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Search Console active coverage</h2>
+        <h2 className="text-sm font-semibold text-foreground">Search Console API freshness</h2>
+        {apiCoverage.isLoading ? (
+          <div className="panel px-6 py-10 text-center text-sm text-muted-foreground">Loading…</div>
+        ) : !apiRows.length ? (
+          <EmptyState
+            title="No Search Console API data yet"
+            description="Connect and sync the Search Console API in Admin → Search Console Connection. Manual imports keep working as a fallback until API rows exist."
+          />
+        ) : (
+          <div className="panel space-y-4 p-5">
+            <dl className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <dt className="text-xs text-muted-foreground">Last successful API sync</dt>
+                <dd className="text-foreground">
+                  {relative(gscConnection.data?.last_successful_sync_at ?? null)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">
+                  Latest finalized Search Console day
+                </dt>
+                <dd className="text-foreground">
+                  {apiLatestDate
+                    ? format(new Date(`${apiLatestDate}T00:00:00`), "MMM d, yyyy")
+                    : "—"}
+                </dd>
+                <dd className="text-xs text-muted-foreground">
+                  Google finalizes search data a few days in arrears.
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">API rows stored</dt>
+                <dd className="text-foreground">{apiTotalRows.toLocaleString()}</dd>
+              </div>
+            </dl>
+            <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+              {apiRows.map((r) => (
+                <div key={r.grain} className="rounded-md border border-border px-3 py-2">
+                  <p className="font-medium text-foreground">{r.grain}</p>
+                  <p>
+                    {r.first_date
+                      ? format(new Date(`${r.first_date}T00:00:00`), "MMM d, yyyy")
+                      : "—"}{" "}
+                    –{" "}
+                    {r.last_date ? format(new Date(`${r.last_date}T00:00:00`), "MMM d, yyyy") : "—"}
+                  </p>
+                  <p>{Number(r.row_count ?? 0).toLocaleString()} rows</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">
+          Search Console manual imports (audit / fallback)
+        </h2>
         {coverage.isLoading ? (
           <div className="panel px-6 py-10 text-center text-sm text-muted-foreground">Loading…</div>
         ) : !activeGrainRows.length ? (
