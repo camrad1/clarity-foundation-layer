@@ -22,6 +22,8 @@ export type ConversionBreakdownRow = {
   inquiries: number;
   toured: number;
   deposited: number;
+  /** Cohort prospects who toured and later moved in (cross-stage, deposit-independent). */
+  touredThenMovedIn: number;
   movedIn: number;
 };
 
@@ -43,9 +45,18 @@ export type WhConversion = {
     deposited: number;
     movedIn: number;
     touredThenDeposited: number;
+    /** Toured and later moved in — does not require a deposit. */
+    touredThenMovedIn: number;
     depositedThenMovedIn: number;
   };
-  maturity: { bucket: string; size: number; toured: number; deposited: number; movedIn: number }[];
+  maturity: {
+    bucket: string;
+    size: number;
+    toured: number;
+    deposited: number;
+    touredThenMovedIn: number;
+    movedIn: number;
+  }[];
   byLeadSource: ConversionBreakdownRow[];
   byCounselor: ConversionBreakdownRow[];
   byCommunity: ConversionCommunityRow[];
@@ -58,6 +69,7 @@ export type ConversionPoint = {
   inquiries: number;
   toured: number;
   deposited: number;
+  touredThenMovedIn: number;
   movedIn: number;
 };
 
