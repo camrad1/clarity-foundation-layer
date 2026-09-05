@@ -1394,6 +1394,8 @@ function LeadSourceMix({
                   <TableHead>{sortButton("label", "Lead source", "left")}</TableHead>
                   <TableHead className="text-right">{sortButton("inquiries", "Inquiries")}</TableHead>
                   <TableHead className="text-right">{sortButton("inquiryShare", "% of inquiries")}</TableHead>
+                  <TableHead className="text-right">{sortButton("tours", "Tours")}</TableHead>
+                  <TableHead className="text-right">{sortButton("tourShare", "% of tours")}</TableHead>
                   <TableHead className="text-right">{sortButton("moveIns", "Move-ins")}</TableHead>
                   <TableHead className="text-right">{sortButton("moveInShare", "% of move-ins")}</TableHead>
                 </TableRow>
