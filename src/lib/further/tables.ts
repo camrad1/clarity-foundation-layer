@@ -33,10 +33,15 @@ export const FURTHER_HOURLY_DATASETS: FurtherDataset[] = [
   "conversations",
 ];
 
-/** Datasets the nightly reconciliation tick refreshes in addition. */
+/**
+ * Datasets the nightly reconciliation tick refreshes in addition.
+ *
+ * `visitors` is deliberately excluded: the Further visitors endpoint times out
+ * and returns no usable data, so scheduling it would only fail every run. It
+ * stays a known dataset and is reported as unavailable in Data Health.
+ */
 export const FURTHER_NIGHTLY_DATASETS: FurtherDataset[] = [
   "communities",
-  "visitors",
   "leads",
   "lead_details",
   "conversations",

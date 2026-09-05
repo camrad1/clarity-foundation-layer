@@ -83,7 +83,11 @@ export function FurtherHealthSection({ organizationId }: { organizationId: strin
               <dd className="text-foreground">
                 {freshness.data?.visitors
                   ? format(new Date(freshness.data.visitors), "MMM d, yyyy h:mm a")
-                  : "No visitors"}
+                  : "Unavailable"}
+              </dd>
+              <dd className="text-xs text-warning">
+                Further's visitors endpoint is timing out and currently returns no usable data. It
+                is excluded from the schedule; every other Further dataset is unaffected.
               </dd>
             </div>
             <div>
@@ -103,8 +107,8 @@ export function FurtherHealthSection({ organizationId }: { organizationId: strin
               <dd className="text-foreground">{matchCoverage}</dd>
               <dd className="text-xs text-muted-foreground">
                 {matches.data?.field
-                  ? `Deterministic evidence via ${matches.data.field}`
-                  : "Identifier join not yet proven"}
+                  ? `Exact-ID evidence via wh_prospects.${matches.data.field} — no fuzzy matching`
+                  : "Identifier join not yet activated"}
               </dd>
             </div>
           </dl>
