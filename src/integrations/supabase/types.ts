@@ -5507,6 +5507,110 @@ export type Database = {
         Args: { _org_id: string; _stall_minutes?: number }
         Returns: Json
       }
+      ga4_apply_page_mappings: { Args: { _org_id: string }; Returns: number }
+      ga4_coverage: {
+        Args: { _org_id: string }
+        Returns: {
+          first_date: string
+          last_date: string
+          mapped_rows: number
+          partial_rows: number
+          report: string
+          row_count: number
+        }[]
+      }
+      ga4_daily_series: {
+        Args: {
+          _community_id?: string
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          active_users: number
+          date: string
+          engaged_sessions: number
+          engagement_rate: number
+          is_partial_day: boolean
+          new_users: number
+          screen_page_views: number
+          sessions: number
+        }[]
+      }
+      ga4_daily_totals: {
+        Args: {
+          _community_id?: string
+          _end: string
+          _include_partial?: boolean
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          active_users: number
+          days: number
+          engaged_sessions: number
+          engagement_rate: number
+          first_date: string
+          last_date: string
+          new_users: number
+          partial_days: number
+          screen_page_views: number
+          sessions: number
+        }[]
+      }
+      ga4_dimension_report: {
+        Args: {
+          _dimension: string
+          _end: string
+          _include_partial?: boolean
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          active_users: number
+          dimension_value: string
+          engaged_sessions: number
+          engagement_rate: number
+          new_users: number
+          screen_page_views: number
+          secondary_value: string
+          sessions: number
+        }[]
+      }
+      ga4_health: {
+        Args: { _org_id: string }
+        Returns: {
+          first_date: string
+          landing_rows: number
+          last_complete_date: string
+          last_date: string
+          mapped_landing_rows: number
+          missing_days: number
+          partial_date: string
+          total_rows: number
+        }[]
+      }
+      ga4_landing_page_report: {
+        Args: {
+          _community_id?: string
+          _end: string
+          _include_partial?: boolean
+          _limit?: number
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          active_users: number
+          engaged_sessions: number
+          engagement_rate: number
+          landing_path: string
+          mapped_community_id: string
+          new_users: number
+          screen_page_views: number
+          sessions: number
+        }[]
+      }
       gsc_api_coverage: {
         Args: { _org_id: string }
         Returns: {
