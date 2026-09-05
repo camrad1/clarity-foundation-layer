@@ -59,7 +59,8 @@ export const Route = createFileRoute("/_authenticated/marketing/insights")({
       { property: "og:title", content: "Search Insights — ONELIFE Marketing Performance Hub" },
       {
         property: "og:description",
-        content: "What changed, what matters and what to work on next — every insight traceable to imported Search Console rows.",
+        content:
+          "What changed, what matters and what to work on next — every insight traceable to imported Search Console rows.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -93,7 +94,10 @@ function InsightCard({ insight }: { insight: Insight }) {
     <div className="panel space-y-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-foreground break-all">{insight.subject}</p>
-        <Badge variant="outline" className={cn("shrink-0 text-[11px]", PRIORITY_TONE[insight.priority])}>
+        <Badge
+          variant="outline"
+          className={cn("shrink-0 text-[11px]", PRIORITY_TONE[insight.priority])}
+        >
           {PRIORITY_LABELS[insight.priority]}
         </Badge>
       </div>
@@ -361,7 +365,9 @@ function SearchInsights() {
                 label="Clicks (mapped pages in scope)"
                 value={fmtInt(totals.clicks)}
                 footnote={
-                  pageComparable ? `Prior period: ${fmtInt(priorTotals.clicks)}` : "No comparable prior period"
+                  pageComparable
+                    ? `Prior period: ${fmtInt(priorTotals.clicks)}`
+                    : "No comparable prior period"
                 }
               />
               <MetricCard
@@ -401,14 +407,18 @@ function SearchInsights() {
                 title="Biggest gains"
                 description="Largest measured increases against the comparable prior export."
                 insights={gains}
-                empty={queryComparable || pageComparable ? "No increases were measured." : noComparison}
+                empty={
+                  queryComparable || pageComparable ? "No increases were measured." : noComparison
+                }
               />
 
               <Section
                 title="Biggest declines"
                 description="Largest measured decreases against the comparable prior export."
                 insights={declines}
-                empty={queryComparable || pageComparable ? "No decreases were measured." : noComparison}
+                empty={
+                  queryComparable || pageComparable ? "No decreases were measured." : noComparison
+                }
               />
 
               <Section
@@ -445,7 +455,9 @@ function SearchInsights() {
                             r.share !== null && r.prevShare !== null ? r.share - r.prevShare : null;
                           return (
                             <TableRow key={r.key}>
-                              <TableCell className="font-medium text-foreground">{r.label}</TableCell>
+                              <TableCell className="font-medium text-foreground">
+                                {r.label}
+                              </TableCell>
                               <TableCell className="text-right">{fmtInt(r.clicks)}</TableCell>
                               <TableCell className="text-right">{fmtInt(r.impressions)}</TableCell>
                               <TableCell className="text-right">{fmtPercent(r.share, 1)}</TableCell>

@@ -23,7 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CLASSIFICATIONS, CLASSIFICATION_LABELS, classificationLabel } from "@/lib/gsc/classification";
+import {
+  CLASSIFICATIONS,
+  CLASSIFICATION_LABELS,
+  classificationLabel,
+} from "@/lib/gsc/classification";
 import { change } from "@/lib/gsc/compare";
 import { downloadCsv, fmtDelta, fmtInt, fmtPercent, fmtPosition, toCsv } from "@/lib/gsc/format";
 import { useSearchQueryReport } from "@/lib/gsc/api-queries";
@@ -225,7 +229,6 @@ function QueryIntelligence() {
               />
             </>
           )}
-
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Clicks (filtered)" value={fmtInt(totals.clicks)} />

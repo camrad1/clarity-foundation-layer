@@ -43,7 +43,8 @@ export const Route = createFileRoute("/_authenticated/marketing/")({
 });
 
 function SearchOverview() {
-  const { organizationId, dateRange, comparisonMode, comparisonRange, communityScope } = useAppState();
+  const { organizationId, dateRange, comparisonMode, comparisonRange, communityScope } =
+    useAppState();
 
   const period = { start: dateRange.start, end: dateRange.end };
   // Comparison comes from the global Comparison Period control.
@@ -76,11 +77,12 @@ function SearchOverview() {
     (current!.last_date < period.end || (current!.first_date ?? period.start) > period.start);
   const comparable = !!comparison && !!previous && previous.impressions + previous.clicks > 0;
 
-
   const clickDelta = comparable ? change(current!.clicks, previous!.clicks).percent : null;
   const imprDelta = comparable ? change(current!.impressions, previous!.impressions).percent : null;
   const ctrPts = comparable ? change(current!.ctr, previous!.ctr).absolute : null;
-  const posDelta = comparable ? change(current!.avg_position, previous!.avg_position).percent : null;
+  const posDelta = comparable
+    ? change(current!.avg_position, previous!.avg_position).percent
+    : null;
 
   const rows = (series.data ?? []) as {
     date: string;
@@ -144,7 +146,11 @@ function SearchOverview() {
             grainLabel="Daily totals"
           />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Clicks" value={fmtInt(current!.clicks)} delta={comparable ? fmtDelta(clickDelta) : null} />
+            <MetricCard
+              label="Clicks"
+              value={fmtInt(current!.clicks)}
+              delta={comparable ? fmtDelta(clickDelta) : null}
+            />
             <MetricCard
               label="Impressions"
               value={fmtInt(current!.impressions)}
@@ -191,7 +197,6 @@ function SearchOverview() {
               {comparison && !comparable ? " — no imported data in that period" : ""}
             </span>
           </div>
-
 
           <div className="panel p-5">
             <p className="eyebrow pb-4">Clicks and impressions by day</p>

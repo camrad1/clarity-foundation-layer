@@ -24,13 +24,7 @@ import {
  */
 
 export type ApiGrain =
-  | "date"
-  | "query"
-  | "page"
-  | "query_page"
-  | "device"
-  | "country"
-  | "search_appearance";
+  "date" | "query" | "page" | "query_page" | "device" | "country" | "search_appearance";
 
 export type GscSource = "api" | "manual" | "none";
 
@@ -148,7 +142,9 @@ function useApiQueryReport(
             _org_id: organizationId!,
             _start: period!.start,
             _end: period!.end,
-            ...(comparison ? { _compare_start: comparison.start, _compare_end: comparison.end } : {}),
+            ...(comparison
+              ? { _compare_start: comparison.start, _compare_end: comparison.end }
+              : {}),
             _limit: limit,
           })
           .order("impressions", { ascending: false })
@@ -189,7 +185,9 @@ function useApiPageReport(
             _org_id: organizationId!,
             _start: period!.start,
             _end: period!.end,
-            ...(comparison ? { _compare_start: comparison.start, _compare_end: comparison.end } : {}),
+            ...(comparison
+              ? { _compare_start: comparison.start, _compare_end: comparison.end }
+              : {}),
             _limit: limit,
           })
           .order("impressions", { ascending: false })
@@ -273,7 +271,9 @@ type SourceResult<T> = {
 /** Daily totals for the exact selected range. */
 export function useSearchDailyTotals(organizationId: string | null, period: Period | null) {
   const cov = useGscApiCoverage(organizationId);
-  const coverage = period ? coverageFor(cov.data, "date", period) : { extent: "none" as const, first: null, last: null };
+  const coverage = period
+    ? coverageFor(cov.data, "date", period)
+    : { extent: "none" as const, first: null, last: null };
   const useApi = coverage.extent !== "none";
   const api = useApiDailyTotals(organizationId, useApi ? period : null);
   const manual = useDailyTotals(organizationId, useApi ? null : period);
@@ -298,7 +298,9 @@ export function useSearchDailyTotals(organizationId: string | null, period: Peri
 
 export function useSearchDailySeries(organizationId: string | null, period: Period | null) {
   const cov = useGscApiCoverage(organizationId);
-  const coverage = period ? coverageFor(cov.data, "date", period) : { extent: "none" as const, first: null, last: null };
+  const coverage = period
+    ? coverageFor(cov.data, "date", period)
+    : { extent: "none" as const, first: null, last: null };
   const useApi = coverage.extent !== "none";
   const api = useApiDailySeries(organizationId, useApi ? period : null);
   const manual = useDailySeries(organizationId, useApi ? null : period);
@@ -340,7 +342,12 @@ export function useSearchQueryReport(
   const cov = useGscApiCoverage(organizationId);
   const coverage = coverageFor(cov.data, "query", period);
   const useApi = coverage.extent !== "none" && !overrideImportId;
-  const { grains, selection } = useManualSelection(organizationId, "query", period, overrideImportId);
+  const { grains, selection } = useManualSelection(
+    organizationId,
+    "query",
+    period,
+    overrideImportId,
+  );
   const api = useApiQueryReport(organizationId, useApi ? period : null, useApi ? comparison : null);
   const manual = useQueryReport(
     organizationId,
@@ -366,7 +373,12 @@ export function useSearchPageReport(
   const cov = useGscApiCoverage(organizationId);
   const coverage = coverageFor(cov.data, "page", period);
   const useApi = coverage.extent !== "none" && !overrideImportId;
-  const { grains, selection } = useManualSelection(organizationId, "page", period, overrideImportId);
+  const { grains, selection } = useManualSelection(
+    organizationId,
+    "page",
+    period,
+    overrideImportId,
+  );
   const api = useApiPageReport(organizationId, useApi ? period : null, useApi ? comparison : null);
   const manual = usePageReport(
     organizationId,
@@ -395,7 +407,11 @@ export function useSearchDimensionReport(
   const useApi = coverage.extent !== "none" && !overrideImportId;
   const { grains, selection } = useManualSelection(organizationId, grain, period, overrideImportId);
   const api = useApiDimensionReport(organizationId, useApi ? period : null, grain);
-  const manual = useSimpleGrain(table, grain, useApi ? null : (selection.current?.import_id ?? null));
+  const manual = useSimpleGrain(
+    table,
+    grain,
+    useApi ? null : (selection.current?.import_id ?? null),
+  );
 
   const rows = useMemo(() => {
     if (useApi) {

@@ -90,7 +90,7 @@ function Opportunities() {
     return ((pageReport.data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
       key: String(r["normalized_url"]),
       label: pageLabel(String(r["page_url"])),
-      secondary: ((r["community_name"] as string | null | undefined) ?? "Unmapped"),
+      secondary: (r["community_name"] as string | null | undefined) ?? "Unmapped",
       clicks: Number(r["clicks"] ?? 0),
       impressions: Number(r["impressions"] ?? 0),
       ctr: r["ctr"] == null ? null : Number(r["ctr"]),
@@ -134,7 +134,15 @@ function Opportunities() {
               downloadCsv(
                 `clarityiq-opportunities-${flag}-${dataset}.csv`,
                 toCsv(
-                  ["Item", "Context", "Opportunity", "Clicks", "Impressions", "CTR", "Average position"],
+                  [
+                    "Item",
+                    "Context",
+                    "Opportunity",
+                    "Clicks",
+                    "Impressions",
+                    "CTR",
+                    "Average position",
+                  ],
                   visible.map((x) => [
                     x.row.label,
                     x.row.secondary,
@@ -215,7 +223,6 @@ function Opportunities() {
               />
             </>
           )}
-
 
           <div className="grid gap-4 sm:grid-cols-3">
             <MetricCard label={OPPORTUNITY_LABELS.striking} value={fmtInt(counts.striking)} />

@@ -130,9 +130,13 @@ function PageIntelligence() {
     >();
     for (const r of scoped) {
       const key = r.mapped_community_id ?? "unmapped";
-      const e =
-        map.get(key) ??
-        { name: r.community_name ?? "Unmapped pages", clicks: 0, impressions: 0, weighted: 0, pages: 0 };
+      const e = map.get(key) ?? {
+        name: r.community_name ?? "Unmapped pages",
+        clicks: 0,
+        impressions: 0,
+        weighted: 0,
+        pages: 0,
+      };
       e.clicks += r.clicks;
       e.impressions += r.impressions;
       e.weighted += (r.position_value ?? 0) * r.impressions;
@@ -164,7 +168,6 @@ function PageIntelligence() {
     scopedCommunityNames.length === 1
       ? scopedCommunityNames[0]
       : `the ${scopedCommunityNames.length} selected communities`;
-
 
   return (
     <div className="space-y-6">
@@ -259,7 +262,6 @@ function PageIntelligence() {
             </>
           )}
 
-
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               label="Mapped pages"
@@ -272,7 +274,10 @@ function PageIntelligence() {
               footnote={`${fmtInt(totalClicks - unmappedClicks)} of ${fmtInt(totalClicks)} clicks`}
             />
 
-            <MetricCard label="Clicks in scope" value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))} />
+            <MetricCard
+              label="Clicks in scope"
+              value={fmtInt(scoped.reduce((s, r) => s + r.clicks, 0))}
+            />
             <MetricCard
               label="Impressions in scope"
               value={fmtInt(scoped.reduce((s, r) => s + r.impressions, 0))}
@@ -318,7 +323,6 @@ function PageIntelligence() {
               description="Review Admin → URL Mapping Rules to add a deterministic rule for this community's page URLs. Unmapped pages stay visible in the All communities view."
             />
           ) : view === "communities" ? (
-
             <div className="panel overflow-hidden">
               <Table>
                 <TableHeader>
@@ -402,7 +406,9 @@ function PageIntelligence() {
                         </TableCell>
                         <TableCell className="text-right">{fmtInt(r.impressions)}</TableCell>
                         <TableCell className="text-right">{fmtPercent(r.ctr)}</TableCell>
-                        <TableCell className="text-right">{fmtPosition(r.position_value)}</TableCell>
+                        <TableCell className="text-right">
+                          {fmtPosition(r.position_value)}
+                        </TableCell>
                       </TableRow>
                     );
                   })}

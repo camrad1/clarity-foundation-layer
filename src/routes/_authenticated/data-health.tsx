@@ -63,8 +63,14 @@ function DataHealth() {
   /** Per-grain coverage — grains are never merged into one implied range. */
   const perGrain = (Object.keys(GRAIN_LABELS) as GrainKey[]).map((grain) => {
     const rows = activeGrainRows.filter((r) => r.grain === grain);
-    const starts = rows.map((r) => r.period_start).filter(Boolean).sort() as string[];
-    const ends = rows.map((r) => r.period_end).filter(Boolean).sort() as string[];
+    const starts = rows
+      .map((r) => r.period_start)
+      .filter(Boolean)
+      .sort() as string[];
+    const ends = rows
+      .map((r) => r.period_end)
+      .filter(Boolean)
+      .sort() as string[];
     const lastImport = rows
       .map((r) => r.imported_at)
       .filter(Boolean)
@@ -86,7 +92,6 @@ function DataHealth() {
     .filter(Boolean)
     .sort()
     .at(-1) as string | undefined;
-
 
   const typeName = (key: string) =>
     (sourceTypes.data ?? []).find((t) => t.key === key)?.name ?? key;
@@ -152,9 +157,7 @@ function DataHealth() {
                       <span>Received {latest.records_received}</span>
                       <span>Inserted {latest.records_inserted}</span>
                       <span>Updated {latest.records_updated}</span>
-                      <span
-                        className={latest.records_failed > 0 ? "text-destructive" : undefined}
-                      >
+                      <span className={latest.records_failed > 0 ? "text-destructive" : undefined}>
                         Failed {latest.records_failed}
                       </span>
                       {latest.error_summary ? (
@@ -190,7 +193,9 @@ function DataHealth() {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Latest finalized Search Console day</dt>
+                <dt className="text-xs text-muted-foreground">
+                  Latest finalized Search Console day
+                </dt>
                 <dd className="text-foreground">
                   {apiLatestDate
                     ? format(new Date(`${apiLatestDate}T00:00:00`), "MMM d, yyyy")
