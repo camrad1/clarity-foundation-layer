@@ -112,6 +112,7 @@ export function emailFromIdToken(idToken?: string): string | null {
   if (!idToken) return null;
   try {
     const payload = idToken.split(".")[1];
+    if (!payload) return null;
     const json = JSON.parse(
       new TextDecoder().decode(
         Uint8Array.from(atob(payload.replace(/-/g, "+").replace(/_/g, "/")), (c) =>
@@ -119,7 +120,7 @@ export function emailFromIdToken(idToken?: string): string | null {
         ),
       ),
     ) as { email?: string };
-    return payload && json.email ? json.email : null;
+    return json.email ?? null;
   } catch {
     return null;
   }
@@ -140,7 +141,7 @@ export async function storeTokens(
     updated_at: new Date().toISOString(),
   };
   // Rotation: only overwrite the refresh token when Google issued a new one.
-  if (tokens.refresh_token) patch.refresh_token = tokens.refresh_token;
+  if (tokens.refresh_token) patch["refresh_token"] = tokens.refresh_token;
   await admin.from("google_oauth_tokens").upsert(patch, { onConflict: "connection_id" });
 }
 
