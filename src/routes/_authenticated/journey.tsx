@@ -223,12 +223,67 @@ function PerformanceJourney() {
         ? (ctx.communityNames[singleCommunity!] ?? "Selected community")
         : `${ctx.communityIds.length} communities`;
 
+  // The eight stages read from eight different canonical layers, several of
+  // which are heavy portfolio aggregates. They are released in waves rather
+  // than fired together, so a wide range (year to date, all communities) does
+  // not saturate the database connection and time out.
+  const wh = useWhSalesSummary(ctx.organizationId, ctx.communityIds, period.start, period.end);
+  const waveTwo = wh.isFetched || wh.isError;
+
   // Visibility — Search Console API (property-wide) or the deterministic
   // page-mapping rules when exactly one community is selected.
-  const searchNow = useSearchDailyTotals(ctx.organizationId, singleCommunity ? null : period);
-  const searchPrior = useSearchDailyTotals(ctx.organizationId, singleCommunity ? null : prior);
-  const commSearchNow = useCommunityVisibility(ctx.organizationId, singleCommunity, period);
-  const commSearchPrior = useCommunityVisibility(ctx.organizationId, singleCommunity, prior);
+  const searchNow = useSearchDailyTotals(
+    ctx.organizationId,
+    waveTwo && !singleCommunity ? period : null,
+  );
+  const commSearchNow = useCommunityVisibility(
+    ctx.organizationId,
+    waveTwo ? singleCommunity : null,
+    period,
+  );
+
+  // Traffic — GA4 API. Portfolio uses property-wide totals; a community scope
+  // uses only mapped landing pages. Partial current days are excluded.
+  const ga4Now = useGa4Totals(ctx.organizationId, waveTwo ? period : null, ctx.communityIds);
+
+  // Conversations — Further leads and their active exact-ID matches.
+  const furtherNow = useJourneyFurther(
+    ctx.organizationId,
+    ctx.communityIds,
+    waveTwo ? period : null,
+  );
+
+  const currentDone =
+    waveTwo &&
+    (singleCommunity ? commSearchNow.isFetched || commSearchNow.isError : searchNow.data !== undefined || !searchNow.isLoading) &&
+    (ga4Now.isFetched || ga4Now.isError) &&
+    (furtherNow.isFetched || furtherNow.isError);
+
+  // Comparison wave.
+  const whPrior = useWhSalesSummary(
+    ctx.organizationId,
+    ctx.communityIds,
+    prior.start,
+    prior.end,
+    currentDone,
+  );
+  const searchPrior = useSearchDailyTotals(
+    ctx.organizationId,
+    currentDone && !singleCommunity ? prior : null,
+  );
+  const commSearchPrior = useCommunityVisibility(
+    ctx.organizationId,
+    currentDone ? singleCommunity : null,
+    prior,
+  );
+  const ga4Prior = useGa4Totals(ctx.organizationId, currentDone ? prior : null, ctx.communityIds);
+  const furtherPrior = useJourneyFurther(
+    ctx.organizationId,
+    ctx.communityIds,
+    currentDone ? prior : null,
+  );
+
+  const priorDone = currentDone && (whPrior.isFetched || whPrior.isError);
 
   const vis = singleCommunity
     ? {
@@ -257,33 +312,35 @@ function PerformanceJourney() {
         position: (searchPrior.data?.avg_position as number | null | undefined) ?? null,
       };
 
-  // Traffic — GA4 API. Portfolio uses property-wide totals; a community scope
-  // uses only mapped landing pages. Partial current days are excluded.
-  const ga4Now = useGa4Totals(ctx.organizationId, period, ctx.communityIds);
-  const ga4Prior = useGa4Totals(ctx.organizationId, prior, ctx.communityIds);
-  const ga4Health = useGa4Health(ctx.organizationId);
-
-  // Conversations — Further leads and their active exact-ID matches.
-  const furtherNow = useJourneyFurther(ctx.organizationId, ctx.communityIds, period);
-  const furtherPrior = useJourneyFurther(ctx.organizationId, ctx.communityIds, prior);
-
-  // Leads → Move-ins — the validated WelcomeHome definitions, unchanged.
-  const wh = useWhSalesSummary(ctx.organizationId, ctx.communityIds, period.start, period.end);
-  const whPrior = useWhSalesSummary(ctx.organizationId, ctx.communityIds, prior.start, prior.end);
-
   // Occupancy — canonical current state with the community capacity basis.
-  const { occupancy } = useOccupancyWithBudget(ctx.organizationId, ctx.communityIds);
+  const { occupancy } = useOccupancyWithBudget(
+    priorDone ? ctx.organizationId : null,
+    ctx.communityIds,
+  );
   const priorOcc = useOccupancyTrend(
-    ctx.organizationId,
+    priorDone ? ctx.organizationId : null,
     ctx.communityIds,
     prior.start,
     prior.end,
     "daily",
   );
+  const ga4Health = useGa4Health(priorDone ? ctx.organizationId : null);
+
+  const occDone = priorDone && (occupancy.isFetched || occupancy.isError);
 
   const grain = grainForPeriod(period);
-  const series = useJourneySeries(ctx.organizationId, ctx.communityIds, period, grain);
-  const matrix = useJourneyMatrix(ctx.organizationId, ctx.communityIds, period);
+  const series = useJourneySeries(
+    ctx.organizationId,
+    ctx.communityIds,
+    occDone ? period : null,
+    grain,
+  );
+  const matrix = useJourneyMatrix(
+    ctx.organizationId,
+    ctx.communityIds,
+    series.isFetched || series.isError ? period : null,
+  );
+
 
   const occTotals = occupancy.data?.totals;
   const priorOccPct = useMemo(() => {
