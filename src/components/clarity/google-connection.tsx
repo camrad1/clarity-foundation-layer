@@ -20,12 +20,15 @@ import {
 import { useOrgRole } from "@/lib/clarity-queries";
 import { GOOGLE_OAUTH_CALLBACK_PATH, GOOGLE_SERVICE_LABELS, type GoogleService } from "@/lib/google/config";
 import {
+  googleCompareSearchConsole,
   googleDisconnect,
   googleListProperties,
   googleSelectProperty,
   googleSetupInfo,
   googleStartConnect,
+  googleValidationSync,
 } from "@/lib/google/google.functions";
+
 import { useGoogleConnection } from "@/lib/google/queries";
 import { useAppState } from "@/state/app-state";
 
@@ -146,6 +149,24 @@ export function GoogleConnectionPage({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const runValidation = useServerFn(googleValidationSync);
+  const runCompare = useServerFn(googleCompareSearchConsole);
+
+  const validation = useMutation({
+    mutationFn: async () =>
+      await runValidation({ data: { organizationId: organizationId!, service, days: 5 } }),
+    onSuccess: () => {
+      toast.success("Validation pull finished");
+      void qc.invalidateQueries({ queryKey: ["google_connection"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const compare = useMutation({
+    mutationFn: async () => await runCompare({ data: { organizationId: organizationId! } }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const unlink = useMutation({
     mutationFn: async () => await disconnect({ data: { organizationId: organizationId!, service } }),
     onSuccess: () => {
@@ -216,6 +237,48 @@ export function GoogleConnectionPage({
       </section>
 
       <section className="rounded-lg border bg-card p-5 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Validation pull</h2>
+            <p className="text-sm text-muted-foreground">
+              Fetches only a few recent days into a separate, clearly labeled area. Existing imports and
+              dashboards are not changed.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={!canManageImports || !conn?.selected_property_id || validation.isPending}
+              onClick={() => validation.mutate()}
+            >
+              <RefreshCw className={`mr-2 size-4 ${validation.isPending ? "animate-spin" : ""}`} />
+              Run validation pull
+            </Button>
+            {service === "search_console" ? (
+              <Button
+                variant="outline"
+                disabled={!canManageImports || compare.isPending}
+                onClick={() => compare.mutate()}
+              >
+                Compare with manual import
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        {validation.data ? (
+          <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs">
+            {JSON.stringify(validation.data, null, 2)}
+          </pre>
+        ) : null}
+        {compare.data ? (
+          <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs">
+            {JSON.stringify(compare.data, null, 2)}
+          </pre>
+        ) : null}
+      </section>
+
+      <section className="rounded-lg border bg-card p-5 space-y-3">
+
         <h2 className="text-sm font-semibold">Google Cloud redirect URI</h2>
         <p className="text-sm text-muted-foreground">
           Add this exact address to the authorized redirect URIs of your Google Cloud OAuth client.
