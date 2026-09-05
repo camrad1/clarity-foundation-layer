@@ -1208,13 +1208,15 @@ const SOURCE_LIMITS = [
 function LeadSourceMix({
   rows,
   totals,
+  reTours,
   prior,
   comparisonLabel,
   utm,
 }: {
   rows: LeadSourceRow[];
-  totals: { inquiries: number; moveIns: number };
-  prior: { inquiries: number; moveIns: number } | null;
+  totals: { inquiries: number; tours: number; moveIns: number };
+  reTours: number;
+  prior: { inquiries: number; tours: number; moveIns: number } | null;
   comparisonLabel: string;
   utm: { total: number; counts: Record<string, number> };
 }) {
