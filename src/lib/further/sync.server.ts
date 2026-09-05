@@ -59,7 +59,7 @@ export type UnitResult = {
 };
 
 const LEAD_PAGE_SIZE = 100;
-const LEAD_MAX_PAGES = 10;
+const LEAD_MAX_PAGES = 320;
 const VISITOR_MAX_PAGES = 8;
 const DETAIL_BATCH = 40;
 const CONVERSATION_BATCH = 25;
