@@ -233,35 +233,32 @@ function PerformanceJourney() {
   // than fired together, so a wide range (year to date, all communities) does
   // not saturate the database connection and time out.
   const wh = useWhSalesSummary(ctx.organizationId, ctx.communityIds, period.start, period.end);
+  // wh_sales_summary is the single heaviest read on the page; it runs alone
+  // first so the lighter source reads never compete with it.
+  const w2 = wh.isFetched || wh.isError;
 
   // Visibility — Search Console API (property-wide) or the deterministic
   // page-mapping rules when exactly one community is selected.
   const searchNow = useSearchDailyTotals(
     ctx.organizationId,
-    singleCommunity ? null : period,
+    !w2 || singleCommunity ? null : period,
   );
   const commSearchNow = useCommunityVisibility(
     ctx.organizationId,
-    singleCommunity,
+    w2 ? singleCommunity : null,
     period,
   );
 
   // Traffic — GA4 API. Portfolio uses property-wide totals; a community scope
   // uses only mapped landing pages. Partial current days are excluded.
-  const ga4Now = useGa4Totals(ctx.organizationId, period, ctx.communityIds);
+  const ga4Now = useGa4Totals(ctx.organizationId, w2 ? period : null, ctx.communityIds);
 
   // Conversations — Further leads and their active exact-ID matches.
   const furtherNow = useJourneyFurther(
     ctx.organizationId,
     ctx.communityIds,
-    period,
+    w2 ? period : null,
   );
-
-  const currentDone =
-    (wh.isFetched || wh.isError) &&
-    (singleCommunity ? commSearchNow.isFetched || commSearchNow.isError : searchNow.data !== undefined || !searchNow.isLoading) &&
-    (ga4Now.isFetched || ga4Now.isError) &&
-    (furtherNow.isFetched || furtherNow.isError);
 
   // Comparison wave.
   const whPrior = useWhSalesSummary(
@@ -269,8 +266,16 @@ function PerformanceJourney() {
     ctx.communityIds,
     prior.start,
     prior.end,
-    currentDone,
+    w2,
   );
+
+  const currentDone =
+    w2 &&
+    (whPrior.isFetched || whPrior.isError) &&
+    (singleCommunity ? commSearchNow.isFetched || commSearchNow.isError : searchNow.data !== undefined || !searchNow.isLoading) &&
+    (ga4Now.isFetched || ga4Now.isError) &&
+    (furtherNow.isFetched || furtherNow.isError);
+
   const searchPrior = useSearchDailyTotals(
     ctx.organizationId,
     currentDone && !singleCommunity ? prior : null,
