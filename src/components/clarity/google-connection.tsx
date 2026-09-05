@@ -20,12 +20,15 @@ import {
 import { useOrgRole } from "@/lib/clarity-queries";
 import { GOOGLE_OAUTH_CALLBACK_PATH, GOOGLE_SERVICE_LABELS, type GoogleService } from "@/lib/google/config";
 import {
+  googleCompareSearchConsole,
   googleDisconnect,
   googleListProperties,
   googleSelectProperty,
   googleSetupInfo,
   googleStartConnect,
+  googleValidationSync,
 } from "@/lib/google/google.functions";
+
 import { useGoogleConnection } from "@/lib/google/queries";
 import { useAppState } from "@/state/app-state";
 
