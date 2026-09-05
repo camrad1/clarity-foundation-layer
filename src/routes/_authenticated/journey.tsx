@@ -112,6 +112,7 @@ type Stage = {
   name: string;
   metric: string;
   value: string;
+  loading?: boolean;
   delta: Delta;
   priorLabel: string;
   source: string;
@@ -121,42 +122,62 @@ type Stage = {
   href?: { to: string } | undefined;
 };
 
+function DeltaChip({ delta, priorLabel }: { delta: Delta; priorLabel: string }) {
+  const Icon = delta?.tone === "up" ? ArrowUpRight : delta?.tone === "down" ? ArrowDownRight : Minus;
+  if (!delta) return <span className="text-xs text-muted-foreground">No comparison</span>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs font-medium",
+        delta.tone === "up" && "text-success",
+        delta.tone === "down" && "text-destructive",
+        delta.tone === "neutral" && "text-muted-foreground",
+      )}
+      title={priorLabel}
+    >
+      <Icon className="size-3.5" />
+      {delta.label}
+    </span>
+  );
+}
+
+/**
+ * One stage of the journey. Provenance stays on the card but is tucked into a
+ * compact disclosure so the metric, its change and its supporting figure lead
+ * the hierarchy.
+ */
 function StageCard({ stage, index }: { stage: Stage; index: number }) {
-  const Icon =
-    stage.delta?.tone === "up" ? ArrowUpRight : stage.delta?.tone === "down" ? ArrowDownRight : Minus;
   const body = (
-    <div className="kpi-card flex h-full flex-col gap-2 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">
-          {index + 1}. {stage.name}
-        </p>
-      </div>
+    <div className="kpi-card flex h-full flex-col gap-1.5 p-4">
+      <p className="eyebrow">
+        {index + 1}. {stage.name}
+      </p>
       <p className="text-xs text-muted-foreground">{stage.metric}</p>
-      <p className="font-display text-2xl font-semibold tracking-tight text-brand">{stage.value}</p>
-      <div className="flex items-center gap-2 text-xs">
-        {stage.delta ? (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 font-medium",
-              stage.delta.tone === "up" && "text-success",
-              stage.delta.tone === "down" && "text-destructive",
-              stage.delta.tone === "neutral" && "text-muted-foreground",
-            )}
-          >
-            <Icon className="size-3.5" />
-            {stage.delta.label}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">No comparison</span>
-        )}
-        <span className="text-muted-foreground">{stage.priorLabel}</span>
-      </div>
-      {stage.support ? <p className="text-xs text-muted-foreground">{stage.support}</p> : null}
-      <div className="mt-auto space-y-0.5 border-t border-border pt-2 text-[11px] text-muted-foreground">
-        <p>{stage.source}</p>
-        <p>{stage.freshness}</p>
-        <p>{stage.scope}</p>
-      </div>
+      {stage.loading ? (
+        <Skeleton className="h-8 w-24" />
+      ) : (
+        <p className="font-display text-2xl font-semibold tracking-tight text-brand">
+          {stage.value}
+        </p>
+      )}
+      {stage.loading ? (
+        <Skeleton className="h-4 w-32" />
+      ) : (
+        <DeltaChip delta={stage.delta} priorLabel={stage.priorLabel} />
+      )}
+      {stage.support && !stage.loading ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">{stage.support}</p>
+      ) : null}
+      <details className="group mt-auto border-t border-border pt-2 text-[11px] text-muted-foreground">
+        <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
+          <span className="truncate">{stage.freshness}</span>
+          <ChevronDown className="size-3 shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="space-y-0.5 pt-1">
+          <p>{stage.source}</p>
+          <p>{stage.scope}</p>
+        </div>
+      </details>
     </div>
   );
   return stage.href ? (
@@ -165,6 +186,18 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
     </Link>
   ) : (
     body
+  );
+}
+
+/** Subtle directional connector shown between stage cards on wide layouts. */
+function StageConnector() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 sm:block"
+    >
+      <ArrowRight className="size-4 text-brand/40" />
+    </div>
   );
 }
 
@@ -178,8 +211,13 @@ function EvidenceBadge({ level }: { level: EvidenceLevel }) {
         ? "bg-info/10 text-info"
         : "bg-muted text-muted-foreground";
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium", tone)}>
-      Level {level} · {EVIDENCE_LABELS[level]}
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        tone,
+      )}
+    >
+      {EVIDENCE_LABELS[level]}
     </span>
   );
 }
@@ -193,26 +231,49 @@ type Transition = {
   rateLabel: string;
   sentence: string;
   note: string;
+  highlight?: boolean;
+  loading?: boolean;
 };
 
-function TransitionCard({ t }: { t: Transition }) {
+/**
+ * Compact transition row. The full evidence wording is preserved verbatim but
+ * moves behind a disclosure so the section reads as a chain, not a report.
+ */
+function TransitionRow({ t }: { t: Transition }) {
   return (
-    <div className="panel space-y-2 p-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
-        <span>{t.from}</span>
-        <ArrowRight className="size-3.5 text-muted-foreground" />
-        <span>{t.to}</span>
+    <details
+      className={cn(
+        "group panel px-4 py-3",
+        t.highlight && "border-success/40 bg-success/[0.04]",
+      )}
+    >
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="flex min-w-[13rem] items-center gap-2 text-sm font-medium text-foreground">
+          {t.from}
+          <ArrowRight className="size-3.5 text-muted-foreground" />
+          {t.to}
+        </span>
+        {t.loading ? (
+          <Skeleton className="h-5 w-40" />
+        ) : (
+          <span className="flex flex-1 flex-wrap items-baseline gap-2">
+            <span className="font-display text-lg font-semibold text-brand">
+              {t.rate == null ? "—" : fmtPct(t.rate)}
+            </span>
+            <span className="text-xs text-muted-foreground">{t.rateLabel}</span>
+          </span>
+        )}
+        <EvidenceBadge level={t.level} />
+        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-1 pt-2 text-xs leading-relaxed text-muted-foreground">
+        <p>{t.sentence}</p>
+        <p className="text-[11px]">{t.note}</p>
       </div>
-      <p className="font-display text-xl font-semibold text-brand">
-        {t.rate == null ? "—" : fmtPct(t.rate)}{" "}
-        <span className="text-xs font-normal text-muted-foreground">{t.rateLabel}</span>
-      </p>
-      <p className="text-xs leading-relaxed text-muted-foreground">{t.sentence}</p>
-      <EvidenceBadge level={t.level} />
-      <p className="text-[11px] leading-relaxed text-muted-foreground">{t.note}</p>
-    </div>
+    </details>
   );
 }
+
 
 /* ------------------------------------------------------------------- page */
 
