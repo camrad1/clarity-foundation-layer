@@ -152,8 +152,6 @@ export const furtherDiscoverCommunities = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { organizationId, connectionId } = await guard(context.supabase as any, data.connectionId);
     const admin = await adminClient();
-    const { furtherSyncUnit } = { furtherSyncUnit: null } as { furtherSyncUnit: null };
-    void furtherSyncUnit;
     const { runFurtherSyncUnit } = await import("./sync.server");
     const { safeError } = await import("./api.server");
     const key = await loadKey(admin, connectionId);
@@ -203,6 +201,7 @@ export const furtherConfirmMapping = createServerFn({ method: "POST" })
       .object({
         connectionId: z.string().uuid(),
         furtherCommunityId: z.string().min(1),
+        furtherCommunityName: z.string().max(200).nullable().optional(),
         communityId: z.string().uuid().nullable(),
       })
       .parse(d),
@@ -247,8 +246,8 @@ export const furtherConfirmMapping = createServerFn({ method: "POST" })
       community_id: data.communityId,
       source_type: "further",
       external_id: data.furtherCommunityId,
+      external_name: data.furtherCommunityName ?? null,
       active: true,
-      confirmed_at: new Date().toISOString(),
     };
     if (existing?.id) {
       await admin.from("community_source_mappings").update(payload).eq("id", existing.id);
