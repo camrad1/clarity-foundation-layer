@@ -1302,13 +1302,21 @@ function LeadSourceMix({
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SourceTotalCard
           label="Inquiries in period"
           value={totals.inquiries}
           attributed={attributed.inquiries}
           change={prior ? changePct(totals.inquiries, prior.inquiries) : null}
           comparisonLabel={comparisonLabel}
+        />
+        <SourceTotalCard
+          label="Tours in period"
+          value={totals.tours}
+          attributed={attributed.tours}
+          change={prior ? changePct(totals.tours, prior.tours) : null}
+          comparisonLabel={comparisonLabel}
+          note={`Includes ${reTours.toLocaleString()} re-tour${reTours === 1 ? "" : "s"}`}
         />
         <SourceTotalCard
           label="Move-ins in period"
@@ -1319,7 +1327,7 @@ function LeadSourceMix({
         />
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
         <ChartCard
           title="Inquiries by lead source"
           description="Countable prospects created in the selected period, grouped by the lead source recorded in WelcomeHome. Share is of all inquiries in scope."
@@ -1330,6 +1338,19 @@ function LeadSourceMix({
             data={topN(rows.map((r) => ({ label: r.label, value: r.inquiries })), 10)}
             valueLabel="Inquiries"
             shareTotal={totals.inquiries}
+          />
+        </ChartCard>
+        <ChartCard
+          title="Tours by lead source"
+          description="Completed tours in the period (mapped tour activity with a successful result, re-tours included), attributed through the touring prospect's recorded lead source. Share is of all tours in scope."
+          empty={attributed.tours === 0 ? "No attributed tours in this period." : undefined}
+          height={Math.max(220, Math.min(rows.length, 10) * 30 + 50)}
+        >
+          <HorizontalBarChart
+            data={topN(rows.map((r) => ({ label: r.label, value: r.tours })), 10)}
+            valueLabel="Tours"
+            color={CHART_TOKENS.secondary}
+            shareTotal={totals.tours}
           />
         </ChartCard>
         <ChartCard
