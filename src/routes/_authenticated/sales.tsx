@@ -632,6 +632,21 @@ function SalesIntelligence() {
           />
         </TabsContent>
 
+        {/* -------------------------------------------------------- Conversion rates */}
+        <TabsContent value="conversion" className="space-y-6 pt-6">
+          <ConversionRatesTab
+            organizationId={ctx.organizationId}
+            communityIds={ctx.communityIds}
+            range={ctx.dateRange}
+            prior={prior}
+            comparisonLabel={comparisonLabel}
+            priorLabel={formatPeriodLabel(prior)}
+            communityNames={ctx.communityNames}
+            counselorLabel={(id) => resolveLabel(labels.user, id, "Unassigned")}
+            leadSourceLabel={(id) => resolveLabel(labels.leadSource, id, "Unknown lead source")}
+            onDrill={(t) => setTab(t)}
+          />
+        </TabsContent>
 
         {/* ------------------------------------------------------ Current occupancy */}
         <TabsContent value="occupancy" className="space-y-6 pt-6">
