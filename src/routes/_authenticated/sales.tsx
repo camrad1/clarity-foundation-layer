@@ -1190,8 +1190,15 @@ function CounselorChart({
  * Shares are always taken against the period/community totals in scope, not
  * against the visible slice of rows.
  */
-type LeadSourceRow = { id: string; label: string; inquiries: number; moveIns: number };
-type SourceSortKey = "label" | "inquiries" | "inquiryShare" | "moveIns" | "moveInShare";
+type LeadSourceRow = { id: string; label: string; inquiries: number; tours: number; moveIns: number };
+type SourceSortKey =
+  | "label"
+  | "inquiries"
+  | "inquiryShare"
+  | "tours"
+  | "tourShare"
+  | "moveIns"
+  | "moveInShare";
 const SOURCE_LIMITS = [
   { value: 5, label: "Top 5" },
   { value: 10, label: "Top 10" },
