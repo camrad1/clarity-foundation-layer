@@ -26,7 +26,8 @@ import {
 import { CLASSIFICATIONS, CLASSIFICATION_LABELS, classificationLabel } from "@/lib/gsc/classification";
 import { change } from "@/lib/gsc/compare";
 import { downloadCsv, fmtDelta, fmtInt, fmtPercent, fmtPosition, toCsv } from "@/lib/gsc/format";
-import { selectImportForPeriod, useGrainImports, useQueryReport } from "@/lib/gsc/queries";
+import { useSearchQueryReport } from "@/lib/gsc/api-queries";
+import { GscManualSourceNote, GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
@@ -74,21 +75,12 @@ type SortKey = "clicks" | "impressions" | "ctr" | "position_value";
 
 function QueryIntelligence() {
   const initial = Route.useSearch();
-  const { organizationId, dateRange, communityScope } = useAppState();
-  const grains = useGrainImports(organizationId, "query");
+  const { organizationId, dateRange, comparisonRange, communityScope } = useAppState();
   const period = { start: dateRange.start, end: dateRange.end };
-  // null = follow the global date filter; set = the user opened an older export.
+  // null = follow the global date filter; set = the user opened an older manual export.
   const [reportImportId, setReportImportId] = useState<string | null>(null);
-  const selection = useMemo(
-    () => selectImportForPeriod(grains.data ?? [], period, reportImportId),
-    [grains.data, period.start, period.end, reportImportId],
-  );
-
-  const report = useQueryReport(
-    organizationId,
-    selection.current?.import_id ?? null,
-    selection.comparison?.import_id ?? null,
-  );
+  const report = useSearchQueryReport(organizationId, period, comparisonRange, reportImportId);
+  const selection = report.selection;
 
   const [search, setSearch] = useState(initial.q);
   const [classification, setClassification] = useState<string>(initial.classification);
@@ -153,7 +145,7 @@ function QueryIntelligence() {
             disabled={!filtered.length}
             onClick={() =>
               downloadCsv(
-                `clarityiq-queries-${selection.current?.period_start}-${selection.current?.period_end}.csv`,
+                `clarityiq-queries-${period.start}-${period.end}.csv`,
                 toCsv(
                   [
                     "Query",
@@ -195,15 +187,15 @@ function QueryIntelligence() {
         </p>
       ) : null}
 
-      {grains.isLoading || report.isLoading ? (
+      {report.isLoading ? (
         <div className="panel px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-      ) : !selection.options.length ? (
+      ) : report.source === "none" && !selection.options.length ? (
         <EmptyState
           icon={<Search className="size-6" />}
-          title="No Queries report imported"
-          description="Upload a Search Console export containing the Queries report from Admin → Search Console Imports."
+          title="No query data for this period"
+          description="No Search Console API rows cover this range and no Queries export has been imported for it."
         />
-      ) : !selection.current ? (
+      ) : report.source === "none" ? (
         <GscExportNotice
           selection={selection}
           grainLabel="Queries"
@@ -213,13 +205,26 @@ function QueryIntelligence() {
         />
       ) : (
         <>
-          <GscExportNotice
-            selection={selection}
-            grainLabel="Queries"
-            period={period}
-            value={reportImportId}
-            onChange={setReportImportId}
-          />
+          {report.source === "api" ? (
+            <GscSourceNote
+              source={report.source}
+              coverage={report.coverage}
+              period={period}
+              comparison={comparisonRange}
+              grainLabel="Queries"
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel="Queries" />
+              <GscExportNotice
+                selection={selection}
+                grainLabel="Queries"
+                period={period}
+                value={reportImportId}
+                onChange={setReportImportId}
+              />
+            </>
+          )}
 
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { change } from "@/lib/gsc/compare";
 import { comparisonModeLabel, formatPeriodLabel } from "@/lib/date-ranges";
 import { downloadCsv, fmtDelta, fmtInt, fmtPercent, fmtPosition, toCsv } from "@/lib/gsc/format";
-import { useDailySeries, useDailyTotals } from "@/lib/gsc/queries";
+import { useSearchDailySeries, useSearchDailyTotals } from "@/lib/gsc/api-queries";
+import { GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/marketing/")({
@@ -48,9 +49,9 @@ function SearchOverview() {
   // Comparison comes from the global Comparison Period control.
   const comparison = comparisonRange;
 
-  const totals = useDailyTotals(organizationId, period);
-  const prior = useDailyTotals(organizationId, comparison ?? period);
-  const series = useDailySeries(organizationId, period);
+  const totals = useSearchDailyTotals(organizationId, period);
+  const prior = useSearchDailyTotals(organizationId, comparison ?? period);
+  const series = useSearchDailySeries(organizationId, period);
 
   const current = totals.data as
     | {
@@ -94,7 +95,7 @@ function SearchOverview() {
       <PageHeader
         eyebrow="Search Intelligence"
         title="Search Overview"
-        description="Daily totals from the Dates report of your Search Console exports. Click-through rate is recalculated from clicks and impressions, and average position is impression weighted — never a simple average of averages."
+        description="Daily totals from the Search Console API, aggregated over the exact selected dates. Click-through rate is recalculated from clicks and impressions, and average position is impression weighted — never a simple average of averages."
         actions={
           <div className="flex items-center gap-2">
             <Button
@@ -131,10 +132,17 @@ function SearchOverview() {
         <EmptyState
           icon={<Search className="size-6" />}
           title="No Search Console data for this period"
-          description="Import a Search Console export that covers this date range from Admin → Search Console Imports. Nothing is estimated or back-filled."
+          description="No Search Console API rows or manual import cover this date range. Nothing is estimated or back-filled."
         />
       ) : (
         <>
+          <GscSourceNote
+            source={totals.source}
+            coverage={totals.coverage}
+            period={period}
+            comparison={comparison}
+            grainLabel="Daily totals"
+          />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Clicks" value={fmtInt(current!.clicks)} delta={comparable ? fmtDelta(clickDelta) : null} />
             <MetricCard

@@ -42,12 +42,8 @@ import {
   type Priority,
   type QueryRow,
 } from "@/lib/gsc/insights";
-import {
-  selectImportForPeriod,
-  useGrainImports,
-  usePageReport,
-  useQueryReport,
-} from "@/lib/gsc/queries";
+import { useSearchPageReport, useSearchQueryReport } from "@/lib/gsc/api-queries";
+import { GscManualSourceNote, GscSourceNote } from "@/components/clarity/gsc-source-note";
 import { resolveSelectedCommunityIds, useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
 
@@ -183,49 +179,32 @@ function Section({
 }
 
 function SearchInsights() {
-  const { organizationId, dateRange, communityScope } = useAppState();
+  const { organizationId, dateRange, comparisonRange, communityScope } = useAppState();
   const communities = useCommunities(organizationId);
   const period = { start: dateRange.start, end: dateRange.end };
-
-  const queryGrains = useGrainImports(organizationId, "query");
-  const pageGrains = useGrainImports(organizationId, "page");
 
   const [queryImportId, setQueryImportId] = useState<string | null>(null);
   const [pageImportId, setPageImportId] = useState<string | null>(null);
 
-  const querySelection = useMemo(
-    () => selectImportForPeriod(queryGrains.data ?? [], period, queryImportId),
-    [queryGrains.data, period.start, period.end, queryImportId],
-  );
-  const pageSelection = useMemo(
-    () => selectImportForPeriod(pageGrains.data ?? [], period, pageImportId),
-    [pageGrains.data, period.start, period.end, pageImportId],
-  );
+  const queryReport = useSearchQueryReport(organizationId, period, comparisonRange, queryImportId);
+  const pageReport = useSearchPageReport(organizationId, period, comparisonRange, pageImportId);
+  const querySelection = queryReport.selection;
+  const pageSelection = pageReport.selection;
 
-  // A prior export is only used when it covers a genuinely similar span. A
-  // month against a 16-month export is rejected outright.
+  // API rows carry real dates, so the globally selected comparison period is
+  // used directly. Manual exports are only compared with a prior export of a
+  // genuinely similar span.
   const periodOf = (g: { period_start: string | null; period_end: string | null } | null) =>
     g?.period_start && g.period_end ? { start: g.period_start, end: g.period_end } : null;
 
-  const queryComparable = isComparablePeriod(
-    periodOf(querySelection.current),
-    periodOf(querySelection.comparison),
-  );
-  const pageComparable = isComparablePeriod(
-    periodOf(pageSelection.current),
-    periodOf(pageSelection.comparison),
-  );
-
-  const queryReport = useQueryReport(
-    organizationId,
-    querySelection.current?.import_id ?? null,
-    queryComparable ? (querySelection.comparison?.import_id ?? null) : null,
-  );
-  const pageReport = usePageReport(
-    organizationId,
-    pageSelection.current?.import_id ?? null,
-    pageComparable ? (pageSelection.comparison?.import_id ?? null) : null,
-  );
+  const queryComparable =
+    queryReport.source === "api"
+      ? !!comparisonRange
+      : isComparablePeriod(periodOf(querySelection.current), periodOf(querySelection.comparison));
+  const pageComparable =
+    pageReport.source === "api"
+      ? !!comparisonRange
+      : isComparablePeriod(periodOf(pageSelection.current), periodOf(pageSelection.comparison));
 
   const scopedIds = useMemo(
     () =>
@@ -252,7 +231,7 @@ function SearchInsights() {
   );
 
   const communityFiltered = communityScope.mode !== "all";
-  const loading = queryGrains.isLoading || pageGrains.isLoading || queryReport.isLoading || pageReport.isLoading;
+  const loading = queryReport.isLoading || pageReport.isLoading;
 
   const totals = useMemo(() => totalsOf(scopedPages), [scopedPages]);
   const priorTotals = useMemo(() => priorTotalsOf(scopedPages), [scopedPages]);
@@ -300,14 +279,18 @@ function SearchInsights() {
     ? " Query-level insights are hidden while a community filter is active, because query exports carry no URL and cannot be attributed to a community."
     : "";
 
-  const nothingImported = !querySelection.options.length && !pageSelection.options.length;
+  const nothingImported =
+    queryReport.source === "none" &&
+    pageReport.source === "none" &&
+    !querySelection.options.length &&
+    !pageSelection.options.length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Search Intelligence"
         title="Insights"
-        description="Rule-based observations from the Search Console exports you have imported. Every insight states the numbers behind it and links to the underlying rows. Search Console is aggregate data: visibility and clicks are reported, never leads, tours or move-ins."
+        description="Rule-based observations from your Search Console data for the selected period. Every insight states the numbers behind it and links to the underlying rows. Search Console is aggregate data: visibility and clicks are reported, never leads, tours or move-ins."
       />
 
       {loading ? (
@@ -315,42 +298,70 @@ function SearchInsights() {
       ) : nothingImported ? (
         <EmptyState
           icon={<Lightbulb className="size-6" />}
-          title="No Search Console exports imported"
-          description="Upload Queries and Pages exports from Admin → Search Console Imports to generate insights."
+          title="No Search Console data for this period"
+          description="No API rows cover this range and no Queries or Pages export has been imported for it."
         />
       ) : (
         <>
-          <GscExportNotice
-            selection={querySelection}
-            grainLabel="Queries"
-            period={period}
-            value={queryImportId}
-            onChange={setQueryImportId}
-          />
-          <GscExportNotice
-            selection={pageSelection}
-            grainLabel="Pages"
-            period={period}
-            value={pageImportId}
-            onChange={setPageImportId}
-          />
+          {queryReport.source === "api" ? (
+            <GscSourceNote
+              source={queryReport.source}
+              coverage={queryReport.coverage}
+              period={period}
+              comparison={comparisonRange}
+              grainLabel="Queries"
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel="Queries" />
+              <GscExportNotice
+                selection={querySelection}
+                grainLabel="Queries"
+                period={period}
+                value={queryImportId}
+                onChange={setQueryImportId}
+              />
+            </>
+          )}
+          {pageReport.source === "api" ? (
+            <GscSourceNote
+              source={pageReport.source}
+              coverage={pageReport.coverage}
+              period={period}
+              comparison={comparisonRange}
+              grainLabel="Pages"
+            />
+          ) : (
+            <>
+              <GscManualSourceNote grainLabel="Pages" />
+              <GscExportNotice
+                selection={pageSelection}
+                grainLabel="Pages"
+                period={period}
+                value={pageImportId}
+                onChange={setPageImportId}
+              />
+            </>
+          )}
 
           <div className="panel space-y-3 p-5">
             <p className="eyebrow">Executive summary</p>
             <p className="text-sm text-muted-foreground">
               {formatPeriodLabel(period)}.{" "}
               {pageComparable || queryComparable
-                ? "A prior export of a comparable length is available, so change insights are shown."
+                ? "A comparable prior period is available, so change insights are shown."
                 : `${noComparison} Gains, declines and community movers are hidden.`}
               {communityNote}
             </p>
-            <p className="text-[11px] text-muted-foreground/80">{COMPARISON_RULE}</p>
+            {queryReport.source === "manual" || pageReport.source === "manual" ? (
+              <p className="text-[11px] text-muted-foreground/80">{COMPARISON_RULE}</p>
+            ) : null}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard
                 label="Clicks (mapped pages in scope)"
                 value={fmtInt(totals.clicks)}
                 footnote={
-                  pageComparable ? `Prior export: ${fmtInt(priorTotals.clicks)}` : "No comparable prior export"
+                  pageComparable ? `Prior period: ${fmtInt(priorTotals.clicks)}` : "No comparable prior period"
                 }
               />
               <MetricCard
@@ -358,8 +369,8 @@ function SearchInsights() {
                 value={fmtInt(totals.impressions)}
                 footnote={
                   pageComparable
-                    ? `Prior export: ${fmtInt(priorTotals.impressions)}`
-                    : "No comparable prior export"
+                    ? `Prior period: ${fmtInt(priorTotals.impressions)}`
+                    : "No comparable prior period"
                 }
               />
               <MetricCard label="CTR" value={fmtPercent(totals.ctr)} />
