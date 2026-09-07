@@ -13,6 +13,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+// Type-only: erased at build, so no server module reaches the client bundle.
+import type { AdsAccount, AdsGrain } from "./ads.server";
 
 const SERVICE = "google_ads" as const;
 
@@ -84,7 +86,7 @@ export const adsDiscoverAccounts = createServerFn({ method: "POST" })
 
     try {
       const roots = await ads.listAccessibleCustomers(token);
-      const seen = new Map<string, ads.AdsAccount>();
+      const seen = new Map<string, AdsAccount>();
       const errors: string[] = [];
       for (const root of roots) {
         try {
@@ -245,7 +247,7 @@ export const adsValidationPull = createServerFn({ method: "POST" })
     };
 
     try {
-      const grains: ads.AdsGrain[] = data.includeBreakdowns
+      const grains: AdsGrain[] = data.includeBreakdowns
         ? ["account_day", "campaign_day", "conversion_action_day", "device_day", "ad_group_day"]
         : ["account_day", "campaign_day", "conversion_action_day"];
 
