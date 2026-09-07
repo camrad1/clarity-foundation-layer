@@ -27,6 +27,7 @@ const TABS = [
   { to: "/marketing", label: "Search Overview" },
   { to: "/marketing/queries", label: "Query Intelligence" },
   { to: "/marketing/pages", label: "Page Intelligence" },
+  { to: "/marketing/traffic", label: "Traffic Intelligence" },
   { to: "/marketing/segments", label: "Segments" },
   { to: "/marketing/opportunities", label: "Opportunities" },
 ];
