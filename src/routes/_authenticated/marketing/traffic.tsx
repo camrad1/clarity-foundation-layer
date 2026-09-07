@@ -270,7 +270,7 @@ function TrafficIntelligence() {
   const prevChannels = useGa4Dimension(organizationId, comparisonRange, "channel_group", 50);
   const sources = useGa4Dimension(organizationId, period, "source_medium", 250);
   const prevSources = useGa4Dimension(organizationId, comparisonRange, "source_medium", 250);
-  const campaigns = useGa4Dimension(organizationId, period, "source_medium_campaign", 100);
+  const campaigns = useGa4Dimension(organizationId, period, "source_medium_campaign", 25);
   const devices = useGa4Dimension(organizationId, period, "device", 25);
 
   const landing = useGa4LandingPages(organizationId, period, scopeIds, 300);
@@ -939,7 +939,7 @@ function TrafficIntelligence() {
       {/* 7 — Campaigns */}
       <Panel
         title="Campaigns"
-        note={`${PROPERTY_NOTE} Campaign names are shown exactly as GA4 stores them. Campaign text is never used to infer a community mapping.`}
+        note={`${PROPERTY_NOTE} Campaign names are shown exactly as GA4 stores them. Campaign text is never used to infer a community mapping. Showing the top 25 campaigns by sessions.`}
         loading={campaigns.isLoading}
         empty={!campaigns.data?.length}
       >
