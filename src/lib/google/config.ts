@@ -5,11 +5,12 @@
  * server-side only (see oauth.server.ts).
  */
 
-export type GoogleService = "search_console" | "ga4";
+export type GoogleService = "search_console" | "ga4" | "google_ads";
 
 export const GOOGLE_SERVICE_LABELS: Record<GoogleService, string> = {
   search_console: "Google Search Console",
   ga4: "Google Analytics 4",
+  google_ads: "Google Ads",
 };
 
 /** Path Google redirects back to after the user authorizes the connection. */
@@ -26,6 +27,8 @@ export const GOOGLE_SCOPES: Record<GoogleService, string[]> = {
     "email",
     "https://www.googleapis.com/auth/analytics.readonly",
   ],
+  // Read-only use only: the app never calls a Google Ads mutate endpoint.
+  google_ads: ["openid", "email", "https://www.googleapis.com/auth/adwords"],
 };
 
 /** Origins this app is allowed to complete an OAuth round-trip on. */

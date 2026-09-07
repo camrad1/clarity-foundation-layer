@@ -18,6 +18,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { GOOGLE_SCOPES, isAllowedOrigin, type GoogleService } from "./config";
 
 const serviceSchema = z.enum(["search_console", "ga4"]);
+/** Connect/disconnect also cover Google Ads; property selection does not. */
+const connectServiceSchema = z.enum(["search_console", "ga4", "google_ads"]);
 
 async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -74,7 +76,7 @@ export const googleStartConnect = createServerFn({ method: "POST" })
     z
       .object({
         organizationId: z.string().uuid(),
-        service: serviceSchema,
+        service: connectServiceSchema,
         origin: z.string().url(),
         returnPath: z.string().max(300).optional(),
       })
@@ -182,7 +184,7 @@ export const googleSelectProperty = createServerFn({ method: "POST" })
 export const googleDisconnect = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ organizationId: z.string().uuid(), service: serviceSchema }).parse(d),
+    z.object({ organizationId: z.string().uuid(), service: connectServiceSchema }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await guard(context.supabase as any, data.organizationId);
