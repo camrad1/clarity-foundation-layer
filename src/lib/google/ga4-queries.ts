@@ -228,6 +228,47 @@ export function useGa4LandingPages(
   });
 }
 
+export type Ga4CommunityRow = {
+  community_id: string;
+  community_name: string;
+  sessions: number;
+  active_users: number;
+  new_users: number;
+  engaged_sessions: number;
+  screen_page_views: number;
+  engagement_rate: number | null;
+  landing_pages: number;
+};
+
+/**
+ * Traffic grouped by community. Sourced exclusively from landing-page rows a
+ * deterministic URL rule already mapped — property-wide traffic is never split
+ * across communities and unmapped landing pages are never claimed by one.
+ */
+export function useGa4CommunityTraffic(
+  organizationId: string | null,
+  period: Ga4Period | null,
+  communityIds?: string[] | null,
+) {
+  const ids = scope(communityIds);
+  return useQuery({
+    queryKey: ["ga4_community", organizationId, period?.start, period?.end, ids],
+    enabled: !!organizationId && !!period,
+    queryFn: async (): Promise<Ga4CommunityRow[]> => {
+      const { data, error } = await supabase.rpc("ga4_community_report", {
+        _org_id: organizationId!,
+        _start: period!.start,
+        _end: period!.end,
+        ...(ids ? { _community_ids: ids } : {}),
+        _include_partial: false,
+      });
+      if (error) throw error;
+      return (data ?? []) as Ga4CommunityRow[];
+    },
+  });
+}
+
+
 /**
  * Honest coverage statement for a period: GA4 either covers the whole selected
  * range, part of it, or none of it. Nothing is prorated or estimated.
