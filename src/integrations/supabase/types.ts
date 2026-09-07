@@ -2052,6 +2052,139 @@ export type Database = {
           },
         ]
       }
+      google_ads_api_facts: {
+        Row: {
+          ad_group_id: string | null
+          ad_group_name: string | null
+          advertising_channel_type: string | null
+          average_cpc: number | null
+          average_cpc_micros: number | null
+          campaign_id: string | null
+          campaign_name: string | null
+          campaign_status: string | null
+          clicks: number
+          connection_id: string | null
+          conversion_action_category: string | null
+          conversion_action_id: string | null
+          conversion_action_name: string | null
+          conversion_action_primary: boolean | null
+          conversions: number
+          conversions_value: number
+          cost: number | null
+          cost_micros: number
+          created_at: string
+          ctr: number | null
+          currency_code: string | null
+          customer_id: string
+          date: string
+          device: string | null
+          dim_key: string
+          fetched_at: string
+          grain: string
+          id: string
+          impressions: number
+          login_customer_id: string | null
+          organization_id: string
+          source_system: string
+          sync_run_id: string | null
+          time_zone: string | null
+        }
+        Insert: {
+          ad_group_id?: string | null
+          ad_group_name?: string | null
+          advertising_channel_type?: string | null
+          average_cpc?: number | null
+          average_cpc_micros?: number | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          campaign_status?: string | null
+          clicks?: number
+          connection_id?: string | null
+          conversion_action_category?: string | null
+          conversion_action_id?: string | null
+          conversion_action_name?: string | null
+          conversion_action_primary?: boolean | null
+          conversions?: number
+          conversions_value?: number
+          cost?: number | null
+          cost_micros?: number
+          created_at?: string
+          ctr?: number | null
+          currency_code?: string | null
+          customer_id: string
+          date: string
+          device?: string | null
+          dim_key?: string
+          fetched_at?: string
+          grain: string
+          id?: string
+          impressions?: number
+          login_customer_id?: string | null
+          organization_id: string
+          source_system?: string
+          sync_run_id?: string | null
+          time_zone?: string | null
+        }
+        Update: {
+          ad_group_id?: string | null
+          ad_group_name?: string | null
+          advertising_channel_type?: string | null
+          average_cpc?: number | null
+          average_cpc_micros?: number | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          campaign_status?: string | null
+          clicks?: number
+          connection_id?: string | null
+          conversion_action_category?: string | null
+          conversion_action_id?: string | null
+          conversion_action_name?: string | null
+          conversion_action_primary?: boolean | null
+          conversions?: number
+          conversions_value?: number
+          cost?: number | null
+          cost_micros?: number
+          created_at?: string
+          ctr?: number | null
+          currency_code?: string | null
+          customer_id?: string
+          date?: string
+          device?: string | null
+          dim_key?: string
+          fetched_at?: string
+          grain?: string
+          id?: string
+          impressions?: number
+          login_customer_id?: string | null
+          organization_id?: string
+          source_system?: string
+          sync_run_id?: string | null
+          time_zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_ads_api_facts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "google_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_ads_api_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_ads_api_facts_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "google_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_backfill_chunks: {
         Row: {
           attempts: number
@@ -2129,6 +2262,12 @@ export type Database = {
       }
       google_connections: {
         Row: {
+          ads_currency_code: string | null
+          ads_customer_id: string | null
+          ads_customer_name: string | null
+          ads_manager_customer_id: string | null
+          ads_test_ok_at: string | null
+          ads_time_zone: string | null
           connected_by: string | null
           created_at: string
           google_account_email: string | null
@@ -2148,6 +2287,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ads_currency_code?: string | null
+          ads_customer_id?: string | null
+          ads_customer_name?: string | null
+          ads_manager_customer_id?: string | null
+          ads_test_ok_at?: string | null
+          ads_time_zone?: string | null
           connected_by?: string | null
           created_at?: string
           google_account_email?: string | null
@@ -2167,6 +2312,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ads_currency_code?: string | null
+          ads_customer_id?: string | null
+          ads_customer_name?: string | null
+          ads_manager_customer_id?: string | null
+          ads_test_ok_at?: string | null
+          ads_time_zone?: string | null
           connected_by?: string | null
           created_at?: string
           google_account_email?: string | null
