@@ -46,7 +46,11 @@ export const Route = createFileRoute("/api/public/google/oauth/callback")({
           .eq("state", state);
 
         const fallback =
-          stateRow.service === "ga4" ? "/admin/ga4-connection" : "/admin/search-console-connection";
+          stateRow.service === "ga4"
+            ? "/admin/ga4-connection"
+            : stateRow.service === "google_ads"
+              ? "/admin/google-ads-connection"
+              : "/admin/search-console-connection";
         const returnPath: string =
           typeof stateRow.return_path === "string" && stateRow.return_path.startsWith("/")
             ? stateRow.return_path
