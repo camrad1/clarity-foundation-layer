@@ -5532,6 +5532,26 @@ export type Database = {
         Returns: Json
       }
       ga4_apply_page_mappings: { Args: { _org_id: string }; Returns: number }
+      ga4_community_report: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _include_partial?: boolean
+          _org_id: string
+          _start: string
+        }
+        Returns: {
+          active_users: number
+          community_id: string
+          community_name: string
+          engaged_sessions: number
+          engagement_rate: number
+          landing_pages: number
+          new_users: number
+          screen_page_views: number
+          sessions: number
+        }[]
+      }
       ga4_coverage: {
         Args: { _org_id: string }
         Returns: {
