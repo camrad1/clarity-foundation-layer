@@ -44,6 +44,7 @@ import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './route
 import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
+import { Route as AuthenticatedMarketingTrafficRouteImport } from './routes/_authenticated/marketing/traffic'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
 import { Route as ApiPublicHooksGoogleBackfillRouteImport } from './routes/api/public/hooks/google-backfill'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
@@ -246,6 +247,12 @@ const AuthenticatedMarketingSegmentsRoute =
     path: '/segments',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingTrafficRoute =
+  AuthenticatedMarketingTrafficRouteImport.update({
+    id: '/traffic',
+    path: '/traffic',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 const ApiPublicHooksFurtherSyncRoute =
   ApiPublicHooksFurtherSyncRouteImport.update({
     id: '/api/public/hooks/further-sync',
@@ -304,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
@@ -343,6 +351,7 @@ export interface FileRoutesByTo {
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
@@ -385,6 +394,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
+  '/_authenticated/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/marketing/pages'
     | '/marketing/queries'
     | '/marketing/segments'
+    | '/marketing/traffic'
     | '/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/marketing/pages'
     | '/marketing/queries'
     | '/marketing/segments'
+    | '/marketing/traffic'
     | '/marketing'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
@@ -507,6 +519,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/pages'
     | '/_authenticated/marketing/queries'
     | '/_authenticated/marketing/segments'
+    | '/_authenticated/marketing/traffic'
     | '/_authenticated/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingSegmentsRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/traffic': {
+      id: '/_authenticated/marketing/traffic'
+      path: '/traffic'
+      fullPath: '/marketing/traffic'
+      preLoaderRoute: typeof AuthenticatedMarketingTrafficRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
     '/api/public/hooks/further-sync': {
       id: '/api/public/hooks/further-sync'
       path: '/api/public/hooks/further-sync'
@@ -808,6 +828,7 @@ interface AuthenticatedMarketingRouteChildren {
   AuthenticatedMarketingPagesRoute: typeof AuthenticatedMarketingPagesRoute
   AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
   AuthenticatedMarketingSegmentsRoute: typeof AuthenticatedMarketingSegmentsRoute
+  AuthenticatedMarketingTrafficRoute: typeof AuthenticatedMarketingTrafficRoute
   AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
 }
 
@@ -819,6 +840,7 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
     AuthenticatedMarketingPagesRoute: AuthenticatedMarketingPagesRoute,
     AuthenticatedMarketingQueriesRoute: AuthenticatedMarketingQueriesRoute,
     AuthenticatedMarketingSegmentsRoute: AuthenticatedMarketingSegmentsRoute,
+    AuthenticatedMarketingTrafficRoute: AuthenticatedMarketingTrafficRoute,
     AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
   }
 

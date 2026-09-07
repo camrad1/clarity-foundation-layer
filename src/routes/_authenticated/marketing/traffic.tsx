@@ -1098,7 +1098,7 @@ function TrafficHeader({ scopeLabel }: { scopeLabel: string }) {
   );
 }
 
-function Num({ children, className }: { children: React.ReactNode; className?: string }) {
+function Num({ children, className }: { children: React.ReactNode; className?: string | undefined }) {
   return (
     <TableCell className={cn("text-right tabular-nums", className)}>{children}</TableCell>
   );
