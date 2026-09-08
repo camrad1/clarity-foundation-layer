@@ -279,10 +279,13 @@ function CommunityTrends() {
               key={c.id}
               name={c.name}
               rows={c.rows}
+              buckets={buckets}
+              grain={grain}
               visible={visible}
               focusedKey={focusedKey}
               onOpen={() => openSales(c.id)}
             />
+
           ))}
         </div>
       )}
