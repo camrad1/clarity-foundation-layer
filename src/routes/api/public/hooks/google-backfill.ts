@@ -33,12 +33,13 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
         if (ok !== true) return json({ error: "Invalid scheduler token" }, 401);
 
         let mode: "plan" | "run" = "run";
-        let service: "search_console" | "ga4" = "search_console";
+        let service: "search_console" | "ga4" | "google_ads" = "search_console";
         let budgetMs = 40_000;
         try {
           const body = (await request.json()) as { mode?: string; service?: string; budgetMs?: number } | null;
           if (body?.mode === "plan") mode = "plan";
           if (body?.service === "ga4") service = "ga4";
+          if (body?.service === "google_ads") service = "google_ads";
           if (typeof body?.budgetMs === "number") budgetMs = Math.min(300_000, Math.max(5_000, body.budgetMs));
         } catch {
           /* empty body means: run a Search Console slice */
@@ -46,7 +47,9 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
 
         const { data: connections } = await admin
           .from("google_connections")
-          .select("id, organization_id, selected_property_id")
+          .select(
+            "id, organization_id, selected_property_id, ads_customer_id, ads_manager_customer_id, ads_currency_code, ads_time_zone",
+          )
           .eq("service", service)
           .eq("status", "connected");
 
@@ -55,13 +58,42 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
 
         const results: unknown[] = [];
         for (const conn of (connections ?? []) as any[]) {
-          if (!conn.selected_property_id) {
+          if (service === "google_ads" && !conn.ads_customer_id) {
+            results.push({ organizationId: conn.organization_id, skipped: "no_ads_account" });
+            continue;
+          }
+          if (service !== "google_ads" && !conn.selected_property_id) {
             results.push({ organizationId: conn.organization_id, skipped: "no_property" });
             continue;
           }
           try {
             const accessToken = await getAccessToken(admin, conn.id);
-            if (mode === "plan" && service === "ga4") {
+            if (service === "google_ads") {
+              results.push({
+                organizationId: conn.organization_id,
+                ...(mode === "plan"
+                  ? {
+                      plan: await backfill.planGoogleAdsBackfill(admin, {
+                        organizationId: conn.organization_id,
+                        connectionId: conn.id,
+                        customerId: conn.ads_customer_id,
+                        loginCustomerId: conn.ads_manager_customer_id ?? null,
+                        accessToken,
+                      }),
+                    }
+                  : {
+                      slice: await backfill.runGoogleAdsBackfillSlice(admin, {
+                        organizationId: conn.organization_id,
+                        customerId: conn.ads_customer_id,
+                        loginCustomerId: conn.ads_manager_customer_id ?? null,
+                        accessToken,
+                        currencyCode: conn.ads_currency_code ?? null,
+                        timeZone: conn.ads_time_zone ?? null,
+                        budgetMs,
+                      }),
+                    }),
+              });
+            } else if (mode === "plan" && service === "ga4") {
               results.push({
                 organizationId: conn.organization_id,
                 plan: await backfill.planGa4Backfill(admin, {
