@@ -403,7 +403,7 @@ function CommunityCard({
 
       {showOccupancy ? (
         <div className="space-y-1">
-          <p className="eyebrow text-muted-foreground">Occupancy % (end of month)</p>
+          <p className="eyebrow text-muted-foreground">{OCC_NOTE[grain]}</p>
           <div className="h-[150px]">
             <MetricTrendChart
               data={data}
