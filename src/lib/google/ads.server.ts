@@ -13,7 +13,7 @@
 
 const BASE = "https://googleads.googleapis.com";
 /** Newest first. The first version the API accepts is cached for the process. */
-const VERSIONS = ["v21", "v20", "v19", "v18"];
+const VERSIONS = ["v25", "v24", "v23", "v22"];
 let cachedVersion: string | null = null;
 
 export function adsDeveloperToken(): string {
