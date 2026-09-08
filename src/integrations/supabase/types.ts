@@ -4930,6 +4930,50 @@ export type Database = {
           },
         ]
       }
+      wh_paid_lead_source_classifications: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          include_in_google_ads_cost: boolean
+          lead_source_id: string
+          lead_source_label: string
+          notes: string | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          include_in_google_ads_cost?: boolean
+          lead_source_id: string
+          lead_source_label: string
+          notes?: string | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          include_in_google_ads_cost?: boolean
+          lead_source_id?: string
+          lead_source_label?: string
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_paid_lead_source_classifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wh_prospects: {
         Row: {
           account_id: string | null
@@ -5900,6 +5944,15 @@ export type Database = {
           valid_to: string
         }[]
       }
+      google_ads_paid_report: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
       gsc_api_coverage: {
         Args: { _org_id: string }
         Returns: {
@@ -6630,6 +6683,15 @@ export type Database = {
           vacant_units: number
           variance_units: number
         }[]
+      }
+      wh_paid_media_outcomes: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
       }
       wh_person_label: {
         Args: {

@@ -28,6 +28,7 @@ const TABS = [
   { to: "/marketing/queries", label: "Query Intelligence" },
   { to: "/marketing/pages", label: "Page Intelligence" },
   { to: "/marketing/traffic", label: "Traffic Intelligence" },
+  { to: "/marketing/paid-media", label: "Paid Media Intelligence" },
   { to: "/marketing/segments", label: "Segments" },
   { to: "/marketing/opportunities", label: "Opportunities" },
 ];

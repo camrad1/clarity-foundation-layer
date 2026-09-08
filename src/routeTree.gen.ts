@@ -44,6 +44,7 @@ import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedMarketingInsightsRouteImport } from './routes/_authenticated/marketing/insights'
 import { Route as AuthenticatedMarketingOpportunitiesRouteImport } from './routes/_authenticated/marketing/opportunities'
 import { Route as AuthenticatedMarketingPagesRouteImport } from './routes/_authenticated/marketing/pages'
+import { Route as AuthenticatedMarketingPaidMediaRouteImport } from './routes/_authenticated/marketing/paid-media'
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 import { Route as AuthenticatedMarketingTrafficRouteImport } from './routes/_authenticated/marketing/traffic'
@@ -249,6 +250,12 @@ const AuthenticatedMarketingPagesRoute =
     path: '/pages',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingPaidMediaRoute =
+  AuthenticatedMarketingPaidMediaRouteImport.update({
+    id: '/paid-media',
+    path: '/paid-media',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 const AuthenticatedMarketingQueriesRoute =
   AuthenticatedMarketingQueriesRouteImport.update({
     id: '/queries',
@@ -325,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/marketing/paid-media': typeof AuthenticatedMarketingPaidMediaRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
@@ -367,6 +375,7 @@ export interface FileRoutesByTo {
   '/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/marketing/paid-media': typeof AuthenticatedMarketingPaidMediaRoute
   '/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
@@ -412,6 +421,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/insights': typeof AuthenticatedMarketingInsightsRoute
   '/_authenticated/marketing/opportunities': typeof AuthenticatedMarketingOpportunitiesRoute
   '/_authenticated/marketing/pages': typeof AuthenticatedMarketingPagesRoute
+  '/_authenticated/marketing/paid-media': typeof AuthenticatedMarketingPaidMediaRoute
   '/_authenticated/marketing/queries': typeof AuthenticatedMarketingQueriesRoute
   '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/_authenticated/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/marketing/insights'
     | '/marketing/opportunities'
     | '/marketing/pages'
+    | '/marketing/paid-media'
     | '/marketing/queries'
     | '/marketing/segments'
     | '/marketing/traffic'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/marketing/insights'
     | '/marketing/opportunities'
     | '/marketing/pages'
+    | '/marketing/paid-media'
     | '/marketing/queries'
     | '/marketing/segments'
     | '/marketing/traffic'
@@ -543,6 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/insights'
     | '/_authenticated/marketing/opportunities'
     | '/_authenticated/marketing/pages'
+    | '/_authenticated/marketing/paid-media'
     | '/_authenticated/marketing/queries'
     | '/_authenticated/marketing/segments'
     | '/_authenticated/marketing/traffic'
@@ -810,6 +823,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingPagesRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/paid-media': {
+      id: '/_authenticated/marketing/paid-media'
+      path: '/paid-media'
+      fullPath: '/marketing/paid-media'
+      preLoaderRoute: typeof AuthenticatedMarketingPaidMediaRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
     '/_authenticated/marketing/queries': {
       id: '/_authenticated/marketing/queries'
       path: '/queries'
@@ -866,6 +886,7 @@ interface AuthenticatedMarketingRouteChildren {
   AuthenticatedMarketingInsightsRoute: typeof AuthenticatedMarketingInsightsRoute
   AuthenticatedMarketingOpportunitiesRoute: typeof AuthenticatedMarketingOpportunitiesRoute
   AuthenticatedMarketingPagesRoute: typeof AuthenticatedMarketingPagesRoute
+  AuthenticatedMarketingPaidMediaRoute: typeof AuthenticatedMarketingPaidMediaRoute
   AuthenticatedMarketingQueriesRoute: typeof AuthenticatedMarketingQueriesRoute
   AuthenticatedMarketingSegmentsRoute: typeof AuthenticatedMarketingSegmentsRoute
   AuthenticatedMarketingTrafficRoute: typeof AuthenticatedMarketingTrafficRoute
@@ -878,6 +899,7 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
     AuthenticatedMarketingOpportunitiesRoute:
       AuthenticatedMarketingOpportunitiesRoute,
     AuthenticatedMarketingPagesRoute: AuthenticatedMarketingPagesRoute,
+    AuthenticatedMarketingPaidMediaRoute: AuthenticatedMarketingPaidMediaRoute,
     AuthenticatedMarketingQueriesRoute: AuthenticatedMarketingQueriesRoute,
     AuthenticatedMarketingSegmentsRoute: AuthenticatedMarketingSegmentsRoute,
     AuthenticatedMarketingTrafficRoute: AuthenticatedMarketingTrafficRoute,
