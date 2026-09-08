@@ -168,6 +168,59 @@ function CommunityTrends() {
     return { communities: list, buckets };
   }, [matrix.data, sort]);
 
+  // Portfolio roll-up: canonical aggregation, never an average of the 12 cards.
+  // Counts and mapped GA4/Further sum per bucket; occupancy is recomputed as
+  // total occupied canonical capacity ÷ total canonical capacity, so each
+  // community's configured capacity basis (rooms or occupancy points) holds.
+  const portfolioRows = useMemo<CommunityTrendRow[]>(() => {
+    const byBucket = new Map<string, CommunityTrendRow>();
+    for (const r of matrix.data ?? []) {
+      const key = r.bucket.slice(0, 10);
+      const acc =
+        byBucket.get(key) ??
+        ({
+          community_id: "portfolio",
+          community_name: "ONELIFE Portfolio — All Communities",
+          bucket: key,
+          inquiries: 0,
+          tours: 0,
+          re_tours: 0,
+          deposits: 0,
+          move_ins: 0,
+          move_outs: 0,
+          net_move_ins: 0,
+          sessions: 0,
+          engaged_sessions: 0,
+          further_leads: 0,
+          occupancy_pct: null,
+          occupied_units: null,
+          census_units: null,
+          occupancy_source: "canonical portfolio capacity",
+        } as CommunityTrendRow);
+      acc.inquiries += r.inquiries ?? 0;
+      acc.tours += r.tours ?? 0;
+      acc.re_tours += r.re_tours ?? 0;
+      acc.deposits += r.deposits ?? 0;
+      acc.move_ins += r.move_ins ?? 0;
+      acc.move_outs += r.move_outs ?? 0;
+      acc.net_move_ins += r.net_move_ins ?? 0;
+      acc.sessions += r.sessions ?? 0;
+      acc.engaged_sessions += r.engaged_sessions ?? 0;
+      acc.further_leads += r.further_leads ?? 0;
+      if (r.occupied_units != null && r.census_units != null && r.census_units > 0) {
+        acc.occupied_units = (acc.occupied_units ?? 0) + Number(r.occupied_units);
+        acc.census_units = (acc.census_units ?? 0) + Number(r.census_units);
+      }
+      byBucket.set(key, acc);
+    }
+    const out = [...byBucket.values()].sort((a, b) => a.bucket.localeCompare(b.bucket));
+    for (const r of out) {
+      r.occupancy_pct =
+        r.occupied_units != null && r.census_units ? (r.occupied_units / r.census_units) * 100 : null;
+    }
+    return out;
+  }, [matrix.data]);
+
   // Metric visibility is stored separately from granularity, so switching
   // Day / Week / Month never turns series on or off.
   const { visible, toggle } = useSeriesVisibility(
@@ -287,6 +340,16 @@ function CommunityTrends() {
             />
 
           ))}
+          <CommunityCard
+            name="ONELIFE Portfolio — All Communities"
+            rows={portfolioRows}
+            buckets={buckets}
+            grain={grain}
+            visible={visible}
+            focusedKey={focusedKey}
+            variant="portfolio"
+            scopeNote="Portfolio totals for the same periods above. Website figures are mapped community traffic only. Occupancy is total occupied capacity ÷ total capacity, honouring each community's capacity basis — never an average of the charts above."
+          />
         </div>
       )}
     </div>
@@ -301,6 +364,8 @@ function CommunityCard({
   visible,
   focusedKey,
   onOpen,
+  variant = "community",
+  scopeNote,
 }: {
   name: string;
   rows: CommunityTrendRow[];
@@ -308,7 +373,9 @@ function CommunityCard({
   grain: TrendGrain;
   visible: string[];
   focusedKey: string | null;
-  onOpen: () => void;
+  onOpen?: () => void;
+  variant?: "community" | "portfolio";
+  scopeNote?: string;
 }) {
   // Shared buckets across every card: a community missing a period shows a
   // gap rather than shifting the axis.
@@ -371,29 +438,47 @@ function CommunityCard({
       dashed: m.key === "deposits",
     }));
 
+  const portfolio = variant === "portfolio";
+
   return (
-    <section className="panel space-y-3 px-5 py-4">
+    <section
+      className={cn(
+        "panel space-y-3 px-5 py-4",
+        portfolio && "border-2 border-foreground/20 bg-muted/30 shadow-sm",
+      )}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="text-left font-display text-base font-semibold tracking-tight hover:underline"
-        >
-          {name}
-        </button>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
-        >
-          View detail →
-        </button>
+        {portfolio ? (
+          <div>
+            <p className="eyebrow text-muted-foreground">Portfolio roll-up</p>
+            <h2 className="font-display text-lg font-semibold tracking-tight">{name}</h2>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-left font-display text-base font-semibold tracking-tight hover:underline"
+          >
+            {name}
+          </button>
+        )}
+        {onOpen ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+          >
+            View detail →
+          </button>
+        ) : null}
       </div>
       {latest ? (
-        <p className="text-xs text-muted-foreground">
+        <p className={cn("text-xs text-muted-foreground", portfolio && "font-medium text-foreground")}>
           {bucketLabel(latest.bucket, grain)} · {summary.join(" · ")}
         </p>
       ) : null}
+      {scopeNote ? <p className="text-[11px] text-muted-foreground">{scopeNote}</p> : null}
+
 
       {salesSeries.length ? (
         <div className="h-[180px]">
