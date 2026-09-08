@@ -340,6 +340,16 @@ function CommunityTrends() {
             />
 
           ))}
+          <CommunityCard
+            name="ONELIFE Portfolio — All Communities"
+            rows={portfolioRows}
+            buckets={buckets}
+            grain={grain}
+            visible={visible}
+            focusedKey={focusedKey}
+            variant="portfolio"
+            scopeNote="Portfolio totals for the same periods above. Website figures are mapped community traffic only. Occupancy is total occupied capacity ÷ total capacity, honouring each community's capacity basis — never an average of the charts above."
+          />
         </div>
       )}
     </div>
