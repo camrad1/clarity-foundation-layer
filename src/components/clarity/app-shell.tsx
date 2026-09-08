@@ -11,6 +11,7 @@ import {
   Globe,
   Goal,
   LayoutDashboard,
+  LineChart,
   Link2,
   PlugZap,
   LogOut,
