@@ -333,7 +333,16 @@ function CommunityCard({
     });
   }, [rows, buckets, grain]);
 
-  const latest = rows[rows.length - 1];
+  // Summarise the most recent period that actually has activity or a
+  // canonical occupancy value, so empty future days aren't shown as a summary.
+  const latest =
+    [...rows]
+      .reverse()
+      .find(
+        (r) =>
+          r.inquiries || r.tours || r.move_ins || r.move_outs || r.sessions || r.occupancy_pct != null,
+      ) ?? rows[rows.length - 1];
+
   const salesSeries = METRICS.filter((m) => m.group === "sales" && visible.includes(m.key));
   const digitalSeries = METRICS.filter((m) => m.group === "digital" && visible.includes(m.key));
   const showOccupancy = visible.includes("occupancy_pct");
