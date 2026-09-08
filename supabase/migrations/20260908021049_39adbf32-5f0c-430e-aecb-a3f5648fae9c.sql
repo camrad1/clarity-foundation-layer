@@ -1,0 +1,2 @@
+ALTER TABLE public.google_backfill_chunks DROP CONSTRAINT IF EXISTS google_backfill_chunks_service_check;
+ALTER TABLE public.google_backfill_chunks ADD CONSTRAINT google_backfill_chunks_service_check CHECK (service IN ('search_console','ga4','google_ads'));
