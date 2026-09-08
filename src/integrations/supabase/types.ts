@@ -5944,6 +5944,15 @@ export type Database = {
           valid_to: string
         }[]
       }
+      google_ads_paid_report: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
+      }
       gsc_api_coverage: {
         Args: { _org_id: string }
         Returns: {
@@ -6674,6 +6683,15 @@ export type Database = {
           vacant_units: number
           variance_units: number
         }[]
+      }
+      wh_paid_media_outcomes: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _org_id: string
+          _start: string
+        }
+        Returns: Json
       }
       wh_person_label: {
         Args: {
