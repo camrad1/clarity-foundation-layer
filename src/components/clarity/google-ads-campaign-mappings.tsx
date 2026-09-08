@@ -39,7 +39,7 @@ const money = (n: number | null | undefined) =>
 
 const day = (d: string | null) => (d ? format(new Date(`${d}T00:00:00`), "MMM d, yyyy") : "—");
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: string | undefined }) {
   return (
     <Card>
       <CardContent className="pt-5">
