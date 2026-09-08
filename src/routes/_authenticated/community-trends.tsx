@@ -1,13 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/clarity/page-header";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { CHART_TOKENS, MetricTrendChart } from "@/components/clarity/charts";
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
 import { occupancyAxis, visibleValues } from "@/lib/charts/occupancy-axis";
-import { useCommunityTrendMatrix, type CommunityTrendRow } from "@/lib/community-trends/queries";
+import {
+  suggestGrain,
+  useCommunityTrendSeries,
+  type CommunityTrendRow,
+  type TrendGrain,
+} from "@/lib/community-trends/queries";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/community-trends")({
   head: () => ({
@@ -31,9 +37,31 @@ export const Route = createFileRoute("/_authenticated/community-trends")({
 });
 
 const MONTH_FMT = new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
-const monthLabel = (iso: string) => MONTH_FMT.format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+const DAY_FMT = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const asUtc = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+const monthLabel = (iso: string) => MONTH_FMT.format(asUtc(iso));
+
+/** Shared bucket label. Week buckets start Sunday and are labelled by that Sunday. */
+function bucketLabel(iso: string, grain: TrendGrain) {
+  if (grain === "month") return monthLabel(iso);
+  if (grain === "day") return DAY_FMT.format(asUtc(iso));
+  return `Wk ${DAY_FMT.format(asUtc(iso))}`;
+}
+
+const GRAINS: { key: TrendGrain; label: string }[] = [
+  { key: "day", label: "Day" },
+  { key: "week", label: "Week" },
+  { key: "month", label: "Month" },
+];
+
+const OCC_NOTE: Record<TrendGrain, string> = {
+  day: "Occupancy % (that day)",
+  week: "Occupancy % (end of week)",
+  month: "Occupancy % (end of month)",
+};
 
 const STORAGE_KEY = "clarityiq.chart.community-trends";
+
 
 type MetricDef = {
   key: string;
@@ -79,29 +107,49 @@ const SORTS: { key: SortMode; label: string }[] = [
 function CommunityTrends() {
   const { organizationId, dateRange, setCommunityScope } = useAppState();
   const navigate = useNavigate();
-  const matrix = useCommunityTrendMatrix(organizationId, dateRange.end, 12);
   const [sort, setSort] = useState<SortMode>("az");
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
 
-  const { visible, toggle } = useSeriesVisibility(
-    STORAGE_KEY,
-    METRICS.map((m) => m.key),
-    DEFAULTS,
-  );
+  // Granularity is independent of the metric toggles: changing one never
+  // changes the other. Auto-suggested from the selected range until the user
+  // picks a granularity, then their choice is kept for the session.
+  const suggested = suggestGrain(dateRange.start, dateRange.end);
+  const [chosenGrain, setChosenGrain] = useState<TrendGrain | null>(null);
+  const grain: TrendGrain = chosenGrain ?? suggested;
+  const chosenRef = useRef(chosenGrain);
+  useEffect(() => {
+    chosenRef.current = chosenGrain;
+  }, [chosenGrain]);
 
-  const communities = useMemo(() => {
+  // Month keeps the validated 12-month monitoring window ending on the
+  // selected period; day/week follow the selected range exactly.
+  const { start, end } = useMemo(() => {
+    const end = dateRange.end.slice(0, 10);
+    if (grain !== "month") return { start: dateRange.start.slice(0, 10), end };
+    const d = asUtc(end);
+    const s = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 11, 1));
+    return { start: s.toISOString().slice(0, 10), end };
+  }, [dateRange.start, dateRange.end, grain]);
+
+  const matrix = useCommunityTrendSeries(organizationId, start, end, grain);
+
+  const { communities, buckets } = useMemo(() => {
     const byId = new Map<string, { id: string; name: string; rows: CommunityTrendRow[] }>();
+    const bucketSet = new Set<string>();
     for (const r of matrix.data ?? []) {
       const entry = byId.get(r.community_id) ?? {
         id: r.community_id,
         name: r.community_name,
-        rows: [],
+        rows: [] as CommunityTrendRow[],
       };
       entry.rows.push(r);
       byId.set(r.community_id, entry);
+      bucketSet.add(r.bucket.slice(0, 10));
     }
+    // Shared x-axis: identical buckets for every community card.
+    const buckets = [...bucketSet].sort();
     const list = [...byId.values()];
-    for (const c of list) c.rows.sort((a, b) => a.month.localeCompare(b.month));
+    for (const c of list) c.rows.sort((a, b) => a.bucket.localeCompare(b.bucket));
     const latest = (c: (typeof list)[number]) => c.rows[c.rows.length - 1];
     const num = (v: number | null | undefined) => (v == null ? Number.POSITIVE_INFINITY : v);
     list.sort((a, b) => {
@@ -117,8 +165,17 @@ function CommunityTrends() {
       };
       return pick(la) - pick(lb) || a.name.localeCompare(b.name);
     });
-    return list;
+    return { communities: list, buckets };
   }, [matrix.data, sort]);
+
+  // Metric visibility is stored separately from granularity, so switching
+  // Day / Week / Month never turns series on or off.
+  const { visible, toggle } = useSeriesVisibility(
+    STORAGE_KEY,
+    METRICS.map((m) => m.key),
+    DEFAULTS,
+  );
+
 
   const openSales = (communityId: string) => {
     setCommunityScope({ mode: "communities", communityIds: [communityId] });
@@ -133,7 +190,36 @@ function CommunityTrends() {
         description="Compare sales, occupancy and digital engagement trends across every community in one view."
       />
 
-      <div className="sticky top-16 z-10 -mx-2 rounded-lg border border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-16 z-10 -mx-2 space-y-3 rounded-lg border border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow text-muted-foreground">View by</span>
+          <div className="inline-flex rounded-full border border-border p-0.5">
+            {GRAINS.map((g) => (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => setChosenGrain(g.key)}
+                aria-pressed={grain === g.key}
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
+                  grain === g.key
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            {grain === "day"
+              ? "One point per day"
+              : grain === "week"
+                ? "Sunday–Saturday weeks"
+                : "Calendar months (last 12 ending the selected period)"}
+            {chosenGrain === null ? " · matched to your date range" : ""}
+          </span>
+        </div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <SeriesToggleChips
             series={METRICS}
@@ -161,12 +247,14 @@ function CommunityTrends() {
             ))}
           </div>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           Each chart scales independently for readability. Compare trend direction and movement rather
           than line height between communities. Counts, website traffic and occupancy % are plotted
-          separately so units are never mixed on one scale.
+          separately so units are never mixed on one scale. Occupancy uses the value at the end of each
+          period and is never averaged.
         </p>
       </div>
+
 
       {matrix.error ? (
         <EmptyState
@@ -191,10 +279,13 @@ function CommunityTrends() {
               key={c.id}
               name={c.name}
               rows={c.rows}
+              buckets={buckets}
+              grain={grain}
               visible={visible}
               focusedKey={focusedKey}
               onOpen={() => openSales(c.id)}
             />
+
           ))}
         </div>
       )}
@@ -205,36 +296,53 @@ function CommunityTrends() {
 function CommunityCard({
   name,
   rows,
+  buckets,
+  grain,
   visible,
   focusedKey,
   onOpen,
 }: {
   name: string;
   rows: CommunityTrendRow[];
+  buckets: string[];
+  grain: TrendGrain;
   visible: string[];
   focusedKey: string | null;
   onOpen: () => void;
 }) {
-  const data = useMemo(
-    () =>
-      rows.map((r) => ({
-        label: monthLabel(r.month),
-        inquiries: r.inquiries,
-        tours: r.tours,
-        re_tours: r.re_tours,
-        deposits: r.deposits,
-        move_ins: r.move_ins,
-        move_outs: r.move_outs,
-        net_move_ins: r.net_move_ins,
-        sessions: r.sessions,
-        engaged_sessions: r.engaged_sessions,
-        further_leads: r.further_leads,
-        occupancy_pct: r.occupancy_pct,
-      })),
-    [rows],
-  );
+  // Shared buckets across every card: a community missing a period shows a
+  // gap rather than shifting the axis.
+  const data = useMemo(() => {
+    const byBucket = new Map(rows.map((r) => [r.bucket.slice(0, 10), r]));
+    return buckets.map((b) => {
+      const r = byBucket.get(b);
+      return {
+        label: bucketLabel(b, grain),
+        inquiries: r?.inquiries ?? null,
+        tours: r?.tours ?? null,
+        re_tours: r?.re_tours ?? null,
+        deposits: r?.deposits ?? null,
+        move_ins: r?.move_ins ?? null,
+        move_outs: r?.move_outs ?? null,
+        net_move_ins: r?.net_move_ins ?? null,
+        sessions: r?.sessions ?? null,
+        engaged_sessions: r?.engaged_sessions ?? null,
+        further_leads: r?.further_leads ?? null,
+        occupancy_pct: r?.occupancy_pct ?? null,
+      };
+    });
+  }, [rows, buckets, grain]);
 
-  const latest = rows[rows.length - 1];
+  // Summarise the most recent period that actually has activity or a
+  // canonical occupancy value, so empty future days aren't shown as a summary.
+  const latest =
+    [...rows]
+      .reverse()
+      .find(
+        (r) =>
+          r.inquiries || r.tours || r.move_ins || r.move_outs || r.sessions || r.occupancy_pct != null,
+      ) ?? rows[rows.length - 1];
+
   const salesSeries = METRICS.filter((m) => m.group === "sales" && visible.includes(m.key));
   const digitalSeries = METRICS.filter((m) => m.group === "digital" && visible.includes(m.key));
   const showOccupancy = visible.includes("occupancy_pct");
@@ -243,6 +351,7 @@ function CommunityCard({
     () => occupancyAxis(visibleValues(data, ["occupancy_pct"]), "percent"),
     [data],
   );
+
 
   const summary: string[] = [];
   if (latest) {
@@ -282,7 +391,7 @@ function CommunityCard({
       </div>
       {latest ? (
         <p className="text-xs text-muted-foreground">
-          {monthLabel(latest.month)} · {summary.join(" · ")}
+          {bucketLabel(latest.bucket, grain)} · {summary.join(" · ")}
         </p>
       ) : null}
 
@@ -303,7 +412,7 @@ function CommunityCard({
 
       {showOccupancy ? (
         <div className="space-y-1">
-          <p className="eyebrow text-muted-foreground">Occupancy % (end of month)</p>
+          <p className="eyebrow text-muted-foreground">{OCC_NOTE[grain]}</p>
           <div className="h-[150px]">
             <MetricTrendChart
               data={data}
