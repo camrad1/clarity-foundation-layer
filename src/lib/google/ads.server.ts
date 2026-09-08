@@ -116,7 +116,8 @@ export async function gaql(params: {
     const json = await request(`customers/${cid}/googleAds:search`, params.accessToken, {
       method: "POST",
       loginCustomerId: params.loginCustomerId ?? null,
-      body: { query: params.query, pageSize: 10000, ...(pageToken ? { pageToken } : {}) },
+      // page_size is not accepted by current Google Ads API versions.
+      body: { query: params.query, ...(pageToken ? { pageToken } : {}) },
     });
     rows.push(...((json.results ?? []) as any[]));
     pageToken = json.nextPageToken;

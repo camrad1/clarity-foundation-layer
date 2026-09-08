@@ -309,6 +309,44 @@ export function GoogleAdsConnectionPage() {
 
         {discover.data ? (
           <div className="space-y-3">
+            {discover.data.accounts.length > 0 ? (
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-xs text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Account</th>
+                      <th className="px-3 py-2 text-left font-medium">Customer ID</th>
+                      <th className="px-3 py-2 text-left font-medium">Type</th>
+                      <th className="px-3 py-2 text-left font-medium">API reporting</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {discover.data.accounts.map((a: any) => (
+                      <tr key={a.customerId} className="border-t">
+                        <td className="px-3 py-2">{a.descriptiveName ?? "Unnamed"}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{a.customerId}</td>
+                        <td className="px-3 py-2">
+                          {a.manager ? "Manager" : "Client"}
+                          {a.testAccount ? " (test)" : ""}
+                        </td>
+                        <td className="px-3 py-2">
+                          {a.manager
+                            ? "Not selectable"
+                            : a.status === "ENABLED"
+                              ? "Enabled"
+                              : (a.status ?? "Unknown")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No reportable Google Ads accounts were returned for this Google user.
+              </p>
+            )}
+
             <div className="grid gap-2 sm:max-w-xl">
               <Label>Google Ads account</Label>
               <Select value={chosen} onValueChange={setChosen}>
@@ -333,10 +371,17 @@ export function GoogleAdsConnectionPage() {
                 Save selected account
               </Button>
             </div>
-            {discover.data.errors.length > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Some accounts could not be listed: {discover.data.errors.join("; ")}
-              </p>
+            {(discover.data as any).skipped?.length > 0 ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Skipped accounts</p>
+                <ul className="mt-1 space-y-1">
+                  {(discover.data as any).skipped.map((s: any) => (
+                    <li key={s.customerId}>
+                      {s.customerId} — {s.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </div>
         ) : null}
