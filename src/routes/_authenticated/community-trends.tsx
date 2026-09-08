@@ -301,6 +301,8 @@ function CommunityCard({
   visible,
   focusedKey,
   onOpen,
+  variant = "community",
+  scopeNote,
 }: {
   name: string;
   rows: CommunityTrendRow[];
@@ -308,7 +310,9 @@ function CommunityCard({
   grain: TrendGrain;
   visible: string[];
   focusedKey: string | null;
-  onOpen: () => void;
+  onOpen?: () => void;
+  variant?: "community" | "portfolio";
+  scopeNote?: string;
 }) {
   // Shared buckets across every card: a community missing a period shows a
   // gap rather than shifting the axis.
