@@ -186,11 +186,13 @@ function PaidMediaIntelligence() {
       })),
     [communities.data],
   );
-  const communityIds = useMemo(
-    () => resolveSelectedCommunityIds(communityScope, authorized),
-    [communityScope, authorized],
-  );
   const scoped = communityScope.mode !== "all";
+  // In "all" mode we deliberately send no community list so the report uses
+  // whole-account Google Ads spend instead of only mapped campaigns.
+  const communityIds = useMemo(
+    () => (scoped ? resolveSelectedCommunityIds(communityScope, authorized) : null),
+    [scoped, communityScope, authorized],
+  );
   const communityNames = useMemo(() => {
     const map: Record<string, string> = {};
     for (const c of communities.data ?? []) map[(c as any).id] = (c as any).name;
