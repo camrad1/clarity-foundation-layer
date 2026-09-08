@@ -107,29 +107,49 @@ const SORTS: { key: SortMode; label: string }[] = [
 function CommunityTrends() {
   const { organizationId, dateRange, setCommunityScope } = useAppState();
   const navigate = useNavigate();
-  const matrix = useCommunityTrendMatrix(organizationId, dateRange.end, 12);
   const [sort, setSort] = useState<SortMode>("az");
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
 
-  const { visible, toggle } = useSeriesVisibility(
-    STORAGE_KEY,
-    METRICS.map((m) => m.key),
-    DEFAULTS,
-  );
+  // Granularity is independent of the metric toggles: changing one never
+  // changes the other. Auto-suggested from the selected range until the user
+  // picks a granularity, then their choice is kept for the session.
+  const suggested = suggestGrain(dateRange.start, dateRange.end);
+  const [chosenGrain, setChosenGrain] = useState<TrendGrain | null>(null);
+  const grain: TrendGrain = chosenGrain ?? suggested;
+  const chosenRef = useRef(chosenGrain);
+  useEffect(() => {
+    chosenRef.current = chosenGrain;
+  }, [chosenGrain]);
 
-  const communities = useMemo(() => {
+  // Month keeps the validated 12-month monitoring window ending on the
+  // selected period; day/week follow the selected range exactly.
+  const { start, end } = useMemo(() => {
+    const end = dateRange.end.slice(0, 10);
+    if (grain !== "month") return { start: dateRange.start.slice(0, 10), end };
+    const d = asUtc(end);
+    const s = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 11, 1));
+    return { start: s.toISOString().slice(0, 10), end };
+  }, [dateRange.start, dateRange.end, grain]);
+
+  const matrix = useCommunityTrendSeries(organizationId, start, end, grain);
+
+  const { communities, buckets } = useMemo(() => {
     const byId = new Map<string, { id: string; name: string; rows: CommunityTrendRow[] }>();
+    const bucketSet = new Set<string>();
     for (const r of matrix.data ?? []) {
       const entry = byId.get(r.community_id) ?? {
         id: r.community_id,
         name: r.community_name,
-        rows: [],
+        rows: [] as CommunityTrendRow[],
       };
       entry.rows.push(r);
       byId.set(r.community_id, entry);
+      bucketSet.add(r.bucket.slice(0, 10));
     }
+    // Shared x-axis: identical buckets for every community card.
+    const buckets = [...bucketSet].sort();
     const list = [...byId.values()];
-    for (const c of list) c.rows.sort((a, b) => a.month.localeCompare(b.month));
+    for (const c of list) c.rows.sort((a, b) => a.bucket.localeCompare(b.bucket));
     const latest = (c: (typeof list)[number]) => c.rows[c.rows.length - 1];
     const num = (v: number | null | undefined) => (v == null ? Number.POSITIVE_INFINITY : v);
     list.sort((a, b) => {
@@ -145,8 +165,9 @@ function CommunityTrends() {
       };
       return pick(la) - pick(lb) || a.name.localeCompare(b.name);
     });
-    return list;
+    return { communities: list, buckets };
   }, [matrix.data, sort]);
+
 
   const openSales = (communityId: string) => {
     setCommunityScope({ mode: "communities", communityIds: [communityId] });
