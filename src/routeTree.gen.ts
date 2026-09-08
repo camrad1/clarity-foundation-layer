@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedCommunityTrendsRouteImport } from './routes/_authenticated/community-trends'
 import { Route as AuthenticatedDataHealthRouteImport } from './routes/_authenticated/data-health'
 import { Route as AuthenticatedFlashRouteImport } from './routes/_authenticated/flash'
 import { Route as AuthenticatedForecastRouteImport } from './routes/_authenticated/forecast'
@@ -67,6 +68,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCommunityTrendsRoute =
+  AuthenticatedCommunityTrendsRouteImport.update({
+    id: '/community-trends',
+    path: '/community-trends',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDataHealthRoute = AuthenticatedDataHealthRouteImport.update({
   id: '/data-health',
   path: '/data-health',
@@ -301,6 +308,7 @@ const ApiPublicGoogleOauthCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/flash': typeof AuthenticatedFlashRoute
   '/forecast': typeof AuthenticatedForecastRoute
@@ -345,6 +353,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/flash': typeof AuthenticatedFlashRoute
   '/forecast': typeof AuthenticatedForecastRoute
@@ -390,6 +399,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
   '/_authenticated/flash': typeof AuthenticatedFlashRoute
   '/_authenticated/forecast': typeof AuthenticatedForecastRoute
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/community-trends'
     | '/data-health'
     | '/flash'
     | '/forecast'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/community-trends'
     | '/data-health'
     | '/flash'
     | '/forecast'
@@ -524,6 +536,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/community-trends'
     | '/_authenticated/data-health'
     | '/_authenticated/flash'
     | '/_authenticated/forecast'
@@ -598,6 +611,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/community-trends': {
+      id: '/_authenticated/community-trends'
+      path: '/community-trends'
+      fullPath: '/community-trends'
+      preLoaderRoute: typeof AuthenticatedCommunityTrendsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/data-health': {
       id: '/_authenticated/data-health'
@@ -912,6 +932,7 @@ const AuthenticatedMarketingRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCommunityTrendsRoute: typeof AuthenticatedCommunityTrendsRoute
   AuthenticatedDataHealthRoute: typeof AuthenticatedDataHealthRoute
   AuthenticatedFlashRoute: typeof AuthenticatedFlashRoute
   AuthenticatedForecastRoute: typeof AuthenticatedForecastRoute
@@ -943,6 +964,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCommunityTrendsRoute: AuthenticatedCommunityTrendsRoute,
   AuthenticatedDataHealthRoute: AuthenticatedDataHealthRoute,
   AuthenticatedFlashRoute: AuthenticatedFlashRoute,
   AuthenticatedForecastRoute: AuthenticatedForecastRoute,
