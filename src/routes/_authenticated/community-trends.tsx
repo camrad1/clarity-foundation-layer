@@ -382,7 +382,7 @@ function CommunityCard({
       </div>
       {latest ? (
         <p className="text-xs text-muted-foreground">
-          {monthLabel(latest.month)} · {summary.join(" · ")}
+          {bucketLabel(latest.bucket, grain)} · {summary.join(" · ")}
         </p>
       ) : null}
 
