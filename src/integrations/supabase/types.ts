@@ -5875,6 +5875,31 @@ export type Database = {
           sessions: number
         }[]
       }
+      google_ads_campaign_inventory: {
+        Args: { _org_id: string }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          campaign_status: string
+          canonical_community_id: string
+          clicks: number
+          community_name: string
+          conversions: number
+          cost: number
+          first_date: string
+          google_ads_customer_id: string
+          impressions: number
+          is_active: boolean
+          last_date: string
+          mapped_campaign_name: string
+          mapping_id: string
+          mapping_method: string
+          mapping_updated_at: string
+          notes: string
+          valid_from: string
+          valid_to: string
+        }[]
+      }
       gsc_api_coverage: {
         Args: { _org_id: string }
         Returns: {
