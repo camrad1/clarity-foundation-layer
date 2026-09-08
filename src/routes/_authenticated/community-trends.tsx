@@ -37,9 +37,31 @@ export const Route = createFileRoute("/_authenticated/community-trends")({
 });
 
 const MONTH_FMT = new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
-const monthLabel = (iso: string) => MONTH_FMT.format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+const DAY_FMT = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const asUtc = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+const monthLabel = (iso: string) => MONTH_FMT.format(asUtc(iso));
+
+/** Shared bucket label. Week buckets start Sunday and are labelled by that Sunday. */
+function bucketLabel(iso: string, grain: TrendGrain) {
+  if (grain === "month") return monthLabel(iso);
+  if (grain === "day") return DAY_FMT.format(asUtc(iso));
+  return `Wk ${DAY_FMT.format(asUtc(iso))}`;
+}
+
+const GRAINS: { key: TrendGrain; label: string }[] = [
+  { key: "day", label: "Day" },
+  { key: "week", label: "Week" },
+  { key: "month", label: "Month" },
+];
+
+const OCC_NOTE: Record<TrendGrain, string> = {
+  day: "Occupancy % (that day)",
+  week: "Occupancy % (end of week)",
+  month: "Occupancy % (end of month)",
+};
 
 const STORAGE_KEY = "clarityiq.chart.community-trends";
+
 
 type MetricDef = {
   key: string;
