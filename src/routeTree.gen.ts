@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminFurtherRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminGa4ConnectionRouteImport } from './routes/_authenticated/admin/ga4-connection'
 import { Route as AuthenticatedAdminGoalsRouteImport } from './routes/_authenticated/admin/goals'
 import { Route as AuthenticatedAdminGoogleAdsConnectionRouteImport } from './routes/_authenticated/admin/google-ads-connection'
+import { Route as AuthenticatedAdminGoogleAdsMappingsRouteImport } from './routes/_authenticated/admin/google-ads-mappings'
 import { Route as AuthenticatedAdminGscImportsRouteImport } from './routes/_authenticated/admin/gsc-imports'
 import { Route as AuthenticatedAdminMappingsRouteImport } from './routes/_authenticated/admin/mappings'
 import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
@@ -150,6 +151,12 @@ const AuthenticatedAdminGoogleAdsConnectionRoute =
   AuthenticatedAdminGoogleAdsConnectionRouteImport.update({
     id: '/admin/google-ads-connection',
     path: '/admin/google-ads-connection',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminGoogleAdsMappingsRoute =
+  AuthenticatedAdminGoogleAdsMappingsRouteImport.update({
+    id: '/admin/google-ads-mappings',
+    path: '/admin/google-ads-mappings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminGscImportsRoute =
@@ -303,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/google-ads-connection': typeof AuthenticatedAdminGoogleAdsConnectionRoute
+  '/admin/google-ads-mappings': typeof AuthenticatedAdminGoogleAdsMappingsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
@@ -344,6 +352,7 @@ export interface FileRoutesByTo {
   '/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/admin/google-ads-connection': typeof AuthenticatedAdminGoogleAdsConnectionRoute
+  '/admin/google-ads-mappings': typeof AuthenticatedAdminGoogleAdsMappingsRoute
   '/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
@@ -388,6 +397,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/ga4-connection': typeof AuthenticatedAdminGa4ConnectionRoute
   '/_authenticated/admin/goals': typeof AuthenticatedAdminGoalsRoute
   '/_authenticated/admin/google-ads-connection': typeof AuthenticatedAdminGoogleAdsConnectionRoute
+  '/_authenticated/admin/google-ads-mappings': typeof AuthenticatedAdminGoogleAdsMappingsRoute
   '/_authenticated/admin/gsc-imports': typeof AuthenticatedAdminGscImportsRoute
   '/_authenticated/admin/mappings': typeof AuthenticatedAdminMappingsRoute
   '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
@@ -432,6 +442,7 @@ export interface FileRouteTypes {
     | '/admin/ga4-connection'
     | '/admin/goals'
     | '/admin/google-ads-connection'
+    | '/admin/google-ads-mappings'
     | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/admin/ga4-connection'
     | '/admin/goals'
     | '/admin/google-ads-connection'
+    | '/admin/google-ads-mappings'
     | '/admin/gsc-imports'
     | '/admin/mappings'
     | '/admin/metrics'
@@ -516,6 +528,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/ga4-connection'
     | '/_authenticated/admin/goals'
     | '/_authenticated/admin/google-ads-connection'
+    | '/_authenticated/admin/google-ads-mappings'
     | '/_authenticated/admin/gsc-imports'
     | '/_authenticated/admin/mappings'
     | '/_authenticated/admin/metrics'
@@ -683,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/google-ads-connection'
       fullPath: '/admin/google-ads-connection'
       preLoaderRoute: typeof AuthenticatedAdminGoogleAdsConnectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/google-ads-mappings': {
+      id: '/_authenticated/admin/google-ads-mappings'
+      path: '/admin/google-ads-mappings'
+      fullPath: '/admin/google-ads-mappings'
+      preLoaderRoute: typeof AuthenticatedAdminGoogleAdsMappingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/gsc-imports': {
@@ -886,6 +906,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminGa4ConnectionRoute: typeof AuthenticatedAdminGa4ConnectionRoute
   AuthenticatedAdminGoalsRoute: typeof AuthenticatedAdminGoalsRoute
   AuthenticatedAdminGoogleAdsConnectionRoute: typeof AuthenticatedAdminGoogleAdsConnectionRoute
+  AuthenticatedAdminGoogleAdsMappingsRoute: typeof AuthenticatedAdminGoogleAdsMappingsRoute
   AuthenticatedAdminGscImportsRoute: typeof AuthenticatedAdminGscImportsRoute
   AuthenticatedAdminMappingsRoute: typeof AuthenticatedAdminMappingsRoute
   AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
@@ -917,6 +938,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminGoalsRoute: AuthenticatedAdminGoalsRoute,
   AuthenticatedAdminGoogleAdsConnectionRoute:
     AuthenticatedAdminGoogleAdsConnectionRoute,
+  AuthenticatedAdminGoogleAdsMappingsRoute:
+    AuthenticatedAdminGoogleAdsMappingsRoute,
   AuthenticatedAdminGscImportsRoute: AuthenticatedAdminGscImportsRoute,
   AuthenticatedAdminMappingsRoute: AuthenticatedAdminMappingsRoute,
   AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,

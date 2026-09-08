@@ -2185,6 +2185,75 @@ export type Database = {
           },
         ]
       }
+      google_ads_campaign_community_mappings: {
+        Row: {
+          campaign_id: string
+          campaign_name: string
+          canonical_community_id: string | null
+          created_at: string
+          created_by: string | null
+          google_ads_customer_id: string
+          id: string
+          is_active: boolean
+          mapping_method: string
+          notes: string | null
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          campaign_id: string
+          campaign_name: string
+          canonical_community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          google_ads_customer_id: string
+          id?: string
+          is_active?: boolean
+          mapping_method?: string
+          notes?: string | null
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          campaign_name?: string
+          canonical_community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          google_ads_customer_id?: string
+          id?: string
+          is_active?: boolean
+          mapping_method?: string
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_ads_campaign_community_mappi_canonical_community_id_fkey"
+            columns: ["canonical_community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_ads_campaign_community_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_backfill_chunks: {
         Row: {
           attempts: number
@@ -5804,6 +5873,31 @@ export type Database = {
           new_users: number
           screen_page_views: number
           sessions: number
+        }[]
+      }
+      google_ads_campaign_inventory: {
+        Args: { _org_id: string }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          campaign_status: string
+          canonical_community_id: string
+          clicks: number
+          community_name: string
+          conversions: number
+          cost: number
+          first_date: string
+          google_ads_customer_id: string
+          impressions: number
+          is_active: boolean
+          last_date: string
+          mapped_campaign_name: string
+          mapping_id: string
+          mapping_method: string
+          mapping_updated_at: string
+          notes: string
+          valid_from: string
+          valid_to: string
         }[]
       }
       gsc_api_coverage: {

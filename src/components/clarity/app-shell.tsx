@@ -63,6 +63,7 @@ const ADMIN: NavItem[] = [
   { to: "/admin/search-console-connection", label: "Search Console Connection", icon: PlugZap },
   { to: "/admin/ga4-connection", label: "GA4 Connection", icon: PlugZap },
   { to: "/admin/google-ads-connection", label: "Google Ads Connection", icon: PlugZap },
+  { to: "/admin/google-ads-mappings", label: "Google Ads Campaign Mappings", icon: Link2 },
   { to: "/admin/gsc-imports", label: "Search Console Imports", icon: Upload },
 
   { to: "/admin/forecast-import", label: "Forecast Import", icon: Upload },
