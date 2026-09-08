@@ -168,6 +168,14 @@ function CommunityTrends() {
     return { communities: list, buckets };
   }, [matrix.data, sort]);
 
+  // Metric visibility is stored separately from granularity, so switching
+  // Day / Week / Month never turns series on or off.
+  const { visible, toggle } = useSeriesVisibility(
+    STORAGE_KEY,
+    METRICS.map((m) => m.key),
+    DEFAULTS,
+  );
+
 
   const openSales = (communityId: string) => {
     setCommunityScope({ mode: "communities", communityIds: [communityId] });
