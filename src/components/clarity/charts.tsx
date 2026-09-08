@@ -286,7 +286,15 @@ export function MetricTrendChart({
       : focus;
   const lastIndex = data.length - 1;
   const showLabels = labelLatest && !isMobile && lastIndex >= 0;
-  const label = (v: any) => (v == null ? "" : valueFormatter ? valueFormatter(Number(v)) : fmtCount(Number(v)));
+  // Zero values never show an always-visible point label (keeps the chart clean
+  // for empty periods), but the data point itself stays on the line so hover and
+  // line continuity are preserved. The value still appears in the tooltip.
+  const label = (v: any) => {
+    if (v == null) return "";
+    const n = Number(v);
+    if (n === 0) return "";
+    return valueFormatter ? valueFormatter(n) : fmtCount(n);
+  };
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data} margin={{ top: 18, right: 28, bottom: 0, left: yDomain ? 4 : -18 }}>
@@ -347,7 +355,7 @@ export function MetricTrendChart({
                 content={(props: any) => {
                   if (props.index !== lastIndex) return null;
                   const v = props.value;
-                  if (v == null || !Number.isFinite(Number(v))) return null;
+                  if (v == null || !Number.isFinite(Number(v)) || Number(v) === 0) return null;
                   return (
                     <text
                       x={Number(props.x) - 8}
