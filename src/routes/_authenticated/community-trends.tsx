@@ -1,13 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/clarity/page-header";
 import { EmptyState } from "@/components/clarity/empty-state";
 import { CHART_TOKENS, MetricTrendChart } from "@/components/clarity/charts";
 import { SeriesToggleChips, useSeriesVisibility } from "@/components/clarity/series-toggle";
 import { occupancyAxis, visibleValues } from "@/lib/charts/occupancy-axis";
-import { useCommunityTrendMatrix, type CommunityTrendRow } from "@/lib/community-trends/queries";
+import {
+  suggestGrain,
+  useCommunityTrendSeries,
+  type CommunityTrendRow,
+  type TrendGrain,
+} from "@/lib/community-trends/queries";
 import { useAppState } from "@/state/app-state";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/community-trends")({
   head: () => ({
