@@ -355,7 +355,7 @@ export function MetricTrendChart({
                 content={(props: any) => {
                   if (props.index !== lastIndex) return null;
                   const v = props.value;
-                  if (v == null || !Number.isFinite(Number(v))) return null;
+                  if (v == null || !Number.isFinite(Number(v)) || Number(v) === 0) return null;
                   return (
                     <text
                       x={Number(props.x) - 8}
