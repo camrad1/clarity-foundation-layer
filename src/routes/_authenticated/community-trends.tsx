@@ -375,29 +375,47 @@ function CommunityCard({
       dashed: m.key === "deposits",
     }));
 
+  const portfolio = variant === "portfolio";
+
   return (
-    <section className="panel space-y-3 px-5 py-4">
+    <section
+      className={cn(
+        "panel space-y-3 px-5 py-4",
+        portfolio && "border-2 border-foreground/20 bg-muted/30 shadow-sm",
+      )}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="text-left font-display text-base font-semibold tracking-tight hover:underline"
-        >
-          {name}
-        </button>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
-        >
-          View detail →
-        </button>
+        {portfolio ? (
+          <div>
+            <p className="eyebrow text-muted-foreground">Portfolio roll-up</p>
+            <h2 className="font-display text-lg font-semibold tracking-tight">{name}</h2>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-left font-display text-base font-semibold tracking-tight hover:underline"
+          >
+            {name}
+          </button>
+        )}
+        {onOpen ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+          >
+            View detail →
+          </button>
+        ) : null}
       </div>
       {latest ? (
-        <p className="text-xs text-muted-foreground">
+        <p className={cn("text-xs text-muted-foreground", portfolio && "font-medium text-foreground")}>
           {bucketLabel(latest.bucket, grain)} · {summary.join(" · ")}
         </p>
       ) : null}
+      {scopeNote ? <p className="text-[11px] text-muted-foreground">{scopeNote}</p> : null}
+
 
       {salesSeries.length ? (
         <div className="h-[180px]">
