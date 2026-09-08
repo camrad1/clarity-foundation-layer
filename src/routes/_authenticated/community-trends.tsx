@@ -190,7 +190,36 @@ function CommunityTrends() {
         description="Compare sales, occupancy and digital engagement trends across every community in one view."
       />
 
-      <div className="sticky top-16 z-10 -mx-2 rounded-lg border border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-16 z-10 -mx-2 space-y-3 rounded-lg border border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow text-muted-foreground">View by</span>
+          <div className="inline-flex rounded-full border border-border p-0.5">
+            {GRAINS.map((g) => (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => setChosenGrain(g.key)}
+                aria-pressed={grain === g.key}
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
+                  grain === g.key
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            {grain === "day"
+              ? "One point per day"
+              : grain === "week"
+                ? "Sunday–Saturday weeks"
+                : "Calendar months (last 12 ending the selected period)"}
+            {chosenGrain === null ? " · matched to your date range" : ""}
+          </span>
+        </div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <SeriesToggleChips
             series={METRICS}
@@ -218,12 +247,14 @@ function CommunityTrends() {
             ))}
           </div>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           Each chart scales independently for readability. Compare trend direction and movement rather
           than line height between communities. Counts, website traffic and occupancy % are plotted
-          separately so units are never mixed on one scale.
+          separately so units are never mixed on one scale. Occupancy uses the value at the end of each
+          period and is never averaged.
         </p>
       </div>
+
 
       {matrix.error ? (
         <EmptyState
