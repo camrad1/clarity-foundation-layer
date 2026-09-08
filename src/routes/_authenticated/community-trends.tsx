@@ -296,34 +296,42 @@ function CommunityTrends() {
 function CommunityCard({
   name,
   rows,
+  buckets,
+  grain,
   visible,
   focusedKey,
   onOpen,
 }: {
   name: string;
   rows: CommunityTrendRow[];
+  buckets: string[];
+  grain: TrendGrain;
   visible: string[];
   focusedKey: string | null;
   onOpen: () => void;
 }) {
-  const data = useMemo(
-    () =>
-      rows.map((r) => ({
-        label: monthLabel(r.month),
-        inquiries: r.inquiries,
-        tours: r.tours,
-        re_tours: r.re_tours,
-        deposits: r.deposits,
-        move_ins: r.move_ins,
-        move_outs: r.move_outs,
-        net_move_ins: r.net_move_ins,
-        sessions: r.sessions,
-        engaged_sessions: r.engaged_sessions,
-        further_leads: r.further_leads,
-        occupancy_pct: r.occupancy_pct,
-      })),
-    [rows],
-  );
+  // Shared buckets across every card: a community missing a period shows a
+  // gap rather than shifting the axis.
+  const data = useMemo(() => {
+    const byBucket = new Map(rows.map((r) => [r.bucket.slice(0, 10), r]));
+    return buckets.map((b) => {
+      const r = byBucket.get(b);
+      return {
+        label: bucketLabel(b, grain),
+        inquiries: r?.inquiries ?? null,
+        tours: r?.tours ?? null,
+        re_tours: r?.re_tours ?? null,
+        deposits: r?.deposits ?? null,
+        move_ins: r?.move_ins ?? null,
+        move_outs: r?.move_outs ?? null,
+        net_move_ins: r?.net_move_ins ?? null,
+        sessions: r?.sessions ?? null,
+        engaged_sessions: r?.engaged_sessions ?? null,
+        further_leads: r?.further_leads ?? null,
+        occupancy_pct: r?.occupancy_pct ?? null,
+      };
+    });
+  }, [rows, buckets, grain]);
 
   const latest = rows[rows.length - 1];
   const salesSeries = METRICS.filter((m) => m.group === "sales" && visible.includes(m.key));
@@ -334,6 +342,7 @@ function CommunityCard({
     () => occupancyAxis(visibleValues(data, ["occupancy_pct"]), "percent"),
     [data],
   );
+
 
   const summary: string[] = [];
   if (latest) {
