@@ -4930,6 +4930,50 @@ export type Database = {
           },
         ]
       }
+      wh_paid_lead_source_classifications: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          include_in_google_ads_cost: boolean
+          lead_source_id: string
+          lead_source_label: string
+          notes: string | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          include_in_google_ads_cost?: boolean
+          lead_source_id: string
+          lead_source_label: string
+          notes?: string | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          include_in_google_ads_cost?: boolean
+          lead_source_id?: string
+          lead_source_label?: string
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wh_paid_lead_source_classifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wh_prospects: {
         Row: {
           account_id: string | null
