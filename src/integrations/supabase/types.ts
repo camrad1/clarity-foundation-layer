@@ -5748,6 +5748,33 @@ export type Database = {
         Args: { _org_id: string; _user_id?: string }
         Returns: boolean
       }
+      community_trend_matrix: {
+        Args: {
+          _community_ids?: string[]
+          _end: string
+          _months?: number
+          _org_id: string
+        }
+        Returns: {
+          census_units: number
+          community_id: string
+          community_name: string
+          deposits: number
+          engaged_sessions: number
+          further_leads: number
+          inquiries: number
+          month: string
+          move_ins: number
+          move_outs: number
+          net_move_ins: number
+          occupancy_pct: number
+          occupancy_source: string
+          occupied_units: number
+          re_tours: number
+          sessions: number
+          tours: number
+        }[]
+      }
       flash_budget_units: {
         Args: { _as_of: string; _org_id: string; _scope: string[] }
         Returns: Json

@@ -11,6 +11,7 @@ import {
   Globe,
   Goal,
   LayoutDashboard,
+  LineChart,
   Link2,
   PlugZap,
   LogOut,
@@ -44,6 +45,7 @@ type NavItem = { to: string; label: string; icon: typeof Compass };
 
 const INTELLIGENCE: NavItem[] = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
+  { to: "/community-trends", label: "Community Trends", icon: LineChart },
   { to: "/occupancy", label: "Occupancy Intelligence", icon: Building2 },
   { to: "/flash", label: "Flash Report", icon: Zap },
   { to: "/forecast", label: "Forecast Tracker", icon: CalendarRange },
