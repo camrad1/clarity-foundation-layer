@@ -88,20 +88,29 @@ export const adsDiscoverAccounts = createServerFn({ method: "POST" })
       const roots = await ads.listAccessibleCustomers(token);
       const seen = new Map<string, AdsAccount>();
       const errors: string[] = [];
+      const skipped: Array<{ customerId: string; reason: string; detail: string }> = [];
       for (const root of roots) {
         try {
           for (const acct of await ads.listCustomerClients(token, root)) {
             if (acct.customerId && !seen.has(acct.customerId)) seen.set(acct.customerId, acct);
           }
         } catch (e) {
-          errors.push(`${root}: ${e instanceof Error ? e.message : String(e)}`);
+          const detail = e instanceof Error ? e.message : String(e);
+          // One unusable customer must never abort discovery of the others.
+          const reason = /CUSTOMER_NOT_ENABLED/i.test(detail)
+            ? "Not enabled for API reporting (cancelled, suspended or never activated)"
+            : /USER_PERMISSION_DENIED|NOT_ADS_USER/i.test(detail)
+              ? "The authorized Google user cannot access this account"
+              : "Could not be listed";
+          skipped.push({ customerId: root, reason, detail: detail.slice(0, 400) });
+          errors.push(`${root}: ${reason}`);
         }
       }
       const accounts = [...seen.values()].sort((a, b) =>
         (a.descriptiveName ?? a.customerId).localeCompare(b.descriptiveName ?? b.customerId),
       );
       await admin.from("google_connections").update({ last_error: null }).eq("id", connection.id);
-      return { accessibleCustomerIds: roots, accounts, errors };
+      return { accessibleCustomerIds: roots, accounts, errors, skipped };
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       await admin
