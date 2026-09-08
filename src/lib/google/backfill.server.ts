@@ -409,3 +409,203 @@ export async function runGa4BackfillSlice(
 
   return { processed, remaining: count ?? 0 };
 }
+
+// ------------------------------------------------------------
+// Google Ads historical backfill
+// ------------------------------------------------------------
+
+/**
+ * ADDITIVE ONLY. Google Ads history lands exclusively in `google_ads_api_facts`
+ * with source_system = 'google_ads_api'. Search Console, GA4, WelcomeHome,
+ * Further, occupancy, Sales Intelligence, Performance Journey and every KPI
+ * definition are neither read for writing nor modified here. Grains stay
+ * separate; no cross-grain join is created.
+ *
+ * Dates are the Google Ads account's own calendar dates (America/Los_Angeles
+ * for this account) and are stored as date-only strings with no timezone shift.
+ */
+
+export const ADS_BACKFILL_GRAINS = [
+  "account_day",
+  "campaign_day",
+  "conversion_action_day",
+  "device_day",
+] as const;
+
+export async function planGoogleAdsBackfill(
+  admin: any,
+  args: {
+    organizationId: string;
+    connectionId: string;
+    customerId: string;
+    loginCustomerId: string | null;
+    accessToken: string;
+  },
+): Promise<{ earliest: string; latest: string; months: number; chunksCreated: number; timeZone: string | null; currencyCode: string | null }> {
+  const ads = await import("./ads.server");
+  const customer = await ads.fetchCustomer({
+    accessToken: args.accessToken,
+    customerId: args.customerId,
+    loginCustomerId: args.loginCustomerId,
+  });
+  const yesterday = ads.shiftDate(ads.todayInTimeZone(customer.timeZone), -1);
+
+  // Probe: account-level days with any activity, as far back as Google serves.
+  const probe = await ads.gaql({
+    accessToken: args.accessToken,
+    customerId: args.customerId,
+    loginCustomerId: args.loginCustomerId,
+    query: ads.ADS_QUERIES.account_day("2015-01-01", yesterday),
+    maxRows: 20000,
+  });
+  const dates = probe
+    .map((r: any) => r.segments?.date as string)
+    .filter(Boolean)
+    .sort();
+  if (dates.length === 0) throw new Error("Google Ads returned no historical days for this account.");
+
+  const earliest = dates[0]!;
+  const latest = dates[dates.length - 1]!;
+  const months = monthRanges(earliest, latest);
+
+  const rows = months.flatMap((m) =>
+    ADS_BACKFILL_GRAINS.map((grain) => ({
+      organization_id: args.organizationId,
+      connection_id: args.connectionId,
+      service: "google_ads",
+      property_id: ads.digitsOnly(args.customerId),
+      grain,
+      period_start: m.start,
+      period_end: m.end,
+      status: "pending",
+    })),
+  );
+
+  const { error } = await admin
+    .from("google_backfill_chunks")
+    .upsert(rows, {
+      onConflict: "organization_id,property_id,grain,period_start",
+      ignoreDuplicates: true,
+    });
+  if (error) throw new Error(error.message);
+
+  return {
+    earliest,
+    latest,
+    months: months.length,
+    chunksCreated: rows.length,
+    timeZone: customer.timeZone,
+    currencyCode: customer.currencyCode,
+  };
+}
+
+async function writeAdsChunk(
+  admin: any,
+  chunk: any,
+  args: { accessToken: string; loginCustomerId: string | null; currencyCode: string | null; timeZone: string | null },
+): Promise<{ rows: number; pages: number; truncated: boolean }> {
+  const ads = await import("./ads.server");
+  const grain = chunk.grain as keyof typeof ads.ADS_QUERIES;
+  const rows = await ads.gaql({
+    accessToken: args.accessToken,
+    customerId: chunk.property_id,
+    loginCustomerId: args.loginCustomerId,
+    query: ads.ADS_QUERIES[grain](chunk.period_start, chunk.period_end),
+    maxRows: 200000,
+  });
+
+  const fetchedAt = new Date().toISOString();
+  const payload = rows.map((r: any) => ({
+    organization_id: chunk.organization_id,
+    connection_id: chunk.connection_id,
+    source_system: "google_ads_api",
+    customer_id: chunk.property_id,
+    login_customer_id: args.loginCustomerId,
+    currency_code: args.currencyCode,
+    time_zone: args.timeZone,
+    fetched_at: fetchedAt,
+    ...ads.toAdsFact(grain, r),
+  }));
+
+  for (let i = 0; i < payload.length; i += 500) {
+    const { error } = await admin
+      .from("google_ads_api_facts")
+      .upsert(payload.slice(i, i + 500), {
+        onConflict: "organization_id,customer_id,grain,date,dim_key",
+      });
+    if (error) throw new Error(error.message);
+  }
+  return { rows: payload.length, pages: Math.max(1, Math.ceil(rows.length / 10000)), truncated: false };
+}
+
+/** Bounded, resumable slice. Safe to call repeatedly until remaining === 0. */
+export async function runGoogleAdsBackfillSlice(
+  admin: any,
+  args: {
+    organizationId: string;
+    customerId: string;
+    loginCustomerId: string | null;
+    accessToken: string;
+    currencyCode: string | null;
+    timeZone: string | null;
+    budgetMs?: number;
+  },
+): Promise<{ processed: Array<Record<string, unknown>>; remaining: number }> {
+  const deadline = Date.now() + (args.budgetMs ?? 40_000);
+  const processed: Array<Record<string, unknown>> = [];
+
+  for (;;) {
+    if (Date.now() > deadline) break;
+    const { data: pending } = await admin
+      .from("google_backfill_chunks")
+      .select("*")
+      .eq("organization_id", args.organizationId)
+      .eq("property_id", args.customerId)
+      .eq("service", "google_ads")
+      .in("status", ["pending", "failed"])
+      .lt("attempts", 4)
+      .order("period_start", { ascending: false })
+      .limit(1);
+
+    const chunk = (pending ?? [])[0];
+    if (!chunk) break;
+
+    await admin
+      .from("google_backfill_chunks")
+      .update({ status: "running", attempts: (chunk.attempts ?? 0) + 1, started_at: new Date().toISOString() })
+      .eq("id", chunk.id);
+
+    try {
+      const result = await writeAdsChunk(admin, chunk, args);
+      await admin
+        .from("google_backfill_chunks")
+        .update({
+          status: "complete",
+          rows_written: result.rows,
+          pages: result.pages,
+          truncated: result.truncated,
+          last_error: null,
+          finished_at: new Date().toISOString(),
+        })
+        .eq("id", chunk.id);
+      processed.push({ grain: chunk.grain, period: chunk.period_start, ...result });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      await admin
+        .from("google_backfill_chunks")
+        .update({ status: "failed", last_error: message.slice(0, 1000), finished_at: new Date().toISOString() })
+        .eq("id", chunk.id);
+      processed.push({ grain: chunk.grain, period: chunk.period_start, rows: 0, error: message.slice(0, 300) });
+    }
+  }
+
+  const { count } = await admin
+    .from("google_backfill_chunks")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", args.organizationId)
+    .eq("property_id", args.customerId)
+    .eq("service", "google_ads")
+    .in("status", ["pending", "failed", "running"]);
+
+  return { processed, remaining: count ?? 0 };
+}
