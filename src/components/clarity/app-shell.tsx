@@ -81,13 +81,16 @@ const ADMIN: NavItem[] = [
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isExactPage = pathname === item.to;
   return (
     <Link
       to={item.to}
-      // Clicking the page you are already on would otherwise fire a second
-      // navigation and reload the page's data for no reason.
+      // Clicking the exact page you are already on would otherwise fire a second
+      // navigation and reload the page's data for no reason. Section links stay
+      // clickable from sub-pages so you can get back to the section's main page.
       onClick={(event) => {
-        if (active) event.preventDefault();
+        if (isExactPage) event.preventDefault();
       }}
       className={cn(
         "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
