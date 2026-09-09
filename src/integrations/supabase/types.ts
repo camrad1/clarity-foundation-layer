@@ -5987,7 +5987,7 @@ export type Database = {
         Returns: {
           created: number
           reopened: number
-          service: string
+          svc: string
         }[]
       }
       gsc_api_coverage: {
