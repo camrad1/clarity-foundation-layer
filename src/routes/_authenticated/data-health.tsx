@@ -186,11 +186,21 @@ function DataHealth() {
           />
         ) : (
           <div className="panel space-y-4 p-5">
-            <dl className="grid gap-4 sm:grid-cols-3">
+            <dl className="grid gap-4 sm:grid-cols-4">
               <div>
                 <dt className="text-xs text-muted-foreground">Last successful API sync</dt>
                 <dd className="text-foreground">
                   {relative(gscConnection.data?.last_successful_sync_at ?? null)}
+                </dd>
+                <dd className="text-xs text-muted-foreground">
+                  Attempted {relative(gscConnection.data?.last_attempted_sync_at ?? null)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Automatic nightly sync</dt>
+                <dd className="text-foreground">Enabled — runs server-side every hour</dd>
+                <dd className="text-xs text-muted-foreground">
+                  Sync success and Google&apos;s data lag are reported separately.
                 </dd>
               </div>
               <div>

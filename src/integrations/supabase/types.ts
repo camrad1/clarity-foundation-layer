@@ -5982,6 +5982,14 @@ export type Database = {
         }
         Returns: Json
       }
+      google_roll_forward_chunks: {
+        Args: never
+        Returns: {
+          created: number
+          reopened: number
+          svc: string
+        }[]
+      }
       gsc_api_coverage: {
         Args: { _org_id: string }
         Returns: {
