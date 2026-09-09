@@ -213,6 +213,12 @@ export async function furtherTest(auth: FurtherAuth): Promise<TestResult> {
   }
 }
 
+/** Further's list filters are date-only; a full timestamp is rejected with 400. */
+function dateOnly(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  return value.slice(0, 10);
+}
+
 /** GET /api/v1/leads/ — incremental by updated date when a window is given. */
 export async function furtherLeadsPage(
   auth: FurtherAuth,
@@ -223,14 +229,28 @@ export async function furtherLeadsPage(
     pageSize?: number;
   },
 ): Promise<{ rows: Row[]; next: string | null }> {
-  const body = await furtherGet(auth, "/api/v1/leads/", {
-    updated_start_date: opts.updatedStart ?? undefined,
-    updated_end_date: opts.updatedEnd ?? undefined,
+  const base = {
     page: opts.page && opts.page > 1 ? opts.page : undefined,
     page_size: opts.pageSize,
-  });
-  return { rows: rowsOf(body), next: nextPageOf(body) };
+  };
+  try {
+    const body = await furtherGet(auth, "/api/v1/leads/", {
+      ...base,
+      updated_start_date: dateOnly(opts.updatedStart),
+      updated_end_date: dateOnly(opts.updatedEnd),
+    });
+    return { rows: rowsOf(body), next: nextPageOf(body) };
+  } catch (err) {
+    // A rejected incremental window must never stall ingestion: fall back to an
+    // unfiltered page. Upserts are idempotent, so re-reading rows is safe.
+    if (err instanceof FurtherHttpError && err.status === 400 && opts.updatedStart) {
+      const body = await furtherGet(auth, "/api/v1/leads/", base);
+      return { rows: rowsOf(body), next: nextPageOf(body) };
+    }
+    throw err;
+  }
 }
+
 
 /** GET /api/v1/leads/{id} — detail record for one lead. */
 export async function furtherLeadDetail(auth: FurtherAuth, leadId: string): Promise<Row | null> {
