@@ -145,7 +145,7 @@ export async function tickCrmRefresh(
         community: c.target.name,
         status: res.status,
         rows: res.rowsReceived,
-        error: res.error ?? undefined,
+        ...(res.error ? { error: res.error } : {}),
       });
     } catch (err) {
       processed += 1;

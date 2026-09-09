@@ -51,6 +51,7 @@ import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_au
 import { Route as AuthenticatedMarketingTrafficRouteImport } from './routes/_authenticated/marketing/traffic'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
 import { Route as ApiPublicHooksGoogleBackfillRouteImport } from './routes/api/public/hooks/google-backfill'
+import { Route as ApiPublicHooksWhCrmSyncRouteImport } from './routes/api/public/hooks/wh-crm-sync'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
 import { Route as ApiPublicGoogleOauthCallbackRouteImport } from './routes/api/public/google/oauth/callback'
 
@@ -293,6 +294,11 @@ const ApiPublicHooksGoogleBackfillRoute =
     path: '/api/public/hooks/google-backfill',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWhCrmSyncRoute = ApiPublicHooksWhCrmSyncRouteImport.update({
+  id: '/api/public/hooks/wh-crm-sync',
+  path: '/api/public/hooks/wh-crm-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
   id: '/api/public/hooks/wh-nightly',
   path: '/api/public/hooks/wh-nightly',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
+  '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -391,6 +398,7 @@ export interface FileRoutesByTo {
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
+  '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
+  '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
+    | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
     | '/marketing'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
+    | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   id:
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
+    | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
     | '/api/public/google/oauth/callback'
   fileRoutesById: FileRoutesById
@@ -585,6 +597,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
+  ApiPublicHooksWhCrmSyncRoute: typeof ApiPublicHooksWhCrmSyncRoute
   ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
   ApiPublicGoogleOauthCallbackRoute: typeof ApiPublicGoogleOauthCallbackRoute
 }
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksGoogleBackfillRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/wh-crm-sync': {
+      id: '/api/public/hooks/wh-crm-sync'
+      path: '/api/public/hooks/wh-crm-sync'
+      fullPath: '/api/public/hooks/wh-crm-sync'
+      preLoaderRoute: typeof ApiPublicHooksWhCrmSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/wh-nightly': {
       id: '/api/public/hooks/wh-nightly'
       path: '/api/public/hooks/wh-nightly'
@@ -1008,6 +1028,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
+  ApiPublicHooksWhCrmSyncRoute: ApiPublicHooksWhCrmSyncRoute,
   ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
   ApiPublicGoogleOauthCallbackRoute: ApiPublicGoogleOauthCallbackRoute,
 }
