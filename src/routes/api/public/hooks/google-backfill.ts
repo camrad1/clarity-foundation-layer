@@ -134,10 +134,25 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
                 }),
               });
             }
+            // Freshness metadata advances only after a successful slice.
+            if (mode === "run") {
+              const now = new Date().toISOString();
+              await admin
+                .from("google_connections")
+                .update({ last_attempted_sync_at: now, last_successful_sync_at: now, last_error: null })
+                .eq("id", conn.id);
+            }
           } catch (e) {
+            const message = e instanceof Error ? e.message.slice(0, 400) : String(e);
+            if (mode === "run") {
+              await admin
+                .from("google_connections")
+                .update({ last_attempted_sync_at: new Date().toISOString(), last_error: message })
+                .eq("id", conn.id);
+            }
             results.push({
               organizationId: conn.organization_id,
-              error: e instanceof Error ? e.message.slice(0, 400) : String(e),
+              error: message,
             });
           }
         }
