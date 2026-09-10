@@ -53,9 +53,12 @@ export const APP_ROLES = [
 ] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
-/** Roles an organization admin is allowed to assign. platform_admin is excluded. */
+/**
+ * Roles an organization admin is allowed to assign. platform_admin is always
+ * excluded, and organization_admin can only be granted by a platform admin —
+ * enforced by the membership write policies, mirrored here for the interface.
+ */
 export const ASSIGNABLE_ORG_ROLES: AppRole[] = [
-  "organization_admin",
   "regional_user",
   "community_user",
   "marketing_user",

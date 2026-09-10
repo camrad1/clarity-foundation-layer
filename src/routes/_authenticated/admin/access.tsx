@@ -172,8 +172,8 @@ function Access() {
                 return <span>{ROLE_LABELS[r.role as AppRole] ?? r.role}</span>;
               }
               const options = isPlatformAdmin
-                ? ([...ASSIGNABLE_ORG_ROLES, "platform_admin"] as AppRole[])
-                : ASSIGNABLE_ORG_ROLES;
+                 ? (["organization_admin", ...ASSIGNABLE_ORG_ROLES, "platform_admin"] as AppRole[])
+                 : ASSIGNABLE_ORG_ROLES;
               return (
                 <select
                   className="rounded-md border border-border bg-background px-2 py-1 text-sm"
