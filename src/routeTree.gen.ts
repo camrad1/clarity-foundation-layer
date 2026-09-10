@@ -49,7 +49,6 @@ import { Route as AuthenticatedMarketingPaidMediaRouteImport } from './routes/_a
 import { Route as AuthenticatedMarketingQueriesRouteImport } from './routes/_authenticated/marketing/queries'
 import { Route as AuthenticatedMarketingSegmentsRouteImport } from './routes/_authenticated/marketing/segments'
 import { Route as AuthenticatedMarketingTrafficRouteImport } from './routes/_authenticated/marketing/traffic'
-import { Route as ApiPublicHooksFurtherRsvpProbeRouteImport } from './routes/api/public/hooks/further-rsvp-probe'
 import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/public/hooks/further-sync'
 import { Route as ApiPublicHooksGoogleBackfillRouteImport } from './routes/api/public/hooks/google-backfill'
 import { Route as ApiPublicHooksWhCrmSyncRouteImport } from './routes/api/public/hooks/wh-crm-sync'
@@ -283,12 +282,6 @@ const AuthenticatedMarketingTrafficRoute =
     path: '/traffic',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
-const ApiPublicHooksFurtherRsvpProbeRoute =
-  ApiPublicHooksFurtherRsvpProbeRouteImport.update({
-    id: '/api/public/hooks/further-rsvp-probe',
-    path: '/api/public/hooks/further-rsvp-probe',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksFurtherSyncRoute =
   ApiPublicHooksFurtherSyncRouteImport.update({
     id: '/api/public/hooks/further-sync',
@@ -358,7 +351,6 @@ export interface FileRoutesByFullPath {
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
-  '/api/public/hooks/further-rsvp-probe': typeof ApiPublicHooksFurtherRsvpProbeRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
@@ -404,7 +396,6 @@ export interface FileRoutesByTo {
   '/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/marketing': typeof AuthenticatedMarketingIndexRoute
-  '/api/public/hooks/further-rsvp-probe': typeof ApiPublicHooksFurtherRsvpProbeRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
@@ -453,7 +444,6 @@ export interface FileRoutesById {
   '/_authenticated/marketing/segments': typeof AuthenticatedMarketingSegmentsRoute
   '/_authenticated/marketing/traffic': typeof AuthenticatedMarketingTrafficRoute
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
-  '/api/public/hooks/further-rsvp-probe': typeof ApiPublicHooksFurtherRsvpProbeRoute
   '/api/public/hooks/further-sync': typeof ApiPublicHooksFurtherSyncRoute
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
@@ -502,7 +492,6 @@ export interface FileRouteTypes {
     | '/marketing/segments'
     | '/marketing/traffic'
     | '/marketing/'
-    | '/api/public/hooks/further-rsvp-probe'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
@@ -548,7 +537,6 @@ export interface FileRouteTypes {
     | '/marketing/segments'
     | '/marketing/traffic'
     | '/marketing'
-    | '/api/public/hooks/further-rsvp-probe'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
@@ -596,7 +584,6 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/segments'
     | '/_authenticated/marketing/traffic'
     | '/_authenticated/marketing/'
-    | '/api/public/hooks/further-rsvp-probe'
     | '/api/public/hooks/further-sync'
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
@@ -608,7 +595,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiPublicHooksFurtherRsvpProbeRoute: typeof ApiPublicHooksFurtherRsvpProbeRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
   ApiPublicHooksWhCrmSyncRoute: typeof ApiPublicHooksWhCrmSyncRoute
@@ -898,13 +884,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingTrafficRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
-    '/api/public/hooks/further-rsvp-probe': {
-      id: '/api/public/hooks/further-rsvp-probe'
-      path: '/api/public/hooks/further-rsvp-probe'
-      fullPath: '/api/public/hooks/further-rsvp-probe'
-      preLoaderRoute: typeof ApiPublicHooksFurtherRsvpProbeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/further-sync': {
       id: '/api/public/hooks/further-sync'
       path: '/api/public/hooks/further-sync'
@@ -1047,7 +1026,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiPublicHooksFurtherRsvpProbeRoute: ApiPublicHooksFurtherRsvpProbeRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
   ApiPublicHooksWhCrmSyncRoute: ApiPublicHooksWhCrmSyncRoute,
