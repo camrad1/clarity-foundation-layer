@@ -290,6 +290,13 @@ export const updateOrgUser = createServerFn({ method: "POST" })
       role,
       data.communityIds,
     );
+    await applyRegionAccess(
+      supabase as never,
+      data.organizationId,
+      data.userId,
+      role,
+      data.regionIds ?? [],
+    );
     return { ok: true };
   });
 
