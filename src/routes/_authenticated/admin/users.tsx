@@ -583,6 +583,37 @@ function UserFormDialog({
             </Select>
           </div>
 
+          {needsRegions ? (
+            <div className="space-y-2">
+              <Label>Region access</Label>
+              <p className="text-xs text-muted-foreground">
+                A region grants access to every community in that region. Regions and individual
+                communities can be combined.
+              </p>
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-3">
+                {regions.map((rg) => (
+                  <label key={rg.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.regionIds.includes(rg.id)}
+                      onCheckedChange={(checked) =>
+                        setForm((s) => ({
+                          ...s,
+                          regionIds: checked
+                            ? [...s.regionIds, rg.id]
+                            : s.regionIds.filter((id) => id !== rg.id),
+                        }))
+                      }
+                    />
+                    {rg.name}
+                  </label>
+                ))}
+                {regions.length ? null : (
+                  <p className="text-sm text-muted-foreground">No regions defined yet.</p>
+                )}
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <Label>Community access</Label>
             {needsCommunities ? (
