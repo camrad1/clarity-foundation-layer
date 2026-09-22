@@ -97,6 +97,7 @@ function UsersPage() {
   const { isOrgAdmin, isPlatformAdmin, loading } = useOrgRole(organizationId);
   const users = useOrgUsers(organizationId);
   const communities = useCommunities(organizationId);
+  const regions = useRegions(organizationId);
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -118,6 +119,12 @@ function UsersPage() {
     for (const c of communities.data ?? []) map.set(c.id, c.name);
     return map;
   }, [communities.data]);
+
+  const regionName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of regions.data ?? []) map.set(r.id, r.name);
+    return map;
+  }, [regions.data]);
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
