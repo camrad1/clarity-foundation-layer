@@ -485,6 +485,7 @@ function UserFormDialog({
   initial,
   roleOptions,
   communities,
+  regions,
   showEmail,
   showActive,
   busy,
@@ -498,6 +499,7 @@ function UserFormDialog({
   initial: FormState;
   roleOptions: readonly { value: string; label: string }[];
   communities: { id: string; name: string }[];
+  regions: { id: string; name: string }[];
   showEmail?: boolean;
   showActive?: boolean;
   busy?: boolean;
@@ -505,6 +507,7 @@ function UserFormDialog({
 }) {
   const [form, setForm] = useState<FormState>(initial);
   const needsCommunities = roleNeedsCommunities(form.role);
+  const needsRegions = roleNeedsRegions(form.role);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
