@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedCommunityTrendsRouteImport } from './routes/_authenticated/community-trends'
 import { Route as AuthenticatedDataHealthRouteImport } from './routes/_authenticated/data-health'
 import { Route as AuthenticatedFlashRouteImport } from './routes/_authenticated/flash'
@@ -76,6 +77,11 @@ const AcceptInviteRoute = AcceptInviteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCommunityTrendsRoute =
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/flash': typeof AuthenticatedFlashRoute
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/data-health': typeof AuthenticatedDataHealthRoute
   '/flash': typeof AuthenticatedFlashRoute
@@ -440,6 +448,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/community-trends': typeof AuthenticatedCommunityTrendsRoute
   '/_authenticated/data-health': typeof AuthenticatedDataHealthRoute
   '/_authenticated/flash': typeof AuthenticatedFlashRoute
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/auth'
+    | '/reset-password'
     | '/community-trends'
     | '/data-health'
     | '/flash'
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/auth'
+    | '/reset-password'
     | '/community-trends'
     | '/data-health'
     | '/flash'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/accept-invite'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/community-trends'
     | '/_authenticated/data-health'
     | '/_authenticated/flash'
@@ -644,6 +656,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
   ApiPublicHooksWhCrmSyncRoute: typeof ApiPublicHooksWhCrmSyncRoute
@@ -682,6 +695,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/community-trends': {
@@ -1107,6 +1127,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
   ApiPublicHooksWhCrmSyncRoute: ApiPublicHooksWhCrmSyncRoute,
