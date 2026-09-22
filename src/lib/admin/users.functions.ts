@@ -168,6 +168,8 @@ type CreateInput = {
   communityIds: string[];
   regionIds?: string[];
   active: boolean;
+  /** Where the invitation email should land (the set-password page). */
+  redirectTo?: string;
 };
 
 
