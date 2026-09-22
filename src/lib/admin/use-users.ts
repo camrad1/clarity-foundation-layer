@@ -99,17 +99,26 @@ export function useSetUserActive(organizationId: string | null) {
   });
 }
 
+/**
+ * One email mechanism, two destinations:
+ *  - someone who has never signed in is finishing setup  -> /accept-invite
+ *  - an established user is recovering their password     -> /reset-password
+ */
 export function useSendPasswordSetup(organizationId: string | null) {
   const send = useServerFn(sendPasswordSetupEmail);
   return useMutation({
-    mutationFn: (input: { email: string }) =>
+    mutationFn: (input: { email: string; mode: "invite" | "reset" }) =>
       send({
         data: {
           organizationId: organizationId!,
           email: input.email,
           ...(typeof window === "undefined"
             ? {}
-            : { redirectTo: `${window.location.origin}/auth` }),
+            : {
+                redirectTo: `${window.location.origin}/${
+                  input.mode === "invite" ? "accept-invite" : "reset-password"
+                }`,
+              }),
         },
       }),
   });
