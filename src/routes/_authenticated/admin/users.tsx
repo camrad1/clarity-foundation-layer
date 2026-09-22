@@ -353,6 +353,7 @@ function UsersPage() {
         showActive
         roleOptions={roleOptions}
         communities={communities.data ?? []}
+        regions={regions.data ?? []}
         busy={createUser.isPending}
         onSubmit={async (form) => {
           const result = await createUser.mutateAsync(form);
@@ -372,7 +373,7 @@ function UsersPage() {
           open
           onOpenChange={(v) => !v && setEditing(null)}
           title="Edit user"
-          description="Change the name, role and community access for this account."
+          description="Manage this account's details together with its role, region and community access. Access changes take effect immediately and are enforced in the database."
           submitLabel="Save changes"
           initial={{
             firstName: editing.first_name ?? "",
@@ -380,10 +381,12 @@ function UsersPage() {
             email: editing.email ?? "",
             role: editing.role,
             communityIds: editing.community_ids,
+            regionIds: editing.region_ids,
             active: editing.is_active,
           }}
           roleOptions={roleOptions}
           communities={communities.data ?? []}
+          regions={regions.data ?? []}
           busy={updateUser.isPending}
           onSubmit={async (form) => {
             await updateUser.mutateAsync({
@@ -392,6 +395,7 @@ function UsersPage() {
               lastName: form.lastName,
               role: form.role,
               communityIds: form.communityIds,
+              regionIds: form.regionIds,
             });
             setEditing(null);
             toast.success("User updated");
