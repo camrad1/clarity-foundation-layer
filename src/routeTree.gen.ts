@@ -38,6 +38,7 @@ import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminQueryRulesRouteImport } from './routes/_authenticated/admin/query-rules'
 import { Route as AuthenticatedAdminSearchConsoleConnectionRouteImport } from './routes/_authenticated/admin/search-console-connection'
 import { Route as AuthenticatedAdminUrlRulesRouteImport } from './routes/_authenticated/admin/url-rules'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminValidationRouteImport } from './routes/_authenticated/admin/validation'
 import { Route as AuthenticatedAdminWelcomehomeRouteImport } from './routes/_authenticated/admin/welcomehome'
 import { Route as AuthenticatedAdminWhMappingsRouteImport } from './routes/_authenticated/admin/wh-mappings'
@@ -216,6 +217,11 @@ const AuthenticatedAdminUrlRulesRoute =
     path: '/admin/url-rules',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminValidationRoute =
   AuthenticatedAdminValidationRouteImport.update({
     id: '/admin/validation',
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/query-rules': typeof AuthenticatedAdminQueryRulesRoute
   '/_authenticated/admin/search-console-connection': typeof AuthenticatedAdminSearchConsoleConnectionRoute
   '/_authenticated/admin/url-rules': typeof AuthenticatedAdminUrlRulesRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/validation': typeof AuthenticatedAdminValidationRoute
   '/_authenticated/admin/welcomehome': typeof AuthenticatedAdminWelcomehomeRoute
   '/_authenticated/admin/wh-mappings': typeof AuthenticatedAdminWhMappingsRoute
@@ -481,6 +490,7 @@ export interface FileRouteTypes {
     | '/admin/query-rules'
     | '/admin/search-console-connection'
     | '/admin/url-rules'
+    | '/admin/users'
     | '/admin/validation'
     | '/admin/welcomehome'
     | '/admin/wh-mappings'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/admin/query-rules'
     | '/admin/search-console-connection'
     | '/admin/url-rules'
+    | '/admin/users'
     | '/admin/validation'
     | '/admin/welcomehome'
     | '/admin/wh-mappings'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/query-rules'
     | '/_authenticated/admin/search-console-connection'
     | '/_authenticated/admin/url-rules'
+    | '/_authenticated/admin/users'
     | '/_authenticated/admin/validation'
     | '/_authenticated/admin/welcomehome'
     | '/_authenticated/admin/wh-mappings'
@@ -807,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUrlRulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/validation': {
       id: '/_authenticated/admin/validation'
       path: '/admin/validation'
@@ -978,6 +997,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminQueryRulesRoute: typeof AuthenticatedAdminQueryRulesRoute
   AuthenticatedAdminSearchConsoleConnectionRoute: typeof AuthenticatedAdminSearchConsoleConnectionRoute
   AuthenticatedAdminUrlRulesRoute: typeof AuthenticatedAdminUrlRulesRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminValidationRoute: typeof AuthenticatedAdminValidationRoute
   AuthenticatedAdminWelcomehomeRoute: typeof AuthenticatedAdminWelcomehomeRoute
   AuthenticatedAdminWhMappingsRoute: typeof AuthenticatedAdminWhMappingsRoute
@@ -1014,6 +1034,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSearchConsoleConnectionRoute:
     AuthenticatedAdminSearchConsoleConnectionRoute,
   AuthenticatedAdminUrlRulesRoute: AuthenticatedAdminUrlRulesRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminValidationRoute: AuthenticatedAdminValidationRoute,
   AuthenticatedAdminWelcomehomeRoute: AuthenticatedAdminWelcomehomeRoute,
   AuthenticatedAdminWhMappingsRoute: AuthenticatedAdminWhMappingsRoute,
