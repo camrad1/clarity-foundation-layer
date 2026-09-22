@@ -237,6 +237,7 @@ export const createOrgUser = createServerFn({ method: "POST" })
       if (membershipError) throw membershipError;
 
       await applyCommunityAccess(supabase as never, data.organizationId, userId, role, data.communityIds);
+      await applyRegionAccess(supabase as never, data.organizationId, userId, role, data.regionIds ?? []);
       if (!data.active) await setAuthSignInBlocked(userId, true);
 
       return { userId, invited, temporaryPassword };
@@ -250,6 +251,7 @@ type UpdateInput = {
   lastName: string;
   role: string;
   communityIds: string[];
+  regionIds?: string[];
 };
 
 export const updateOrgUser = createServerFn({ method: "POST" })
