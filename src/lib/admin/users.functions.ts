@@ -166,8 +166,10 @@ type CreateInput = {
   email: string;
   role: string;
   communityIds: string[];
+  regionIds?: string[];
   active: boolean;
 };
+
 
 export const createOrgUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
