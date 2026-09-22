@@ -67,7 +67,16 @@ export function useCreateUser(organizationId: string | null) {
       communityIds: string[];
       regionIds: string[];
       active: boolean;
-    }) => create({ data: { organizationId: organizationId!, ...input } }),
+    }) =>
+      create({
+        data: {
+          organizationId: organizationId!,
+          ...input,
+          ...(typeof window === "undefined"
+            ? {}
+            : { redirectTo: `${window.location.origin}/accept-invite` }),
+        },
+      }),
     onSuccess: invalidate,
   });
 }
