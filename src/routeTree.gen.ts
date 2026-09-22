@@ -53,6 +53,7 @@ import { Route as ApiPublicHooksFurtherSyncRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksGoogleBackfillRouteImport } from './routes/api/public/hooks/google-backfill'
 import { Route as ApiPublicHooksWhCrmSyncRouteImport } from './routes/api/public/hooks/wh-crm-sync'
 import { Route as ApiPublicHooksWhNightlyRouteImport } from './routes/api/public/hooks/wh-nightly'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicGoogleOauthCallbackRouteImport } from './routes/api/public/google/oauth/callback'
 
 const IndexRoute = IndexRouteImport.update({
@@ -303,6 +304,12 @@ const ApiPublicHooksWhNightlyRoute = ApiPublicHooksWhNightlyRouteImport.update({
   path: '/api/public/hooks/wh-nightly',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicGoogleOauthCallbackRoute =
   ApiPublicGoogleOauthCallbackRouteImport.update({
     id: '/api/public/google/oauth/callback',
@@ -354,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -399,6 +407,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRoutesById {
@@ -447,6 +456,7 @@ export interface FileRoutesById {
   '/api/public/hooks/google-backfill': typeof ApiPublicHooksGoogleBackfillRoute
   '/api/public/hooks/wh-crm-sync': typeof ApiPublicHooksWhCrmSyncRoute
   '/api/public/hooks/wh-nightly': typeof ApiPublicHooksWhNightlyRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/google/oauth/callback': typeof ApiPublicGoogleOauthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -495,6 +505,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/lovable/email/transactional/preview'
     | '/api/public/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -540,6 +551,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/lovable/email/transactional/preview'
     | '/api/public/google/oauth/callback'
   id:
     | '__root__'
@@ -587,6 +599,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/google-backfill'
     | '/api/public/hooks/wh-crm-sync'
     | '/api/public/hooks/wh-nightly'
+    | '/lovable/email/transactional/preview'
     | '/api/public/google/oauth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -598,6 +611,7 @@ export interface RootRouteChildren {
   ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
   ApiPublicHooksWhCrmSyncRoute: typeof ApiPublicHooksWhCrmSyncRoute
   ApiPublicHooksWhNightlyRoute: typeof ApiPublicHooksWhNightlyRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicGoogleOauthCallbackRoute: typeof ApiPublicGoogleOauthCallbackRoute
 }
 
@@ -911,6 +925,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWhNightlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/google/oauth/callback': {
       id: '/api/public/google/oauth/callback'
       path: '/api/public/google/oauth/callback'
@@ -1029,6 +1050,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
   ApiPublicHooksWhCrmSyncRoute: ApiPublicHooksWhCrmSyncRoute,
   ApiPublicHooksWhNightlyRoute: ApiPublicHooksWhNightlyRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicGoogleOauthCallbackRoute: ApiPublicGoogleOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
