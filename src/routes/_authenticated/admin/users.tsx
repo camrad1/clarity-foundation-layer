@@ -259,24 +259,34 @@ function UsersPage() {
           { key: "role", header: "Role", render: (r) => userRoleLabel(r.role) },
           {
             key: "communities",
-            header: "Assigned communities",
-            render: (r) =>
-              roleNeedsCommunities(r.role) ? (
-                r.community_ids.length ? (
-                  <span className="text-sm">
-                    {r.community_ids
-                      .map((id) => communityName.get(id) ?? "Unknown")
-                      .sort()
-                      .join(", ")}
+            header: "Data scope",
+            render: (r) => {
+              if (!roleNeedsCommunities(r.role))
+                return (
+                  <span className="text-sm text-muted-foreground">
+                    All communities (organization-wide)
                   </span>
-                ) : (
-                  <span className="text-sm text-warning">No communities assigned</span>
-                )
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  All communities (organization-wide)
-                </span>
-              ),
+                );
+              const regionLabels = r.region_ids
+                .map((id) => regionName.get(id) ?? "Unknown region")
+                .sort();
+              const communityLabels = r.community_ids
+                .map((id) => communityName.get(id) ?? "Unknown")
+                .sort();
+              if (!regionLabels.length && !communityLabels.length)
+                return <span className="text-sm text-warning">No access assigned</span>;
+              return (
+                <div className="space-y-0.5 text-sm">
+                  {regionLabels.length ? (
+                    <p>
+                      <span className="text-muted-foreground">Regions: </span>
+                      {regionLabels.join(", ")}
+                    </p>
+                  ) : null}
+                  {communityLabels.length ? <p>{communityLabels.join(", ")}</p> : null}
+                </div>
+              );
+            },
           },
           {
             key: "status",
