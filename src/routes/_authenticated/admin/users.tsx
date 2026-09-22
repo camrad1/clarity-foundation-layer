@@ -38,9 +38,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useCommunities, useOrgRole } from "@/lib/clarity-queries";
+import { useCommunities, useOrgRole, useRegions } from "@/lib/clarity-queries";
 import {
   roleNeedsCommunities,
+  roleNeedsRegions,
   useCreateUser,
   useOrgUsers,
   useSendPasswordSetup,
