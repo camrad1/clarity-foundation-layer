@@ -224,11 +224,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                         active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
                       />
                     ))}
-                    <NavLink
-                      item={{ to: "/admin/access", label: "Users & Access", icon: Users }}
-                      active={pathname === "/admin/access"}
-                    />
                   </>
+
                 ) : (
                   // Marketing users manage imports only — no other
                   // organization administration is exposed to them.

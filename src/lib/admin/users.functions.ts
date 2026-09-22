@@ -166,8 +166,10 @@ type CreateInput = {
   email: string;
   role: string;
   communityIds: string[];
+  regionIds?: string[];
   active: boolean;
 };
+
 
 export const createOrgUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -235,6 +237,7 @@ export const createOrgUser = createServerFn({ method: "POST" })
       if (membershipError) throw membershipError;
 
       await applyCommunityAccess(supabase as never, data.organizationId, userId, role, data.communityIds);
+      await applyRegionAccess(supabase as never, data.organizationId, userId, role, data.regionIds ?? []);
       if (!data.active) await setAuthSignInBlocked(userId, true);
 
       return { userId, invited, temporaryPassword };
@@ -248,6 +251,7 @@ type UpdateInput = {
   lastName: string;
   role: string;
   communityIds: string[];
+  regionIds?: string[];
 };
 
 export const updateOrgUser = createServerFn({ method: "POST" })
@@ -285,6 +289,13 @@ export const updateOrgUser = createServerFn({ method: "POST" })
       data.userId,
       role,
       data.communityIds,
+    );
+    await applyRegionAccess(
+      supabase as never,
+      data.organizationId,
+      data.userId,
+      role,
+      data.regionIds ?? [],
     );
     return { ok: true };
   });
@@ -353,6 +364,35 @@ async function applyCommunityAccess(
   );
   if (error) throw error;
 }
+
+/**
+ * Region assignments widen a regional user's scope to every community in the
+ * assigned regions (`has_community_access` already honours them). Only the
+ * regional role keeps region rows; any other role has them cleared so the
+ * stored scope can never contradict the role.
+ */
+async function applyRegionAccess(
+  supabase: { from: (table: string) => any },
+  organizationId: string,
+  userId: string,
+  role: Role,
+  regionIds: string[],
+) {
+  const wanted = role === "regional_user" ? Array.from(new Set(regionIds)) : [];
+  const { error: clearError } = await supabase
+    .from("user_region_access")
+    .delete()
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId);
+  if (clearError) throw clearError;
+  if (!wanted.length) return;
+  const { error } = await supabase.from("user_region_access").insert(
+    wanted.map((region_id) => ({ organization_id: organizationId, user_id: userId, region_id })),
+  );
+  if (error) throw error;
+}
+
+
 
 /** Inactive accounts are blocked in Supabase Auth so they cannot sign in. */
 async function setAuthSignInBlocked(userId: string, blocked: boolean) {

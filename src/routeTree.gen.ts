@@ -21,7 +21,6 @@ import { Route as AuthenticatedMarketingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
-import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
 import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
 import { Route as AuthenticatedAdminForecastImportRouteImport } from './routes/_authenticated/admin/forecast-import'
@@ -116,12 +115,6 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminAccessRoute =
-  AuthenticatedAdminAccessRouteImport.update({
-    id: '/admin/access',
-    path: '/admin/access',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminCommunitiesRoute =
   AuthenticatedAdminCommunitiesRouteImport.update({
     id: '/admin/communities',
@@ -329,7 +322,6 @@ export interface FileRoutesByFullPath {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
-  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -375,7 +367,6 @@ export interface FileRoutesByTo {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
-  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -424,7 +415,6 @@ export interface FileRoutesById {
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
-  '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/_authenticated/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -473,7 +463,6 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
-    | '/admin/access'
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/forecast-import'
@@ -519,7 +508,6 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
-    | '/admin/access'
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/forecast-import'
@@ -567,7 +555,6 @@ export interface FileRouteTypes {
     | '/_authenticated/occupancy'
     | '/_authenticated/overview'
     | '/_authenticated/sales'
-    | '/_authenticated/admin/access'
     | '/_authenticated/admin/communities'
     | '/_authenticated/admin/data-sources'
     | '/_authenticated/admin/forecast-import'
@@ -698,13 +685,6 @@ declare module '@tanstack/react-router' {
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof AuthenticatedSalesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/access': {
-      id: '/_authenticated/admin/access'
-      path: '/admin/access'
-      fullPath: '/admin/access'
-      preLoaderRoute: typeof AuthenticatedAdminAccessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/communities': {
@@ -980,7 +960,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOccupancyRoute: typeof AuthenticatedOccupancyRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
-  AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminCommunitiesRoute: typeof AuthenticatedAdminCommunitiesRoute
   AuthenticatedAdminDataSourcesRoute: typeof AuthenticatedAdminDataSourcesRoute
   AuthenticatedAdminForecastImportRoute: typeof AuthenticatedAdminForecastImportRoute
@@ -1013,7 +992,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOccupancyRoute: AuthenticatedOccupancyRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
-  AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
   AuthenticatedAdminCommunitiesRoute: AuthenticatedAdminCommunitiesRoute,
   AuthenticatedAdminDataSourcesRoute: AuthenticatedAdminDataSourcesRoute,
   AuthenticatedAdminForecastImportRoute: AuthenticatedAdminForecastImportRoute,

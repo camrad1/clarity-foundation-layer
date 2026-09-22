@@ -32,6 +32,11 @@ export function roleNeedsCommunities(role: string) {
   return USER_ROLES.find((r) => r.value === role)?.scope === "community";
 }
 
+/** Only the regional role can additionally be scoped by whole regions. */
+export function roleNeedsRegions(role: string) {
+  return role === "regional_user";
+}
+
 export function useOrgUsers(organizationId: string | null) {
   const list = useServerFn(listOrgUsers);
   return useQuery({
@@ -60,6 +65,7 @@ export function useCreateUser(organizationId: string | null) {
       email: string;
       role: string;
       communityIds: string[];
+      regionIds: string[];
       active: boolean;
     }) => create({ data: { organizationId: organizationId!, ...input } }),
     onSuccess: invalidate,
@@ -76,10 +82,12 @@ export function useUpdateUser(organizationId: string | null) {
       lastName: string;
       role: string;
       communityIds: string[];
+      regionIds: string[];
     }) => update({ data: { organizationId: organizationId!, ...input } }),
     onSuccess: invalidate,
   });
 }
+
 
 export function useSetUserActive(organizationId: string | null) {
   const setActive = useServerFn(setOrgUserActive);

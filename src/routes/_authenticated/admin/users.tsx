@@ -38,9 +38,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useCommunities, useOrgRole } from "@/lib/clarity-queries";
+import { useCommunities, useOrgRole, useRegions } from "@/lib/clarity-queries";
 import {
   roleNeedsCommunities,
+  roleNeedsRegions,
   useCreateUser,
   useOrgUsers,
   useSendPasswordSetup,
@@ -77,6 +78,7 @@ type FormState = {
   email: string;
   role: string;
   communityIds: string[];
+  regionIds: string[];
   active: boolean;
 };
 
@@ -86,6 +88,7 @@ const EMPTY_FORM: FormState = {
   email: "",
   role: "community_user",
   communityIds: [],
+  regionIds: [],
   active: true,
 };
 
@@ -94,6 +97,7 @@ function UsersPage() {
   const { isOrgAdmin, isPlatformAdmin, loading } = useOrgRole(organizationId);
   const users = useOrgUsers(organizationId);
   const communities = useCommunities(organizationId);
+  const regions = useRegions(organizationId);
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -115,6 +119,12 @@ function UsersPage() {
     for (const c of communities.data ?? []) map.set(c.id, c.name);
     return map;
   }, [communities.data]);
+
+  const regionName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of regions.data ?? []) map.set(r.id, r.name);
+    return map;
+  }, [regions.data]);
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -249,24 +259,34 @@ function UsersPage() {
           { key: "role", header: "Role", render: (r) => userRoleLabel(r.role) },
           {
             key: "communities",
-            header: "Assigned communities",
-            render: (r) =>
-              roleNeedsCommunities(r.role) ? (
-                r.community_ids.length ? (
-                  <span className="text-sm">
-                    {r.community_ids
-                      .map((id) => communityName.get(id) ?? "Unknown")
-                      .sort()
-                      .join(", ")}
+            header: "Data scope",
+            render: (r) => {
+              if (!roleNeedsCommunities(r.role))
+                return (
+                  <span className="text-sm text-muted-foreground">
+                    All communities (organization-wide)
                   </span>
-                ) : (
-                  <span className="text-sm text-warning">No communities assigned</span>
-                )
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  All communities (organization-wide)
-                </span>
-              ),
+                );
+              const regionLabels = r.region_ids
+                .map((id) => regionName.get(id) ?? "Unknown region")
+                .sort();
+              const communityLabels = r.community_ids
+                .map((id) => communityName.get(id) ?? "Unknown")
+                .sort();
+              if (!regionLabels.length && !communityLabels.length)
+                return <span className="text-sm text-warning">No access assigned</span>;
+              return (
+                <div className="space-y-0.5 text-sm">
+                  {regionLabels.length ? (
+                    <p>
+                      <span className="text-muted-foreground">Regions: </span>
+                      {regionLabels.join(", ")}
+                    </p>
+                  ) : null}
+                  {communityLabels.length ? <p>{communityLabels.join(", ")}</p> : null}
+                </div>
+              );
+            },
           },
           {
             key: "status",
@@ -351,6 +371,7 @@ function UsersPage() {
         showActive
         roleOptions={roleOptions}
         communities={communities.data ?? []}
+        regions={regions.data ?? []}
         busy={createUser.isPending}
         onSubmit={async (form) => {
           const result = await createUser.mutateAsync(form);
@@ -370,7 +391,7 @@ function UsersPage() {
           open
           onOpenChange={(v) => !v && setEditing(null)}
           title="Edit user"
-          description="Change the name, role and community access for this account."
+          description="Manage this account's details together with its role, region and community access. Access changes take effect immediately and are enforced in the database."
           submitLabel="Save changes"
           initial={{
             firstName: editing.first_name ?? "",
@@ -378,10 +399,12 @@ function UsersPage() {
             email: editing.email ?? "",
             role: editing.role,
             communityIds: editing.community_ids,
+            regionIds: editing.region_ids,
             active: editing.is_active,
           }}
           roleOptions={roleOptions}
           communities={communities.data ?? []}
+          regions={regions.data ?? []}
           busy={updateUser.isPending}
           onSubmit={async (form) => {
             await updateUser.mutateAsync({
@@ -390,6 +413,7 @@ function UsersPage() {
               lastName: form.lastName,
               role: form.role,
               communityIds: form.communityIds,
+              regionIds: form.regionIds,
             });
             setEditing(null);
             toast.success("User updated");
@@ -461,6 +485,7 @@ function UserFormDialog({
   initial,
   roleOptions,
   communities,
+  regions,
   showEmail,
   showActive,
   busy,
@@ -474,6 +499,7 @@ function UserFormDialog({
   initial: FormState;
   roleOptions: readonly { value: string; label: string }[];
   communities: { id: string; name: string }[];
+  regions: { id: string; name: string }[];
   showEmail?: boolean;
   showActive?: boolean;
   busy?: boolean;
@@ -481,6 +507,7 @@ function UserFormDialog({
 }) {
   const [form, setForm] = useState<FormState>(initial);
   const needsCommunities = roleNeedsCommunities(form.role);
+  const needsRegions = roleNeedsRegions(form.role);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -555,6 +582,37 @@ function UserFormDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {needsRegions ? (
+            <div className="space-y-2">
+              <Label>Region access</Label>
+              <p className="text-xs text-muted-foreground">
+                A region grants access to every community in that region. Regions and individual
+                communities can be combined.
+              </p>
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-3">
+                {regions.map((rg) => (
+                  <label key={rg.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.regionIds.includes(rg.id)}
+                      onCheckedChange={(checked) =>
+                        setForm((s) => ({
+                          ...s,
+                          regionIds: checked
+                            ? [...s.regionIds, rg.id]
+                            : s.regionIds.filter((id) => id !== rg.id),
+                        }))
+                      }
+                    />
+                    {rg.name}
+                  </label>
+                ))}
+                {regions.length ? null : (
+                  <p className="text-sm text-muted-foreground">No regions defined yet.</p>
+                )}
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label>Community access</Label>
