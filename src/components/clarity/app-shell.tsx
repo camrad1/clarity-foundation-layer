@@ -58,6 +58,7 @@ const INTELLIGENCE: NavItem[] = [
 const ADMIN_OPEN_KEY = "mph-admin-nav-open";
 
 const ADMIN: NavItem[] = [
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/communities", label: "Communities", icon: Building2 },
   { to: "/admin/mappings", label: "Community Mappings", icon: Link2 },
   { to: "/admin/url-rules", label: "URL Mapping Rules", icon: Signal },

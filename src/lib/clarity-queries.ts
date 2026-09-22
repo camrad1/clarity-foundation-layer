@@ -66,12 +66,12 @@ export const ASSIGNABLE_ORG_ROLES: AppRole[] = [
 ];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  platform_admin: "Platform admin",
-  organization_admin: "Organization admin",
-  regional_user: "Regional user",
-  community_user: "Community user",
-  marketing_user: "Marketing user",
-  read_only: "Read only",
+  platform_admin: "Super Admin",
+  organization_admin: "Corporate Admin",
+  regional_user: "Regional User",
+  community_user: "Community Admin",
+  marketing_user: "Marketing User",
+  read_only: "Read Only",
 };
 
 /** Roles whose data scope is the whole organization. */

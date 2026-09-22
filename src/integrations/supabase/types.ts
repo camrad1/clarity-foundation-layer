@@ -3760,22 +3760,31 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          first_name: string | null
           full_name: string | null
           id: string
+          is_active: boolean
+          last_name: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
+          last_name?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
+          last_name?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -5740,6 +5749,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_admin_manage_profile: {
+        Args: { _profile_id: string; _user_id?: string }
+        Returns: boolean
+      }
       can_admin_view_profile: {
         Args: { _profile_id: string; _user_id?: string }
         Returns: boolean
@@ -6219,6 +6232,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
+      is_user_active: { Args: { _user_id?: string }; Returns: boolean }
       journey_community_matrix: {
         Args: {
           _community_ids?: string[]

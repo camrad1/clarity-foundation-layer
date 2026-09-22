@@ -68,11 +68,33 @@ async function resolveUser(path: string) {
   return { user: cachedUser, degraded: Boolean(cachedUser) };
 }
 
+/**
+ * A deactivated account keeps a valid token until it expires, and row level
+ * security already returns nothing for it. Signing it out here means the person
+ * sees the sign-in screen instead of an app full of empty pages.
+ */
+async function isDeactivated(userId: string) {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("id", userId)
+      .maybeSingle();
+    return data ? data.is_active === false : false;
+  } catch {
+    return false;
+  }
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
     const { user } = await resolveUser(location.pathname);
     if (!user) throw redirect({ to: "/auth" });
+    if (await isDeactivated(user.id)) {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth" });
+    }
     return { user };
   },
   component: AuthenticatedLayout,
