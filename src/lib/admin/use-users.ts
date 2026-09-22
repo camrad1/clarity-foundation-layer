@@ -99,7 +99,9 @@ export function useSendPasswordSetup(organizationId: string | null) {
         data: {
           organizationId: organizationId!,
           email: input.email,
-          redirectTo: typeof window === "undefined" ? undefined : `${window.location.origin}/auth`,
+          ...(typeof window === "undefined"
+            ? {}
+            : { redirectTo: `${window.location.origin}/auth` }),
         },
       }),
   });
