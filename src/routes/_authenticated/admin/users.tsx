@@ -77,6 +77,7 @@ type FormState = {
   email: string;
   role: string;
   communityIds: string[];
+  regionIds: string[];
   active: boolean;
 };
 
@@ -86,6 +87,7 @@ const EMPTY_FORM: FormState = {
   email: "",
   role: "community_user",
   communityIds: [],
+  regionIds: [],
   active: true,
 };
 
