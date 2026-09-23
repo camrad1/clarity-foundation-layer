@@ -134,12 +134,25 @@ export const Route = createFileRoute("/api/public/hooks/google-backfill")({
                 }),
               });
             }
-            // Freshness metadata advances only after a successful slice.
+            // A slice returns normally even when individual chunks failed
+            // against Google, so freshness may only advance when no chunk in
+            // this slice reported an error. Otherwise the run is recorded as
+            // attempted-and-failed, keeping the outage visible on Data Health.
             if (mode === "run") {
               const now = new Date().toISOString();
+              const slice = (results[results.length - 1] as { slice?: { processed?: Array<{ error?: string }> } })
+                ?.slice;
+              const chunkErrors = (slice?.processed ?? [])
+                .map((p) => p?.error)
+                .filter((m): m is string => Boolean(m));
+
               await admin
                 .from("google_connections")
-                .update({ last_attempted_sync_at: now, last_successful_sync_at: now, last_error: null })
+                .update(
+                  chunkErrors.length
+                    ? { last_attempted_sync_at: now, last_error: chunkErrors[0]!.slice(0, 400) }
+                    : { last_attempted_sync_at: now, last_successful_sync_at: now, last_error: null },
+                )
                 .eq("id", conn.id);
             }
           } catch (e) {
