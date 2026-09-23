@@ -211,19 +211,24 @@ export function AppShell({ children }: { children: ReactNode }) {
               {adminOpen ? (
                 isOrgAdmin ? (
                   <>
-                    {isPlatformAdmin ? (
-                      <NavLink
-                        item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
-                        active={pathname === "/admin/organizations"}
-                      />
-                    ) : null}
-                    {ADMIN.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        item={item}
-                        active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
-                      />
-                    ))}
+                    <NavLink
+                      item={{ to: "/admin/organizations", label: "Organizations", icon: ShieldCheck }}
+                      active={pathname === "/admin/organizations"}
+                    />
+                    {/*
+                      Corporate Admin has limited admin: users, organizations and
+                      communities only. Everything else is system configuration
+                      reserved for Super Admin, and RLS enforces the same split.
+                    */}
+                    {(isPlatformAdmin ? ADMIN : ADMIN.filter((i) => LIMITED_ADMIN.includes(i.to))).map(
+                      (item) => (
+                        <NavLink
+                          key={item.to}
+                          item={item}
+                          active={pathname === item.to || pathname.startsWith(`${item.to}/`)}
+                        />
+                      ),
+                    )}
                   </>
 
                 ) : (
