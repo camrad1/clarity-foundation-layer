@@ -108,13 +108,16 @@ export function useOrgRole(organizationId: string | null) {
     loading: memberships.isLoading,
     role,
     isPlatformAdmin,
+    /** Limited admin: users, organizations and communities. */
     isOrgAdmin: isPlatformAdmin || role === "organization_admin",
     /**
-     * Mirrors the database helper `can_manage_imports()` so the interface does
-     * not hide capabilities RLS already allows. Enforcement stays in RLS.
+     * Mirrors the database helpers so the interface neither hides capabilities
+     * RLS allows nor offers ones it denies. Enforcement stays in RLS.
+     * System configuration is reserved for Super Admin; integrations and
+     * imports additionally allow the Marketing User role.
      */
-    canManageImports:
-      isPlatformAdmin || role === "organization_admin" || role === "marketing_user",
+    canManageSystemConfig: isPlatformAdmin,
+    canManageImports: isPlatformAdmin || role === "marketing_user",
   };
 }
 
