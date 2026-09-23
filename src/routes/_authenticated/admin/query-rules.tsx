@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tags } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +54,9 @@ type RuleRow = {
 };
 
 function QueryRules() {
+  const gate = useAdminGate("system", "Query Classification");
+  if (gate) return gate;
+
   const { organizationId } = useAppState();
   const rules = useQueryClassificationRules(organizationId);
   const qc = useQueryClient();

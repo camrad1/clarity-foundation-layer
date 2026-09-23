@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { Ruler } from "lucide-react";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -28,6 +29,9 @@ export const Route = createFileRoute("/_authenticated/admin/metrics")({
 });
 
 function Metrics() {
+  const gate = useAdminGate("system", "Metric Registry");
+  if (gate) return gate;
+
   const metrics = useMetricDefinitions();
 
   return (

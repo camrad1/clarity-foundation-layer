@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Link2 } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
@@ -39,6 +40,9 @@ type MappingRow = {
 };
 
 function Mappings() {
+  const gate = useAdminGate("system", "Community Mappings");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const mappings = useCommunityMappings(organizationId);

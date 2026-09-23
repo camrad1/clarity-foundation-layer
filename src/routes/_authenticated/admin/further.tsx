@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -69,6 +70,9 @@ function fmt(d: string | null | undefined) {
 }
 
 function FurtherAdmin() {
+  const gate = useAdminGate("imports", "Further Connection");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const { canManageImports } = useOrgRole(organizationId);

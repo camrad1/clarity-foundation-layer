@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -37,6 +38,9 @@ type GoalRow = {
 };
 
 function Goals() {
+  const gate = useAdminGate("system", "Goals");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const goals = useMetricGoals(organizationId);

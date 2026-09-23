@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
@@ -74,6 +75,9 @@ type ImportRow = {
 };
 
 function GscImports() {
+  const gate = useAdminGate("imports", "Search Console Imports");
+  if (gate) return gate;
+
   const { organizationId } = useAppState();
   const { canManageImports } = useOrgRole(organizationId);
   const connections = useConnections(organizationId);

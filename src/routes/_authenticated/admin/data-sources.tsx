@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -32,6 +33,9 @@ function fmt(d: string | null) {
 }
 
 function DataSources() {
+  const gate = useAdminGate("system", "Data Sources");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const connections = useConnections(organizationId);
