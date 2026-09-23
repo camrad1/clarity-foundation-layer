@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { GoogleConnectionPage } from "@/components/clarity/google-connection";
 
 export const Route = createFileRoute("/_authenticated/admin/search-console-connection")({
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/_authenticated/admin/search-console-conne
     ],
   }),
   component: () => (
-    <GoogleConnectionPage service="search_console" routePath="/admin/search-console-connection" />
+    <AdminGate capability="imports" title="Search Console Connection">
+      <GoogleConnectionPage service="search_console" routePath="/admin/search-console-connection" />
+    </AdminGate>
   ),
 });

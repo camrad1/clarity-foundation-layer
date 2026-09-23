@@ -19,6 +19,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const ROLE_VALUES = [
   "platform_admin",
   "organization_admin",
+  "corporate_user",
   "regional_user",
   "community_user",
   "marketing_user",
@@ -27,7 +28,13 @@ const ROLE_VALUES = [
 type Role = (typeof ROLE_VALUES)[number];
 
 /** Roles whose scope is the whole organization — no community list needed. */
-const ORG_WIDE: Role[] = ["platform_admin", "organization_admin", "marketing_user", "read_only"];
+const ORG_WIDE: Role[] = [
+  "platform_admin",
+  "organization_admin",
+  "corporate_user",
+  "marketing_user",
+  "read_only",
+];
 
 function assertRole(role: string): Role {
   if (!(ROLE_VALUES as readonly string[]).includes(role)) throw new Error("Unknown role");
@@ -56,14 +63,14 @@ async function isPlatformAdmin(
   return data === true;
 }
 
-/** Only a platform administrator may grant the two elevated roles. */
+/** Only a super administrator may create or promote another super administrator. */
 async function assertRoleAssignable(
   supabase: Parameters<typeof isPlatformAdmin>[0],
   role: Role,
 ) {
-  if (role !== "platform_admin" && role !== "organization_admin") return;
+  if (role !== "platform_admin") return;
   if (!(await isPlatformAdmin(supabase))) {
-    throw new Error("Only a super administrator may assign that role");
+    throw new Error("Only a super administrator may assign the Super Admin role");
   }
 }
 

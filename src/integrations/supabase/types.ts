@@ -5761,6 +5761,10 @@ export type Database = {
         Args: { _org_id: string; _user_id?: string }
         Returns: boolean
       }
+      can_manage_system_config: {
+        Args: { _org_id: string; _user_id?: string }
+        Returns: boolean
+      }
       community_trend_series: {
         Args: {
           _community_ids?: string[]
@@ -6936,6 +6940,7 @@ export type Database = {
         | "community_user"
         | "marketing_user"
         | "read_only"
+        | "corporate_user"
       attribution_level: "exact" | "joined" | "aggregate"
       connection_status:
         | "connected"
@@ -7134,6 +7139,7 @@ export const Constants = {
         "community_user",
         "marketing_user",
         "read_only",
+        "corporate_user",
       ],
       attribution_level: ["exact", "joined", "aggregate"],
       connection_status: [

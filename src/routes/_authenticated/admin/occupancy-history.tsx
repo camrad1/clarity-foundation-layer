@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { format } from "date-fns";
@@ -47,7 +48,11 @@ export const Route = createFileRoute("/_authenticated/admin/occupancy-history")(
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OccupancyHistoryImport,
+  component: () => (
+    <AdminGate capability="imports" title="Occupancy History Import">
+      <OccupancyHistoryImport />
+    </AdminGate>
+  ),
 });
 
 type Preview = Awaited<ReturnType<typeof occHistoryPreview>>;

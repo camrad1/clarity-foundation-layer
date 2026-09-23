@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tags } from "lucide-react";
 import { toast } from "sonner";
@@ -38,7 +39,11 @@ export const Route = createFileRoute("/_authenticated/admin/query-rules")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: QueryRules,
+  component: () => (
+    <AdminGate capability="system" title="Query Classification">
+      <QueryRules />
+    </AdminGate>
+  ),
 });
 
 type RuleRow = {

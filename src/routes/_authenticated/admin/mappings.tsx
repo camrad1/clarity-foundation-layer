@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Link2 } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
@@ -25,7 +26,11 @@ export const Route = createFileRoute("/_authenticated/admin/mappings")({
       },
     ],
   }),
-  component: Mappings,
+  component: () => (
+    <AdminGate capability="system" title="Community Mappings">
+      <Mappings />
+    </AdminGate>
+  ),
 });
 
 type MappingRow = {

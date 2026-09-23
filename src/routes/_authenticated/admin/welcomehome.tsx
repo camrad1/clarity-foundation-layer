@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -67,7 +68,11 @@ export const Route = createFileRoute("/_authenticated/admin/welcomehome")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: WelcomeHomeAdmin,
+  component: () => (
+    <AdminGate capability="imports" title="WelcomeHome Connection">
+      <WelcomeHomeAdmin />
+    </AdminGate>
+  ),
 });
 
 function fmt(d: string | null | undefined) {
