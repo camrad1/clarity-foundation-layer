@@ -9,6 +9,8 @@ import { useAppState } from "@/state/app-state";
  * community (Corporate Admin, Corporate User) does not imply system-level
  * administration.
  *
+ * - "org": users, organizations and communities — Super Admin and Corporate
+ *   Admin (limited admin).
  * - "system": metric registry, goals, validation, mapping and configuration
  *   surfaces — Super Admin only.
  * - "imports": integrations, connections and import surfaces — Super Admin and
@@ -19,7 +21,7 @@ import { useAppState } from "@/state/app-state";
  * opening the URL directly. The gate wraps the page rather than returning early
  * from inside it, so the page's own hooks never run for a denied user.
  */
-export type AdminCapability = "system" | "imports";
+export type AdminCapability = "org" | "system" | "imports";
 
 export function AdminGate({
   capability,
@@ -31,8 +33,9 @@ export function AdminGate({
   children: ReactNode;
 }) {
   const { organizationId } = useAppState();
-  const { loading, isPlatformAdmin, canManageImports } = useOrgRole(organizationId);
-  const allowed = capability === "system" ? isPlatformAdmin : canManageImports;
+  const { loading, isPlatformAdmin, isOrgAdmin, canManageImports } = useOrgRole(organizationId);
+  const allowed =
+    capability === "org" ? isOrgAdmin : capability === "system" ? isPlatformAdmin : canManageImports;
 
   if (loading) return null;
   if (allowed) return <>{children}</>;
@@ -42,7 +45,11 @@ export function AdminGate({
       <PageHeader eyebrow="Admin" title={title} />
       <EmptyState
         title="You do not have access to this page"
-        description="This area is reserved for super administrators. Ask a super administrator if you need changes made here."
+        description={
+          capability === "org"
+            ? "Administering ClarityIQ requires Super Admin or Corporate Admin permissions."
+            : "This area is reserved for super administrators. Ask a super administrator if you need changes made here."
+        }
       />
     </div>
   );

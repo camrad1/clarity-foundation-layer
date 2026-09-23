@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
@@ -26,7 +27,11 @@ export const Route = createFileRoute("/_authenticated/admin/communities")({
       { property: "og:description", content: "Manage canonical ClarityIQ communities and regions." },
     ],
   }),
-  component: Communities,
+  component: () => (
+    <AdminGate capability="org" title="Communities">
+      <Communities />
+    </AdminGate>
+  ),
 });
 
 function Communities() {
