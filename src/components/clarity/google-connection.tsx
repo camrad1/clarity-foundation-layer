@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -53,8 +52,6 @@ export function GoogleConnectionPage({
   service: GoogleService;
   routePath: string;
 }) {
-  const gate = useAdminGate("imports", service === "ga4" ? "GA4 Connection" : "Search Console Connection");
-  if (gate) return gate;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { google?: string; reason?: string };
