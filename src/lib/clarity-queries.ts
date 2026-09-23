@@ -46,6 +46,7 @@ export function useIsPlatformAdmin() {
 export const APP_ROLES = [
   "platform_admin",
   "organization_admin",
+  "corporate_user",
   "regional_user",
   "community_user",
   "marketing_user",
