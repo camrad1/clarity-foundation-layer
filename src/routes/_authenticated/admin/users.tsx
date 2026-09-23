@@ -155,9 +155,9 @@ function UsersPage() {
     );
   }
 
-  const roleOptions = USER_ROLES.filter(
-    (r) => isPlatformAdmin || (r.value !== "platform_admin" && r.value !== "organization_admin"),
-  );
+  // Only a Super Admin may create or promote another Super Admin. A Corporate
+  // Admin may assign every other role, matching the membership write policies.
+  const roleOptions = USER_ROLES.filter((r) => isPlatformAdmin || r.value !== "platform_admin");
 
   return (
     <div className="space-y-8">
