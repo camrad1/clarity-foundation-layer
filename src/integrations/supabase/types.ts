@@ -6936,6 +6936,7 @@ export type Database = {
         | "community_user"
         | "marketing_user"
         | "read_only"
+        | "corporate_user"
       attribution_level: "exact" | "joined" | "aggregate"
       connection_status:
         | "connected"
@@ -7134,6 +7135,7 @@ export const Constants = {
         "community_user",
         "marketing_user",
         "read_only",
+        "corporate_user",
       ],
       attribution_level: ["exact", "joined", "aggregate"],
       connection_status: [
