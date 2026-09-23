@@ -15,6 +15,7 @@ export type { ManagedUser };
 export const USER_ROLES = [
   { value: "platform_admin", label: "Super Admin", scope: "org" },
   { value: "organization_admin", label: "Corporate Admin", scope: "org" },
+  { value: "corporate_user", label: "Corporate User", scope: "org" },
   { value: "regional_user", label: "Regional User", scope: "community" },
   { value: "community_user", label: "Community Admin", scope: "community" },
   { value: "marketing_user", label: "Marketing User", scope: "org" },
