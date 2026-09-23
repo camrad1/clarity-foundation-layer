@@ -5761,6 +5761,10 @@ export type Database = {
         Args: { _org_id: string; _user_id?: string }
         Returns: boolean
       }
+      can_manage_system_config: {
+        Args: { _org_id: string; _user_id?: string }
+        Returns: boolean
+      }
       community_trend_series: {
         Args: {
           _community_ids?: string[]
