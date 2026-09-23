@@ -55,11 +55,13 @@ export const APP_ROLES = [
 export type AppRole = (typeof APP_ROLES)[number];
 
 /**
- * Roles an organization admin is allowed to assign. platform_admin is always
- * excluded, and organization_admin can only be granted by a platform admin —
- * enforced by the membership write policies, mirrored here for the interface.
+ * Roles a Corporate Admin may assign. platform_admin (Super Admin) is always
+ * excluded — only a Super Admin can create or promote another Super Admin —
+ * enforced by the membership write policies and mirrored here for the interface.
  */
 export const ASSIGNABLE_ORG_ROLES: AppRole[] = [
+  "organization_admin",
+  "corporate_user",
   "regional_user",
   "community_user",
   "marketing_user",
@@ -69,6 +71,7 @@ export const ASSIGNABLE_ORG_ROLES: AppRole[] = [
 export const ROLE_LABELS: Record<AppRole, string> = {
   platform_admin: "Super Admin",
   organization_admin: "Corporate Admin",
+  corporate_user: "Corporate User",
   regional_user: "Regional User",
   community_user: "Community Admin",
   marketing_user: "Marketing User",
@@ -79,6 +82,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 export const ORG_WIDE_ROLES: AppRole[] = [
   "platform_admin",
   "organization_admin",
+  "corporate_user",
   "marketing_user",
   "read_only",
 ];
