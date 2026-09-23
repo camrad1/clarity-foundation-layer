@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
@@ -74,6 +75,9 @@ function HealthBadge({ row }: { row: AdsCampaignMappingRow }) {
 }
 
 export function GoogleAdsCampaignMappingsPage() {
+  const gate = useAdminGate("imports", "Google Ads Campaign Mappings");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const { canManageImports } = useOrgRole(organizationId);

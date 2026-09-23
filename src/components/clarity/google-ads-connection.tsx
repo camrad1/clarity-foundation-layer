@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -63,6 +64,9 @@ const int = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("en-US").format(Math.round(n));
 
 export function GoogleAdsConnectionPage() {
+  const gate = useAdminGate("imports", "Google Ads Connection");
+  if (gate) return gate;
+
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { google?: string; reason?: string };
