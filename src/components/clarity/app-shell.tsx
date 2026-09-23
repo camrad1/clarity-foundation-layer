@@ -57,6 +57,9 @@ const INTELLIGENCE: NavItem[] = [
 
 const ADMIN_OPEN_KEY = "mph-admin-nav-open";
 
+/** Admin pages a Corporate Admin may use, alongside Organizations. */
+const LIMITED_ADMIN: string[] = ["/admin/users", "/admin/communities"];
+
 const ADMIN: NavItem[] = [
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/communities", label: "Communities", icon: Building2 },
