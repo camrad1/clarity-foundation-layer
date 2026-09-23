@@ -9,7 +9,8 @@ import { RecordFormDialog } from "@/components/clarity/record-form-dialog";
 import { StatusPill } from "@/components/clarity/status-pill";
 import { COMMON_TIMEZONES, isValidTimezone, timezoneLabel } from "@/lib/timezones";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsPlatformAdmin, useOrganizations } from "@/lib/clarity-queries";
+import { useOrganizations, useOrgRole } from "@/lib/clarity-queries";
+import { useAppState } from "@/state/app-state";
 
 export const Route = createFileRoute("/_authenticated/admin/organizations")({
   head: () => ({
@@ -26,15 +27,18 @@ export const Route = createFileRoute("/_authenticated/admin/organizations")({
 function Organizations() {
   const qc = useQueryClient();
   const orgs = useOrganizations();
-  const { isPlatformAdmin } = useIsPlatformAdmin();
+  const { organizationId } = useAppState();
+  // Corporate Admins manage their own organization; only a Super Admin may
+  // create new tenants. Both halves are enforced by the organizations policies.
+  const { isPlatformAdmin, isOrgAdmin, loading } = useOrgRole(organizationId);
 
-  if (!isPlatformAdmin) {
+  if (!loading && !isOrgAdmin) {
     return (
       <div className="space-y-8">
         <PageHeader eyebrow="Admin" title="Organizations" />
         <EmptyState
-          title="Platform administration only"
-          description="Managing tenant organizations requires the platform_admin role."
+          title="You do not have access to this page"
+          description="Managing organizations requires an administrator role."
         />
       </div>
     );
@@ -43,10 +47,11 @@ function Organizations() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Platform admin"
+        eyebrow="Admin"
         title="Organizations"
         description="Each organization is an isolated tenant. Data can never cross an organization boundary."
         actions={
+          isPlatformAdmin ? (
           <RecordFormDialog
             title="New organization"
             submitLabel="Create organization"
@@ -84,6 +89,7 @@ function Organizations() {
               await qc.invalidateQueries({ queryKey: ["organizations"] });
             }}
           />
+          ) : null
         }
       />
       <DataTable
