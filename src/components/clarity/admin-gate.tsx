@@ -16,16 +16,26 @@ import { useAppState } from "@/state/app-state";
  *
  * This is the interface half of the rule only; RLS remains the enforcement
  * boundary, so a denied user cannot read or write the underlying data even by
- * opening the URL directly.
+ * opening the URL directly. The gate wraps the page rather than returning early
+ * from inside it, so the page's own hooks never run for a denied user.
  */
 export type AdminCapability = "system" | "imports";
 
-export function useAdminGate(capability: AdminCapability, title: string): ReactNode | null {
+export function AdminGate({
+  capability,
+  title,
+  children,
+}: {
+  capability: AdminCapability;
+  title: string;
+  children: ReactNode;
+}) {
   const { organizationId } = useAppState();
   const { loading, isPlatformAdmin, canManageImports } = useOrgRole(organizationId);
   const allowed = capability === "system" ? isPlatformAdmin : canManageImports;
 
-  if (loading || allowed) return null;
+  if (loading) return null;
+  if (allowed) return <>{children}</>;
 
   return (
     <div className="space-y-8">
