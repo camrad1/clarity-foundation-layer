@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { format } from "date-fns";
@@ -64,9 +63,6 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 function OccupancyHistoryImport() {
-  const gate = useAdminGate("imports", "Occupancy History Import");
-  if (gate) return gate;
-
   const { organizationId } = useAppState();
   const { canManageImports } = useOrgRole(organizationId);
   const qc = useQueryClient();

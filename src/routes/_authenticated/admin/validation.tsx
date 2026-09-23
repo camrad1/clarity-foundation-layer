@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -48,9 +47,6 @@ type CheckRow = {
 };
 
 function Validation() {
-  const gate = useAdminGate("system", "Validation Center");
-  if (gate) return gate;
-
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const checks = useValidationChecks(organizationId);

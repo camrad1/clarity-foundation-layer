@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAdminGate } from "@/components/clarity/admin-gate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -57,9 +56,6 @@ export const Route = createFileRoute("/_authenticated/admin/wh-mappings")({
 });
 
 function WhMappings() {
-  const gate = useAdminGate("imports", "WelcomeHome Mapping");
-  if (gate) return gate;
-
   const qc = useQueryClient();
   const { organizationId } = useAppState();
   const { canManageImports } = useOrgRole(organizationId);
