@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -61,7 +62,11 @@ export const Route = createFileRoute("/_authenticated/admin/further")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: FurtherAdmin,
+  component: () => (
+    <AdminGate capability="imports" title="Further Connection">
+      <FurtherAdmin />
+    </AdminGate>
+  ),
 });
 
 function fmt(d: string | null | undefined) {

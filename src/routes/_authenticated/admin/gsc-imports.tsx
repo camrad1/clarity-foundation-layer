@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
@@ -51,7 +52,11 @@ export const Route = createFileRoute("/_authenticated/admin/gsc-imports")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: GscImports,
+  component: () => (
+    <AdminGate capability="imports" title="Search Console Imports">
+      <GscImports />
+    </AdminGate>
+  ),
 });
 
 type ImportRow = {

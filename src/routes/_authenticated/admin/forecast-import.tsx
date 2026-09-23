@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { format } from "date-fns";
@@ -37,7 +38,11 @@ export const Route = createFileRoute("/_authenticated/admin/forecast-import")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ForecastImport,
+  component: () => (
+    <AdminGate capability="imports" title="Forecast Import">
+      <ForecastImport />
+    </AdminGate>
+  ),
 });
 
 type Preview = Awaited<ReturnType<typeof forecastImportPreview>>;

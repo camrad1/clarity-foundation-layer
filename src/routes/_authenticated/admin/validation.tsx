@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -30,7 +31,11 @@ export const Route = createFileRoute("/_authenticated/admin/validation")({
       },
     ],
   }),
-  component: Validation,
+  component: () => (
+    <AdminGate capability="system" title="Validation Center">
+      <Validation />
+    </AdminGate>
+  ),
 });
 
 type CheckRow = {

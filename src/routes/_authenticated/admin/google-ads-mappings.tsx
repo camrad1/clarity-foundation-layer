@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { GoogleAdsCampaignMappingsPage } from "@/components/clarity/google-ads-campaign-mappings";
 
 export const Route = createFileRoute("/_authenticated/admin/google-ads-mappings")({
@@ -22,5 +23,9 @@ export const Route = createFileRoute("/_authenticated/admin/google-ads-mappings"
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: GoogleAdsCampaignMappingsPage,
+  component: () => (
+    <AdminGate capability="imports" title="Google Ads Campaign Mappings">
+      <GoogleAdsCampaignMappingsPage />
+    </AdminGate>
+  ),
 });

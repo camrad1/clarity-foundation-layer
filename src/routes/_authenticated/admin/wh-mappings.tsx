@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +53,11 @@ export const Route = createFileRoute("/_authenticated/admin/wh-mappings")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: WhMappings,
+  component: () => (
+    <AdminGate capability="imports" title="WelcomeHome Mapping">
+      <WhMappings />
+    </AdminGate>
+  ),
 });
 
 function WhMappings() {

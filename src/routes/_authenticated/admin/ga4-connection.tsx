@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { GoogleConnectionPage } from "@/components/clarity/google-connection";
 
 export const Route = createFileRoute("/_authenticated/admin/ga4-connection")({
@@ -19,5 +20,9 @@ export const Route = createFileRoute("/_authenticated/admin/ga4-connection")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <GoogleConnectionPage service="ga4" routePath="/admin/ga4-connection" />,
+  component: () => (
+    <AdminGate capability="imports" title="GA4 Connection">
+      <GoogleConnectionPage service="ga4" routePath="/admin/ga4-connection" />
+    </AdminGate>
+  ),
 });

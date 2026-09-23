@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { Signal } from "lucide-react";
 import { DataTable } from "@/components/clarity/data-table";
@@ -24,7 +25,11 @@ export const Route = createFileRoute("/_authenticated/admin/url-rules")({
       },
     ],
   }),
-  component: UrlRules,
+  component: () => (
+    <AdminGate capability="system" title="URL Mapping Rules">
+      <UrlRules />
+    </AdminGate>
+  ),
 });
 
 type RuleRow = {

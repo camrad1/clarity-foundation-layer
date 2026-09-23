@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -24,7 +25,11 @@ export const Route = createFileRoute("/_authenticated/admin/data-sources")({
       { property: "og:description", content: "Connection registry and freshness for every ClarityIQ source." },
     ],
   }),
-  component: DataSources,
+  component: () => (
+    <AdminGate capability="system" title="Data Sources">
+      <DataSources />
+    </AdminGate>
+  ),
 });
 
 function fmt(d: string | null) {

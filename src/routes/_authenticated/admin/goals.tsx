@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/clarity/admin-gate";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatDateOnly } from "@/lib/date-ranges";
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/_authenticated/admin/goals")({
       { property: "og:description", content: "Set ClarityIQ metric targets by community and period." },
     ],
   }),
-  component: Goals,
+  component: () => (
+    <AdminGate capability="system" title="Goals">
+      <Goals />
+    </AdminGate>
+  ),
 });
 
 type GoalRow = {
