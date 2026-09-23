@@ -67,7 +67,16 @@ export function useCreateUser(organizationId: string | null) {
       communityIds: string[];
       regionIds: string[];
       active: boolean;
-    }) => create({ data: { organizationId: organizationId!, ...input } }),
+    }) =>
+      create({
+        data: {
+          organizationId: organizationId!,
+          ...input,
+          ...(typeof window === "undefined"
+            ? {}
+            : { redirectTo: `${window.location.origin}/accept-invite` }),
+        },
+      }),
     onSuccess: invalidate,
   });
 }
@@ -99,17 +108,26 @@ export function useSetUserActive(organizationId: string | null) {
   });
 }
 
+/**
+ * One email mechanism, two destinations:
+ *  - someone who has never signed in is finishing setup  -> /accept-invite
+ *  - an established user is recovering their password     -> /reset-password
+ */
 export function useSendPasswordSetup(organizationId: string | null) {
   const send = useServerFn(sendPasswordSetupEmail);
   return useMutation({
-    mutationFn: (input: { email: string }) =>
+    mutationFn: (input: { email: string; mode: "invite" | "reset" }) =>
       send({
         data: {
           organizationId: organizationId!,
           email: input.email,
           ...(typeof window === "undefined"
             ? {}
-            : { redirectTo: `${window.location.origin}/auth` }),
+            : {
+                redirectTo: `${window.location.origin}/${
+                  input.mode === "invite" ? "accept-invite" : "reset-password"
+                }`,
+              }),
         },
       }),
   });

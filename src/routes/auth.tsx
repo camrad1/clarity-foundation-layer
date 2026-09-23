@@ -28,6 +28,22 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // An invitation or recovery link that falls back to the site root must not
+    // be treated as a normal sign-in: hand it to the set-password pages with
+    // its link parameters intact.
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.replace(/^#/, "");
+      const params = new URLSearchParams(hash);
+      const type = params.get("type") ?? new URLSearchParams(window.location.search).get("type");
+      if (type === "invite" || type === "signup") {
+        window.location.replace(`/accept-invite${window.location.search}#${hash}`);
+        return;
+      }
+      if (type === "recovery") {
+        window.location.replace(`/reset-password${window.location.search}#${hash}`);
+        return;
+      }
+    }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/overview" });
     });

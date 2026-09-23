@@ -319,17 +319,24 @@ function UsersPage() {
                   disabled={!r.email || sendSetup.isPending}
                   onClick={() => {
                     if (!r.email) return;
+                    // Someone who has never signed in is still finishing setup,
+                    // so they get the invitation link rather than a reset link.
+                    const mode = r.last_sign_in_at ? "reset" : "invite";
                     sendSetup.mutate(
-                      { email: r.email },
+                      { email: r.email, mode },
                       {
-                        onSuccess: () => toast.success("Password setup email sent"),
+                        onSuccess: () =>
+                          toast.success(
+                            mode === "invite" ? "Invitation resent" : "Password reset email sent",
+                          ),
                         onError: (e) =>
                           toast.error(e instanceof Error ? e.message : "Could not send the email"),
                       },
                     );
                   }}
                 >
-                  <KeyRound className="size-3.5" /> Password
+                  <KeyRound className="size-3.5" />{" "}
+                  {r.last_sign_in_at ? "Reset password" : "Resend invitation"}
                 </Button>
                 {r.is_active ? (
                   <Button size="sm" variant="ghost" onClick={() => setConfirming(r)}>

@@ -168,6 +168,8 @@ type CreateInput = {
   communityIds: string[];
   regionIds?: string[];
   active: boolean;
+  /** Where the invitation email should land (the set-password page). */
+  redirectTo?: string;
 };
 
 
@@ -197,7 +199,12 @@ export const createOrgUser = createServerFn({ method: "POST" })
       let temporaryPassword: string | null = null;
 
       // Preferred path: Supabase sends a secure password-setup (invite) email.
-      const invite = await supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: metadata });
+      // The invitation must land on the set-password page, never the sign-in
+      // page — the invited person has no password yet.
+      const invite = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: metadata,
+        ...(data.redirectTo ? { redirectTo: data.redirectTo } : {}),
+      });
       if (invite.data?.user && !invite.error) {
         userId = invite.data.user.id;
         invited = true;
