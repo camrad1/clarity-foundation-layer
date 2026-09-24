@@ -44,6 +44,7 @@ import {
   roleNeedsRegions,
   useCreateUser,
   useOrgUsers,
+  useSendMagicLink,
   useSendPasswordSetup,
   useSetUserActive,
   useUpdateUser,
@@ -113,6 +114,7 @@ function UsersPage() {
   const updateUser = useUpdateUser(organizationId);
   const setActive = useSetUserActive(organizationId);
   const sendSetup = useSendPasswordSetup(organizationId);
+  const sendMagic = useSendMagicLink(organizationId);
 
   const communityName = useMemo(() => {
     const map = new Map<string, string>();
@@ -338,6 +340,26 @@ function UsersPage() {
                   <KeyRound className="size-3.5" />{" "}
                   {r.last_sign_in_at ? "Reset password" : "Resend invitation"}
                 </Button>
+                {r.last_sign_in_at && r.is_active ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={!r.email || sendMagic.isPending}
+                    onClick={() => {
+                      if (!r.email) return;
+                      sendMagic.mutate(
+                        { userId: r.user_id, email: r.email },
+                        {
+                          onSuccess: () => toast.success("Sign-in link sent"),
+                          onError: (e) =>
+                            toast.error(e instanceof Error ? e.message : "Could not send the link"),
+                        },
+                      );
+                    }}
+                  >
+                    Send sign-in link
+                  </Button>
+                ) : null}
                 {r.is_active ? (
                   <Button size="sm" variant="ghost" onClick={() => setConfirming(r)}>
                     Deactivate

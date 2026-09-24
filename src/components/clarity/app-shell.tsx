@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { ChangePasswordButton } from "@/components/clarity/change-password-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -262,6 +263,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-sidebar-border p-3">
+          <ChangePasswordButton />
           <Button
             variant="ghost"
             size="sm"
