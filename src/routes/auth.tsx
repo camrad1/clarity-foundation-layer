@@ -26,6 +26,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"signin" | "forgot" | "magic">("signin");
+  const [sent, setSent] = useState<string | null>(null);
 
   useEffect(() => {
     // An invitation or recovery link that falls back to the site root must not
@@ -43,21 +45,42 @@ function AuthPage() {
         window.location.replace(`/reset-password${window.location.search}#${hash}`);
         return;
       }
+      if (type === "magiclink") {
+        window.location.replace(`/auth/callback${window.location.search}#${hash}`);
+        return;
+      }
+      try {
+        if (sessionStorage.getItem("clarity:no-access")) {
+          sessionStorage.removeItem("clarity:no-access");
+          toast.error("Your account doesn't have active access to ClarityIQ. Contact your administrator.");
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
     }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/overview" });
     });
   }, [navigate]);
 
-  async function submit(e: React.FormEvent) {
+  async function sendLink(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      navigate({ to: "/overview" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Authentication failed");
+      if (mode === "forgot") {
+        await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        setSent("If an account exists for that email, we've sent password reset instructions.");
+      } else {
+        await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
+        setSent("If an account exists for that email, we've sent a sign-in link.");
+      }
+      // Errors are deliberately not shown: they could reveal whether an account exists.
     } finally {
       setBusy(false);
     }
@@ -105,6 +128,43 @@ function AuthPage() {
             <p className="text-sm text-muted-foreground">Use your work email to continue.</p>
           </div>
 
+          {mode !== "signin" ? (
+            <div className="space-y-4">
+              <p className="text-sm font-medium">
+                {mode === "forgot" ? "Reset your password" : "Email me a sign-in link"}
+              </p>
+              {sent ? (
+                <p className="text-sm text-muted-foreground">{sent}</p>
+              ) : (
+                <form onSubmit={sendLink} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="link-email">Work email</Label>
+                    <Input
+                      id="link-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    {mode === "forgot" ? "Send reset instructions" : "Send sign-in link"}
+                  </Button>
+                </form>
+              )}
+              <button
+                type="button"
+                className="text-sm font-medium text-primary underline"
+                onClick={() => {
+                  setMode("signin");
+                  setSent(null);
+                }}
+              >
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <>
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Work email</Label>
@@ -117,7 +177,16 @@ function AuthPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:underline"
+                  onClick={() => setMode("forgot")}
+                >
+                  Forgot password?
+                </button>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -138,9 +207,16 @@ function AuthPage() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button variant="outline" className="w-full" onClick={google}>
-            Continue with Google
-          </Button>
+          <div className="space-y-2">
+            <Button variant="outline" className="w-full" onClick={() => setMode("magic")}>
+              Email me a sign-in link
+            </Button>
+            <Button variant="outline" className="w-full" onClick={google}>
+              Continue with Google
+            </Button>
+          </div>
+            </>
+          )}
 
           <p className="text-center text-sm text-muted-foreground">
             Need access? Contact your ONELIFE administrator.

@@ -23,6 +23,7 @@ import { Route as AuthenticatedMarketingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOccupancyRouteImport } from './routes/_authenticated/occupancy'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as AuthenticatedAdminCommunitiesRouteImport } from './routes/_authenticated/admin/communities'
 import { Route as AuthenticatedAdminDataSourcesRouteImport } from './routes/_authenticated/admin/data-sources'
 import { Route as AuthenticatedAdminForecastImportRouteImport } from './routes/_authenticated/admin/forecast-import'
@@ -129,6 +130,11 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth_/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminCommunitiesRoute =
   AuthenticatedAdminCommunitiesRouteImport.update({
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -405,6 +412,7 @@ export interface FileRoutesByTo {
   '/occupancy': typeof AuthenticatedOccupancyRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/sales': typeof AuthenticatedSalesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/_authenticated/occupancy': typeof AuthenticatedOccupancyRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/_authenticated/admin/communities': typeof AuthenticatedAdminCommunitiesRoute
   '/_authenticated/admin/data-sources': typeof AuthenticatedAdminDataSourcesRoute
   '/_authenticated/admin/forecast-import': typeof AuthenticatedAdminForecastImportRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
+    | '/auth/callback'
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/forecast-import'
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/occupancy'
     | '/overview'
     | '/sales'
+    | '/auth/callback'
     | '/admin/communities'
     | '/admin/data-sources'
     | '/admin/forecast-import'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/_authenticated/occupancy'
     | '/_authenticated/overview'
     | '/_authenticated/sales'
+    | '/auth_/callback'
     | '/_authenticated/admin/communities'
     | '/_authenticated/admin/data-sources'
     | '/_authenticated/admin/forecast-import'
@@ -657,6 +669,7 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ApiPublicHooksFurtherSyncRoute: typeof ApiPublicHooksFurtherSyncRoute
   ApiPublicHooksGoogleBackfillRoute: typeof ApiPublicHooksGoogleBackfillRoute
   ApiPublicHooksWhCrmSyncRoute: typeof ApiPublicHooksWhCrmSyncRoute
@@ -766,6 +779,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sales'
       preLoaderRoute: typeof AuthenticatedSalesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/communities': {
       id: '/_authenticated/admin/communities'
@@ -1128,6 +1148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ApiPublicHooksFurtherSyncRoute: ApiPublicHooksFurtherSyncRoute,
   ApiPublicHooksGoogleBackfillRoute: ApiPublicHooksGoogleBackfillRoute,
   ApiPublicHooksWhCrmSyncRoute: ApiPublicHooksWhCrmSyncRoute,
