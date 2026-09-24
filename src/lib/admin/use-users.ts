@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   createOrgUser,
   listOrgUsers,
+  sendMagicSignInLink,
   sendPasswordSetupEmail,
   setOrgUserActive,
   updateOrgUser,
@@ -129,6 +130,22 @@ export function useSendPasswordSetup(organizationId: string | null) {
                   input.mode === "invite" ? "accept-invite" : "reset-password"
                 }`,
               }),
+        },
+      }),
+  });
+}
+
+export function useSendMagicLink(organizationId: string | null) {
+  const send = useServerFn(sendMagicSignInLink);
+  return useMutation({
+    mutationFn: (input: { userId: string; email: string }) =>
+      send({
+        data: {
+          organizationId: organizationId!,
+          ...input,
+          ...(typeof window === "undefined"
+            ? {}
+            : { redirectTo: `${window.location.origin}/auth/callback` }),
         },
       }),
   });

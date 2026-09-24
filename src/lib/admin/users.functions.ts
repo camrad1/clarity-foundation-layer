@@ -352,6 +352,46 @@ export const sendPasswordSetupEmail = createServerFn({ method: "POST" })
   });
 
 /**
+ * Sends an existing member a one-time sign-in link. Never creates an account
+ * and never touches the password. The target must belong to the admin's
+ * organization (checked through the admin's own row-level access).
+ */
+export const sendMagicSignInLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { organizationId: string; userId: string; email: string; redirectTo?: string }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase as never, data.organizationId);
+    const email = assertEmail(data.email);
+    const { data: member } = await (context.supabase as any)
+      .from("organization_memberships")
+      .select("user_id")
+      .eq("organization_id", data.organizationId)
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (!member) throw new Error("That person is not a member of this organization");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (target?.user?.email?.toLowerCase() !== email) throw new Error("Email does not match this user");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("is_active")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (profile && profile.is_active === false) throw new Error("This user is inactive");
+    const { error } = await supabaseAdmin.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        ...(data.redirectTo ? { emailRedirectTo: data.redirectTo } : {}),
+      },
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
  * Community assignments are only meaningful for community-scoped roles. When a
  * user is promoted to an organization-wide role their explicit community rows
  * are removed so the record cannot drift from the role's actual scope.

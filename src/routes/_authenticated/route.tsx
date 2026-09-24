@@ -86,13 +86,38 @@ async function isDeactivated(userId: string) {
   }
 }
 
+/**
+ * An emailed sign-in link authenticates, but never authorizes: a person with
+ * no organization membership is signed out. Lookup failures fail open (row
+ * level security still returns nothing) so transient errors don't lock
+ * members out.
+ */
+async function hasNoMembership(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("organization_memberships")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
+    if (error) return false;
+    return (data ?? []).length === 0;
+  } catch {
+    return false;
+  }
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
     const { user } = await resolveUser(location.pathname);
     if (!user) throw redirect({ to: "/auth" });
-    if (await isDeactivated(user.id)) {
+    if ((await isDeactivated(user.id)) || (await hasNoMembership(user.id))) {
       await supabase.auth.signOut();
+      try {
+        sessionStorage.setItem("clarity:no-access", "1");
+      } catch {
+        /* ignore */
+      }
       throw redirect({ to: "/auth" });
     }
     return { user };
