@@ -73,10 +73,11 @@ function AuthPage() {
         });
         setSent("If an account exists for that email, we've sent password reset instructions.");
       } else {
-        await supabase.auth.signInWithOtp({
-          email,
-          options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
-        });
+        // Eligibility (active user + active organization membership) is checked
+        // server-side before any link is sent; the response is always identical.
+        await requestSignInLink({
+          data: { email, redirectTo: `${window.location.origin}/auth/callback` },
+        }).catch(() => undefined);
         setSent("If an account exists for that email, we've sent a sign-in link.");
       }
       // Errors are deliberately not shown: they could reveal whether an account exists.
