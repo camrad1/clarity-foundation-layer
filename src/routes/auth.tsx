@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -98,18 +97,6 @@ function AuthPage() {
     } finally {
       setBusy(false);
     }
-  }
-
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/overview" });
   }
 
   return (
@@ -215,29 +202,16 @@ function AuthPage() {
             </Button>
           </form>
 
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
           <div className="space-y-2">
             <Button variant="outline" className="w-full" onClick={() => setMode("magic")}>
               Email me a sign-in link
-            </Button>
-            <Button variant="outline" className="w-full" onClick={google}>
-              Continue with Google
             </Button>
           </div>
             </>
           )}
 
           <p className="text-center text-sm text-muted-foreground">
-            Need access? Contact your ONELIFE administrator.
-          </p>
-          <p className="text-center text-xs text-muted-foreground">
-            Signing in does not grant data access on its own — an administrator must add you to an
-            organization.
+            Need access? Contact cam@onelifeseniorliving.com.
           </p>
         </div>
       </div>
