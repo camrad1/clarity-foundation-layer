@@ -39,7 +39,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error: rawError, reset }: ErrorComponentProps) {
   const error = rawError instanceof Error ? rawError : new Error(String(rawError));
-  void 0; {
+
   console.error(error);
   const router = useRouter();
   useEffect(() => {

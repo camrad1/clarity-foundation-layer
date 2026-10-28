@@ -163,7 +163,7 @@ function AuthenticatedPending() {
  */
 function AuthenticatedError({ error: rawError, reset }: ErrorComponentProps) {
   const error = rawError instanceof Error ? rawError : new Error(String(rawError));
-  void 0; {
+
   const router = useRouter();
   const path = typeof window === "undefined" ? "" : window.location.pathname;
 
