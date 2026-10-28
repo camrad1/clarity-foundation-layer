@@ -232,9 +232,16 @@ export const createOrgUser = createServerFn({ method: "POST" })
         temporaryPassword = password;
       }
 
-      // The profile row is created by the existing new-user trigger; make sure
-      // the names and status match what the administrator entered.
-      await supabase
+      const { error: membershipError } = await supabase
+        .from("organization_memberships")
+        .insert({ organization_id: data.organizationId, user_id: userId, role });
+      if (membershipError) throw membershipError;
+
+      // The profile row is created by the existing new-user trigger. The caller
+      // just created this account and its membership (both checked above), so
+      // write the names and status with the service client — profile RLS would
+      // otherwise silently drop the write for Corporate Admin callers.
+      const { data: profileRows, error: profileError } = await supabaseAdmin
         .from("profiles")
         .update({
           email,
@@ -243,12 +250,10 @@ export const createOrgUser = createServerFn({ method: "POST" })
           full_name: fullName,
           is_active: data.active,
         })
-        .eq("id", userId);
-
-      const { error: membershipError } = await supabase
-        .from("organization_memberships")
-        .insert({ organization_id: data.organizationId, user_id: userId, role });
-      if (membershipError) throw membershipError;
+        .eq("id", userId)
+        .select("id");
+      if (profileError) throw profileError;
+      if (!profileRows?.length) throw new Error("The user's profile could not be saved");
 
       await applyCommunityAccess(supabase as never, data.organizationId, userId, role, data.communityIds);
       await applyRegionAccess(supabase as never, data.organizationId, userId, role, data.regionIds ?? []);
@@ -280,22 +285,30 @@ export const updateOrgUser = createServerFn({ method: "POST" })
     const lastName = data.lastName.trim();
     if (!firstName || !lastName) throw new Error("First and last name are required");
 
-    const { error: profileError } = await supabase
+    // Membership RLS decides whether this caller may manage this person
+    // (peers included, Super Admins excluded for non-Super Admins). A filtered
+    // row yields no error, so require that the row was actually updated.
+    const { data: roleRows, error: roleError } = await supabase
+      .from("organization_memberships")
+      .update({ role })
+      .eq("organization_id", data.organizationId)
+      .eq("user_id", data.userId)
+      .select("user_id");
+    if (roleError) throw roleError;
+    if (!roleRows?.length) throw new Error("You are not allowed to edit this user");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profileRows, error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({
         first_name: firstName,
         last_name: lastName,
         full_name: `${firstName} ${lastName}`,
       })
-      .eq("id", data.userId);
+      .eq("id", data.userId)
+      .select("id");
     if (profileError) throw profileError;
-
-    const { error: roleError } = await supabase
-      .from("organization_memberships")
-      .update({ role })
-      .eq("organization_id", data.organizationId)
-      .eq("user_id", data.userId);
-    if (roleError) throw roleError;
+    if (!profileRows?.length) throw new Error("The user's profile could not be saved");
 
     await applyCommunityAccess(
       supabase as never,
@@ -326,11 +339,13 @@ export const setOrgUserActive = createServerFn({ method: "POST" })
 
     // The database trigger is the real safeguard (own account, last active
     // super administrator); this surfaces its message to the administrator.
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("profiles")
       .update({ is_active: data.active })
-      .eq("id", data.userId);
+      .eq("id", data.userId)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!updated?.length) throw new Error("You are not allowed to change this user's status");
 
     await setAuthSignInBlocked(data.userId, !data.active);
     return { ok: true };

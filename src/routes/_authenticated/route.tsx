@@ -1,3 +1,4 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute, Outlet, redirect, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
@@ -160,7 +161,9 @@ function AuthenticatedPending() {
  * Errors from any page inside the shell land here instead of the root fatal
  * screen: the sidebar stays usable and retry is localized to the page.
  */
-function AuthenticatedError({ error, reset }: { error: Error; reset: () => void }) {
+function AuthenticatedError({ error: rawError, reset }: ErrorComponentProps) {
+  const error = rawError instanceof Error ? rawError : new Error(String(rawError));
+
   const router = useRouter();
   const path = typeof window === "undefined" ? "" : window.location.pathname;
 
