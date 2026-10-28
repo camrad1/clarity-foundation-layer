@@ -69,22 +69,25 @@ export async function consumeAuthLink(): Promise<LinkResult> {
   const tokenHash = query.get("token_hash");
   const otpType = query.get("type");
 
+  // A redemption error may only mean the client's own URL detection already
+  // redeemed this one-use link; the session check below is the real test.
+  let linkError: string | null = null;
   try {
     if (accessToken && refreshToken) {
       const { error } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
-      if (error) return { status: "invalid", message: describe(null, error.message) };
+      if (error) linkError = describe(null, error.message);
     } else if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) return { status: "invalid", message: describe(null, error.message) };
+      if (error) linkError = describe(null, error.message);
     } else if (tokenHash && otpType) {
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: otpType as "invite" | "recovery" | "signup" | "email",
       });
-      if (error) return { status: "invalid", message: describe(null, error.message) };
+      if (error) linkError = describe(null, error.message);
     }
 
     // The client may already have consumed the link parameters itself; the
@@ -93,7 +96,7 @@ export async function consumeAuthLink(): Promise<LinkResult> {
     if (!data.session) {
       return {
         status: "invalid",
-        message: "This link is no longer valid or has already been used.",
+        message: linkError ?? "This link is no longer valid or has already been used.",
       };
     }
     return { status: "ready", flow };
